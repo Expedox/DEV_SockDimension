@@ -96,6 +96,9 @@ Bus `SFX` is created on start if missing, sending to `Master`.
 - `release_held()`: drops the hold without physics changes, for a matched sock
 - `wiggle_held()`: short shake for a wrong pair
 - `capture() -> Dictionary` and `apply(state: Dictionary)`: `position, yaw, pitch, held` (sock_id or -1)
+- `place(spawn: Transform3D)`: feet position and facing
+- Emits `Events.summit_reached` once per run, `sock_grabbed`, `sock_released`; calls `GameState.register_throw`
+- To give back the held sock after loading it needs `SockField.sock_by_id(id) -> Sock` (physics, please add)
 
 ### Pairs
 
@@ -112,7 +115,8 @@ or `GameState.register_mismatch(near_miss)`. These emit
 `scenes/game.tscn` with `scripts/game.gd` builds the run: `Cellar`, `SockField`,
 `Player`, `PairController`, and the UI scenes `scenes/ui/hud.tscn`,
 `scenes/ui/pause_menu.tscn`, `scenes/ui/end_screen.tscn`,
-`scenes/ui/loading_screen.tscn`, `scenes/ui/debug_overlay.tscn`. Missing scenes
+`scenes/ui/loading_screen.tscn`, `scenes/ui/debug_overlay.tscn`. The field is loaded
+from `scripts/physics/sock_field.gd`. Missing scenes
 are skipped, so each area can land on its own. It sets
 `GameState.world_provider` and `GameState.running`.
 

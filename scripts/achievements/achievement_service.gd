@@ -228,8 +228,8 @@ func load_state() -> void:
 	_unlocked = {}
 	_stats = {}
 	_run = {"colors": {}, "patterns": {}}
-	var result := SafeFile.read_var(SAVE_PATH)
-	if not result.ok or not result.data is Dictionary:
+	var result := SafeFile.read(SAVE_PATH)
+	if result.is_empty() or not result.data is Dictionary:
 		return
 	_unlocked = result.data.get("unlocked", {})
 	_stats = result.data.get("stats", {})
@@ -241,9 +241,8 @@ func flush() -> void:
 	if not _dirty:
 		return
 	var data := {"unlocked": _unlocked, "stats": _stats, "run": _run}
-	var err := SafeFile.write_var(SAVE_PATH, data, SAVE_VERSION)
-	if err != OK:
-		push_warning("Could not write achievements: %s" % error_string(err))
+	if not SafeFile.write(SAVE_PATH, SAVE_VERSION, data):
+		push_warning("Could not write achievements")
 		return
 	_dirty = false
 	_dirty_seconds = 0.0
