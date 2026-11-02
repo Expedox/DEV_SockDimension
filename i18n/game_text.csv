@@ -98,3 +98,10 @@ ACH_MARATHON_NAME,Marathon
 ACH_MARATHON_DESC,Play for 2 hours in one sitting.
 ACH_COMPLETIONIST_NAME,Every Last Sock
 ACH_COMPLETIONIST_DESC,Unlock every other achievement.
+PAUSE_TITLE,Paused
+MODE_SAVE_PROGRESS,"Saved game: {found} / {total} pairs, {time}"
+MODE_SAVE_COMPLETED,"Finished in {time}"
+MENU_CONTINUE_INFO,"{mode}: {found} / {total} pairs"
+SETTINGS_SECTION_CONTROLS,Controls
+SETTINGS_SECTION_SOUND,Sound
+SETTINGS_SECTION_DISPLAY,Display
