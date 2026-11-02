@@ -35,9 +35,9 @@ var _time := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var knit := ColorRect.new()
-	knit.set_anchors_preset(Control.PRESET_FULL_RECT)
+	knit.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	knit.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	knit.show_behind_parent = true
 	var shader := Shader.new()
