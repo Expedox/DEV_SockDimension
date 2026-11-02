@@ -1,0 +1,17 @@
+{
+  "keys": {
+    "move_forward": ["W"],
+    "move_back": ["S"],
+    "move_left": ["A"],
+    "move_right": ["D"],
+    "jump": ["Space"],
+    "pair": ["E"],
+    "inspect": ["F"],
+    "pause": ["Escape"],
+    "debug": ["F1"]
+  },
+  "mouse": {
+    "grab": 1,
+    "throw": 2
+  }
+}

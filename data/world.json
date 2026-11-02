@@ -1,0 +1,8 @@
+{
+  "room_size": [34.0, 6.0, 26.0],
+  "player_spawn": [0.0, 0.1, 11.5],
+  "basket_position": [13.5, 0.0, -9.5],
+  "basket_radius": 0.7,
+  "basket_height": 0.8,
+  "washer_position": [-15.5, 0.0, -11.5]
+}

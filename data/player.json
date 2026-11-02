@@ -1,0 +1,17 @@
+{
+  "speed": 4.5,
+  "jump_velocity": 5.0,
+  "eye_height": 1.6,
+  "capsule_radius": 0.3,
+  "capsule_height": 1.8,
+  "step_height": 0.25,
+  "floor_max_angle_deg": 55.0,
+  "grab_reach": 3.2,
+  "hold_distance": 1.1,
+  "hold_inspect_distance": 0.55,
+  "hold_spring": 14.0,
+  "hold_max_speed": 12.0,
+  "hold_turn_spring": 10.0,
+  "inspect_turn_speed": 1.6,
+  "throw_speed": 20.0
+}

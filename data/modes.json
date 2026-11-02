@@ -1,0 +1,20 @@
+{
+  "modes": [
+    {
+      "id": "laundry_day",
+      "name_key": "MODE_LAUNDRY_DAY",
+      "desc_key": "MODE_LAUNDRY_DAY_DESC",
+      "pairs": 1000,
+      "near_pair_share": 0.2,
+      "pile_radius": 3.0
+    },
+    {
+      "id": "sock_dimension",
+      "name_key": "MODE_SOCK_DIMENSION",
+      "desc_key": "MODE_SOCK_DIMENSION_DESC",
+      "pairs": 5000,
+      "near_pair_share": 0.2,
+      "pile_radius": 5.5
+    }
+  ]
+}
