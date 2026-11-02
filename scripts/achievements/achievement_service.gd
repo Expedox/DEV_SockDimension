@@ -12,6 +12,8 @@ const SAVE_VERSION := 1
 const COMPLETIONIST_ID := "ACH_COMPLETIONIST"
 
 var params: Dictionary = {}
+## Tests point this somewhere else before calling load_state().
+var save_path := SAVE_PATH
 
 var _definitions: Array[Dictionary] = []
 var _by_id: Dictionary = {}
@@ -117,9 +119,10 @@ func _on_pair_matched(_pair_id: int, base_color: int, pattern_type: int) -> void
 	if is_night_owl_hour(int(Time.get_time_dict_from_system().hour)):
 		unlock("ACH_NIGHT_OWL")
 
-	# The first pair of a game also clears what an earlier game left behind.
-	if GameState.pairs_found <= 1:
-		_run = {"colors": {}, "patterns": {}}
+	# Colors and patterns count per game; another game (or a fresh one) starts over.
+	var run_key := "%s:%d" % [GameState.mode_id, GameState.seed_value]
+	if GameState.pairs_found <= 1 or _run.get("key", "") != run_key:
+		_run = {"key": run_key, "colors": {}, "patterns": {}}
 	_run.colors[base_color] = true
 	_run.patterns[pattern_type] = true
 	if _run.colors.size() >= SockCatalog.palette_size():
@@ -228,8 +231,8 @@ func load_state() -> void:
 	_unlocked = {}
 	_stats = {}
 	_run = {"colors": {}, "patterns": {}}
-	var result := SafeFile.read(SAVE_PATH)
-	if result.is_empty() or not result.data is Dictionary:
+	var result := SafeFile.read(save_path)
+	if result.is_empty() or result.version != SAVE_VERSION or not result.data is Dictionary:
 		return
 	_unlocked = result.data.get("unlocked", {})
 	_stats = result.data.get("stats", {})
@@ -241,8 +244,8 @@ func flush() -> void:
 	if not _dirty:
 		return
 	var data := {"unlocked": _unlocked, "stats": _stats, "run": _run}
-	if not SafeFile.write(SAVE_PATH, SAVE_VERSION, data):
-		push_warning("Could not write achievements")
+	if not SafeFile.write(save_path, SAVE_VERSION, data):
+		push_warning("Could not write achievements to %s" % save_path)
 		return
 	_dirty = false
 	_dirty_seconds = 0.0
