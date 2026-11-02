@@ -82,14 +82,20 @@ not the player. The player collides with world and socks.
 - `basket: LaundryBasket`: `mouth()` (drop point above the rim), `receive_pair()` when a pair lands (pile grows, `signal pair_received(total)`), `set_pair_count(n)` after loading, `get_pile_top() -> Vector3`
 - `sock_entered_basket` fires for anything on layer 2 inside the basket, so freeze or remove a rolled-up pair before it arrives, or it reads as a trick shot.
 
-Layout, colours and lamps are in `data/world.json`, shaders are `shaders/cellar_*`.
+Layout, colours, lamps, windows, props and ambience are in `data/world.json`, shaders are
+`shaders/cellar_*` (shared noise in `cellar_noise.gdshaderinc`). The look relies on
+SSAO, SSIL, glow and light volumetric fog, all switchable in `world.json` → `environment`.
+Only the centre lamp casts shadows; the side lamps and windows do not, to keep the
+shadow pass cheap with the pile in view. If the 5,000 measurement is tight, turn off
+`ssil` and `volumetric_fog` first.
 
 ### Audio
 
 `Sfx` (autoload): `play(sound: String, position: Variant = null, volume_db := 0.0)`.
-Sounds: `match`, `mismatch`, `throw`, `plop`. Pass a `Vector3` for world sound, leave it out for flat sound.
-Recipes are in `data/sfx.json`; a new sound is one more entry there. `throw` and `plop` already play from `Events.sock_thrown` and `Events.sock_landed`, so do not call those two for that case.
-Bus `SFX` is created on start if missing, sending to `Master`.
+Sounds: `match`, `mismatch`, `throw`, `plop`, `grab`, `drip`, `pipe_knock`. Pass a `Vector3` for world sound, leave it out for flat sound.
+Recipes are in `data/sfx.json`; a new sound is one more entry there. `throw`, `plop` and `grab` already play from `Events.sock_thrown`, `Events.sock_landed` and `Events.sock_grabbed`, so do not call those for that case.
+`start_loop(loop, parent, position = null) -> Node` starts a seamless loop from `loops` in `sfx.json` as a child of `parent`; the cellar uses it for `room_tone` and `boiler_hum`.
+Bus `SFX` is created on start if missing, sending to `Master`. World sounds and loops go through bus `Room` (soft cellar reverb, settings under `room`), which sends to `SFX`, so the effects volume covers them. Flat sounds stay dry on `SFX`.
 
 ### Player
 

@@ -16,6 +16,7 @@ var basket: LaundryBasket
 var _data: Dictionary
 var _colors: Dictionary
 var _room_size := Vector3.ONE
+var _ambience_rng := RandomNumberGenerator.new()
 
 
 static func vec3(values: Array) -> Vector3:
@@ -39,6 +40,7 @@ func _ready() -> void:
 	_build_shelf()
 	_build_clothesline()
 	_build_basket()
+	_build_ambience()
 
 
 ## Feet position and level facing for a fresh game (-Z points towards the pile).
@@ -608,6 +610,29 @@ func _build_clothesline() -> void:
 			peg_part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		t += (width + rng.randf_range(0.15, 0.4)) / from.distance_to(to)
 		index += 1
+
+
+func _build_ambience() -> void:
+	# Quiet room tone, a humming boiler in the washer corner and now and then a drip or a pipe knock.
+	var config: Dictionary = _data.get("ambience", {})
+	if config.is_empty():
+		return
+	Sfx.start_loop("room_tone", self)
+	Sfx.start_loop("boiler_hum", self, vec3(config["hum_position"]))
+	_ambience_rng.randomize()
+	for entry: Dictionary in config["random_sounds"]:
+		var timer := Timer.new()
+		timer.name = "%sTimer" % String(entry["sound"]).to_pascal_case()
+		timer.one_shot = true
+		add_child(timer)
+		timer.timeout.connect(_on_ambient_timer.bind(timer, entry))
+		timer.start(_ambience_rng.randf_range(float(entry["min_seconds"]), float(entry["max_seconds"])))
+
+
+func _on_ambient_timer(timer: Timer, entry: Dictionary) -> void:
+	var spots: Array = entry["positions"]
+	Sfx.play(String(entry["sound"]), vec3(spots[_ambience_rng.randi() % spots.size()]))
+	timer.start(_ambience_rng.randf_range(float(entry["min_seconds"]), float(entry["max_seconds"])))
 
 
 func _wood(axis: int, plank: float, color: Color, dark: Color, seams: bool = true) -> ShaderMaterial:

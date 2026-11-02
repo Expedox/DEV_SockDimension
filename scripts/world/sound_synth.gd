@@ -6,11 +6,37 @@ const PEAK := 0.9
 
 
 static func render(recipe: Dictionary, sample_rate: int, seed_value: int) -> AudioStreamWAV:
+	var mix := _render_layers(recipe, sample_rate, seed_value, 0.0)
+	_normalize(mix)
+	return _to_stream(mix, sample_rate)
+
+
+## Renders a seamless loop: layers marked "sustain" hold their level, and the
+## tail is cross-faded into the head so the seam cannot be heard.
+static func render_loop(recipe: Dictionary, sample_rate: int, seed_value: int) -> AudioStreamWAV:
+	var length := float(recipe.get("loop_seconds", 4.0))
+	var fade := float(recipe.get("crossfade_seconds", 0.5))
+	var mix := _render_layers(recipe, sample_rate, seed_value, length + fade)
+	var body := ceili(length * sample_rate)
+	var fade_count := mini(ceili(fade * sample_rate), mix.size() - body)
+	for i in fade_count:
+		var t := float(i) / fade_count
+		mix[i] = mix[i] * sqrt(t) + mix[body + i] * sqrt(1.0 - t)
+	mix.resize(body)
+	_normalize(mix)
+	var stream := _to_stream(mix, sample_rate)
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	stream.loop_begin = 0
+	stream.loop_end = body
+	return stream
+
+
+static func _render_layers(recipe: Dictionary, sample_rate: int, seed_value: int, min_length: float) -> PackedFloat32Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var layers: Array = recipe.get("layers", [])
 
-	var length := 0.0
+	var length := min_length
 	for layer: Dictionary in layers:
 		length = maxf(length, float(layer.get("delay", 0.0)) + float(layer.get("duration", 0.1)))
 	var mix := PackedFloat32Array()
@@ -18,14 +44,15 @@ static func render(recipe: Dictionary, sample_rate: int, seed_value: int) -> Aud
 	mix.fill(0.0)
 
 	for layer: Dictionary in layers:
+		if layer.get("sustain", false):
+			layer = layer.duplicate()
+			layer["duration"] = length
 		match String(layer.get("type", "tone")):
 			"noise":
 				_mix_noise(mix, layer, sample_rate, rng)
 			_:
 				_mix_tone(mix, layer, sample_rate)
-
-	_normalize(mix)
-	return _to_stream(mix, sample_rate)
+	return mix
 
 
 static func _mix_tone(mix: PackedFloat32Array, layer: Dictionary, sample_rate: int) -> void:
@@ -39,6 +66,9 @@ static func _mix_tone(mix: PackedFloat32Array, layer: Dictionary, sample_rate: i
 	var gain := float(layer.get("gain", 0.5))
 	var attack := float(layer.get("attack", 0.005))
 	var curve := float(layer.get("curve", 4.0))
+	var sustain := bool(layer.get("sustain", false))
+	var tremolo_hz := float(layer.get("tremolo_hz", 0.0))
+	var tremolo_depth := float(layer.get("tremolo_depth", 0.0))
 	var dt := 1.0 / sample_rate
 	var phase := 0.0
 
@@ -51,7 +81,10 @@ static func _mix_tone(mix: PackedFloat32Array, layer: Dictionary, sample_rate: i
 		var sample := 0.0
 		for h in harmonics.size():
 			sample += float(harmonics[h]) * sin(phase * (h + 1))
-		mix[start + i] += sample * gain * _envelope(i * dt, t, attack, curve)
+		var level := 1.0 if sustain else _envelope(i * dt, t, attack, curve)
+		if tremolo_hz > 0.0:
+			level *= 1.0 - tremolo_depth * (0.5 + 0.5 * sin(TAU * tremolo_hz * i * dt))
+		mix[start + i] += sample * gain * level
 
 
 static func _mix_noise(
@@ -66,6 +99,11 @@ static func _mix_noise(
 	var gain := float(layer.get("gain", 0.5))
 	var attack := float(layer.get("attack", 0.005))
 	var curve := float(layer.get("curve", 4.0))
+	var sustain := bool(layer.get("sustain", false))
+	# Slow random swells, e.g. for a room tone that breathes a little.
+	var drift_hz := float(layer.get("drift_hz", 0.0))
+	var drift_depth := float(layer.get("drift_depth", 0.0))
+	var drift_phase := rng.randf() * TAU
 	var dt := 1.0 / sample_rate
 	var low := 0.0
 	var band := 0.0
@@ -79,7 +117,10 @@ static func _mix_noise(
 		band += f * high
 		low += f * band
 		var sample := band if bandpass else low
-		mix[start + i] += sample * gain * _envelope(i * dt, t, attack, curve)
+		var level := 1.0 if sustain else _envelope(i * dt, t, attack, curve)
+		if drift_hz > 0.0:
+			level *= 1.0 - drift_depth * (0.5 + 0.5 * sin(TAU * drift_hz * i * dt + drift_phase))
+		mix[start + i] += sample * gain * level
 
 
 static func _envelope(seconds: float, t: float, attack: float, curve: float) -> float:
