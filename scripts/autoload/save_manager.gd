@@ -7,6 +7,8 @@ const SAVE_EXTENSION := ".save"
 const SAVE_VERSION := 1
 const REQUIRED_KEYS := ["mode", "seed", "play_time", "mistakes", "throws", "completed", "found", "world"]
 
+## Tests point this somewhere else.
+var save_dir := SAVE_DIR
 var _autosave_left := 0.0
 
 
@@ -108,7 +110,7 @@ func _load(mode_id: String) -> Dictionary:
 
 
 func _path(mode_id: String) -> String:
-	return SAVE_DIR + mode_id + SAVE_EXTENSION
+	return save_dir + mode_id + SAVE_EXTENSION
 
 
 func _autosave_interval() -> float:
