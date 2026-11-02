@@ -1,0 +1,16 @@
+{
+  "attempt_cooldown_seconds": 0.35,
+  "roll_seconds": 0.3,
+  "roll_end_scale": 0.15,
+  "roll_spin_turns": 1.5,
+  "fly_speed": 14.0,
+  "fly_min_seconds": 0.45,
+  "fly_max_seconds": 1.3,
+  "fly_arc_share": 0.25,
+  "fly_arc_min": 0.8,
+  "fly_spin_turns": 3.0,
+  "drop_seconds": 0.14,
+  "ball_radius": 0.1,
+  "ball_band_width": 0.035,
+  "end_screen_delay_seconds": 0.6
+}

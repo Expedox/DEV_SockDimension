@@ -1,0 +1,93 @@
+class_name PairController
+extends Node
+## The pair action: checks held against aimed sock, then sends a match to the
+## basket or reports a miss. A match only counts on landing. Until then both
+## socks stay in the field's save data, so a save in mid-flight loses nothing.
+
+const DATA_PATH := "res://data/pairs.json"
+
+var _player: Player
+var _field: SockField
+var _basket: LaundryBasket
+var _socks: SockSet
+var _tuning: Dictionary
+var _next_attempt_msec := 0
+## Socks thrown and not touched since; only these count as basket shots.
+var _thrown := {}
+
+
+func _ready() -> void:
+	_tuning = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))
+	Events.sock_thrown.connect(_on_sock_thrown)
+	Events.sock_grabbed.connect(_on_sock_grabbed)
+
+
+func setup(player: Player, field: SockField, basement: Basement, socks: SockSet) -> void:
+	_player = player
+	_field = field
+	_basket = basement.basket
+	_socks = socks
+	_basket.set_pair_count(GameState.pairs_found)
+	_basket.sock_entered.connect(_on_sock_entered_basket)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pair") and not event.is_echo():
+		_try_pair()
+
+
+func _try_pair() -> void:
+	if _player == null or not GameState.running:
+		return
+	var held := _player.held_sock()
+	var aimed := _player.aimed_sock()
+	if held == null or aimed == null:
+		return
+	if _socks.is_match(held.sock_id, aimed.sock_id):
+		_send_to_basket(held, aimed)
+	elif Time.get_ticks_msec() >= _next_attempt_msec:
+		_miss(held, aimed)
+
+
+func _miss(held: Sock, aimed: Sock) -> void:
+	_next_attempt_msec = Time.get_ticks_msec() + int(float(_tuning.attempt_cooldown_seconds) * 1000.0)
+	_player.wiggle_held()
+	Sfx.play("mismatch")
+	GameState.register_mismatch(_socks.is_near_miss(held.sock_id, aimed.sock_id))
+
+
+func _send_to_basket(held: Sock, aimed: Sock) -> void:
+	var starts: Array[Transform3D] = [held.global_transform, aimed.global_transform]
+	var info := _socks.sock_info(held.sock_id)
+	_player.release_held()
+	_field.set_aside(held)
+	_field.set_aside(aimed)
+	Sfx.play("match")
+
+	var flight := PairFlight.new()
+	add_child(flight)
+	flight.landed.connect(_on_flight_landed.bind(held, aimed, info))
+	flight.launch(_field.renderer, PackedInt32Array([held.sock_id, aimed.sock_id]), starts,
+			PackedColorArray([SockCatalog.colors()[info.base_color], SockCatalog.colors()[info.accent_color]]),
+			_basket.get_drop_position(), _basket.get_pile_top(), _tuning)
+
+
+func _on_flight_landed(a: Sock, b: Sock, info: Dictionary) -> void:
+	_field.remove_pair(a, b)
+	_basket.receive_pair()
+	Sfx.play("plop")
+	GameState.register_match(info.pair_id, info.base_color, info.pattern)
+
+
+func _on_sock_thrown(sock_id: int) -> void:
+	_thrown[sock_id] = true
+
+
+func _on_sock_grabbed(sock_id: int) -> void:
+	_thrown.erase(sock_id)
+
+
+func _on_sock_entered_basket(body: RigidBody3D) -> void:
+	var sock := _field.sock_at(body)
+	if sock != null and _thrown.erase(sock.sock_id):
+		Events.sock_in_basket.emit(sock.sock_id)
