@@ -6,8 +6,10 @@ extends Node
 
 const DATA_PATH := "res://data/pairs.json"
 
-var _player: Player
-var _field: SockField
+# Player, SockField and Sock are used by their NOTES.md interface only, so this
+# script does not depend on those scripts being loaded first.
+var _player: Node
+var _field: Node
 var _basket: LaundryBasket
 var _socks: SockSet
 var _tuning: Dictionary
@@ -22,7 +24,7 @@ func _ready() -> void:
 	Events.sock_grabbed.connect(_on_sock_grabbed)
 
 
-func setup(player: Player, field: SockField, cellar: Cellar, socks: SockSet) -> void:
+func setup(player: Node, field: Node, cellar: Cellar, socks: SockSet) -> void:
 	_player = player
 	_field = field
 	_basket = cellar.basket
@@ -39,8 +41,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _try_pair() -> void:
 	if _player == null or not GameState.running:
 		return
-	var held := _player.held_sock()
-	var aimed := _player.aimed_sock()
+	var held = _player.held_sock()
+	var aimed = _player.aimed_sock()
 	if held == null or aimed == null:
 		return
 	if _socks.is_match(held.sock_id, aimed.sock_id):
@@ -49,14 +51,14 @@ func _try_pair() -> void:
 		_miss(held, aimed)
 
 
-func _miss(held: Sock, aimed: Sock) -> void:
+func _miss(held, aimed) -> void:
 	_next_attempt_msec = Time.get_ticks_msec() + int(float(_tuning.attempt_cooldown_seconds) * 1000.0)
 	_player.wiggle_held()
 	Sfx.play("mismatch")
 	GameState.register_mismatch(_socks.is_near_miss(held.sock_id, aimed.sock_id))
 
 
-func _send_to_basket(held: Sock, aimed: Sock) -> void:
+func _send_to_basket(held, aimed) -> void:
 	var starts: Array[Transform3D] = [held.global_transform, aimed.global_transform]
 	var info := _socks.sock_info(held.sock_id)
 	_player.release_held()
@@ -72,7 +74,7 @@ func _send_to_basket(held: Sock, aimed: Sock) -> void:
 			_basket.mouth(), _basket.get_pile_top(), _tuning)
 
 
-func _on_flight_landed(a: Sock, b: Sock, info: Dictionary) -> void:
+func _on_flight_landed(a, b, info: Dictionary) -> void:
 	_field.remove_pair(a, b)
 	_basket.receive_pair()
 	Sfx.play("plop")
@@ -88,6 +90,6 @@ func _on_sock_grabbed(sock_id: int) -> void:
 
 
 func _on_sock_entered_basket(body: RigidBody3D) -> void:
-	var sock := _field.sock_at(body)
+	var sock = _field.sock_at(body)
 	if sock != null and _thrown.erase(sock.sock_id):
 		Events.sock_in_basket.emit(sock.sock_id)
