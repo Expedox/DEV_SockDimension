@@ -2,10 +2,10 @@ class_name SafeFile
 extends RefCounted
 ## Crash-safe binary files for anything under user://.
 ##
-## Layout: magic, format version, store_var payload, end marker. The end marker
-## makes a truncated file detectable. A write goes to <path>.tmp first, the old
-## file becomes <path>.bak, then the .tmp is renamed into place, so a crash at
-## any point leaves at least one readable copy.
+## Layout: magic, version, store_var payload, end marker. The end marker makes
+## a truncated file detectable. A write goes to <path>.tmp first, the old file
+## becomes <path>.bak, then the .tmp is renamed into place, so a crash at any
+## point leaves at least one readable copy.
 
 const TMP_SUFFIX := ".tmp"
 const BAK_SUFFIX := ".bak"
@@ -16,52 +16,48 @@ const FOOTER_SIZE := 4
 
 
 ## Writes data safely. version is the caller's own schema version.
-static func write_var(path: String, data: Variant, version: int) -> Error:
-	var dir_err := DirAccess.make_dir_recursive_absolute(path.get_base_dir())
-	if dir_err != OK:
-		return dir_err
+static func write(path: String, version: int, data: Variant) -> bool:
+	if DirAccess.make_dir_recursive_absolute(path.get_base_dir()) != OK:
+		return false
 
 	var tmp_path := path + TMP_SUFFIX
 	var file := FileAccess.open(tmp_path, FileAccess.WRITE)
 	if file == null:
-		return FileAccess.get_open_error()
+		return false
 	file.store_32(MAGIC)
 	file.store_32(version)
-	if not file.store_var(data):
-		file.close()
-		DirAccess.remove_absolute(tmp_path)
-		return ERR_FILE_CANT_WRITE
+	var stored := file.store_var(data)
 	file.store_32(END_MARKER)
 	file.flush()
-	var write_err := file.get_error()
+	stored = stored and file.get_error() == OK
 	file.close()
-	if write_err != OK or not _has_valid_frame(tmp_path):
+	if not stored or not _has_valid_frame(tmp_path):
 		DirAccess.remove_absolute(tmp_path)
-		return ERR_FILE_CANT_WRITE
+		return false
 
 	var bak_path := path + BAK_SUFFIX
 	if FileAccess.file_exists(path):
 		if FileAccess.file_exists(bak_path):
 			DirAccess.remove_absolute(bak_path)
-		var bak_err := DirAccess.rename_absolute(path, bak_path)
-		if bak_err != OK:
+		if DirAccess.rename_absolute(path, bak_path) != OK:
 			DirAccess.remove_absolute(tmp_path)
-			return bak_err
-	return DirAccess.rename_absolute(tmp_path, path)
+			return false
+	return DirAccess.rename_absolute(tmp_path, path) == OK
 
 
-## Reads path, falling back to the .bak copy if the main file is missing or
-## damaged. Result keys: ok, version, data, from_backup.
-static func read_var(path: String) -> Dictionary:
-	var result := _read_single(path)
-	if result.ok:
+## Returns {"version", "data", "from_backup"}, or {} when neither the file nor
+## its .bak copy is usable.
+static func read(path: String) -> Dictionary:
+	var result := _read_one(path)
+	if not result.is_empty():
 		return result
-	result = _read_single(path + BAK_SUFFIX)
-	result.from_backup = result.ok
+	result = _read_one(path + BAK_SUFFIX)
+	if not result.is_empty():
+		result.from_backup = true
 	return result
 
 
-## True if read_var would find a file, without loading its payload.
+## True if read() would find a file, without loading its payload.
 static func exists(path: String) -> bool:
 	return _has_valid_frame(path) or _has_valid_frame(path + BAK_SUFFIX)
 
@@ -73,18 +69,18 @@ static func remove(path: String) -> void:
 			DirAccess.remove_absolute(candidate)
 
 
-static func _read_single(path: String) -> Dictionary:
-	var result := {"ok": false, "version": 0, "data": null, "from_backup": false}
+static func _read_one(path: String) -> Dictionary:
 	if not _has_valid_frame(path):
-		return result
+		return {}
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		return result
+		return {}
 	file.seek(4)
-	result.version = file.get_32()
-	result.data = file.get_var()
-	result.ok = file.get_error() == OK and file.get_position() == file.get_length() - FOOTER_SIZE
-	return result
+	var version := file.get_32()
+	var data: Variant = file.get_var()
+	if file.get_error() != OK or file.get_position() != file.get_length() - FOOTER_SIZE:
+		return {}
+	return {"version": version, "data": data, "from_backup": false}
 
 
 static func _has_valid_frame(path: String) -> bool:
