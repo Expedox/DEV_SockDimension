@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "params": {
+    "halfway_fraction": 0.5,
+    "fast_laundry_seconds": 10800,
+    "yeet_distance_m": 20.0,
+    "avalanche_socks": 100,
+    "night_owl_start_hour": 0,
+    "night_owl_end_hour": 4,
+    "marathon_seconds": 7200,
+    "king_height_tolerance_m": 0.5,
+    "toast_seconds": 4.0
+  },
+  "achievements": [
+    { "id": "ACH_FIRST_PAIR", "name": "ACH_FIRST_PAIR_NAME", "description": "ACH_FIRST_PAIR_DESC", "hidden": false, "target": 1, "stat": "pairs_total" },
+    { "id": "ACH_PAIRS_100", "name": "ACH_PAIRS_100_NAME", "description": "ACH_PAIRS_100_DESC", "hidden": false, "target": 100, "stat": "pairs_total" },
+    { "id": "ACH_PAIRS_1000", "name": "ACH_PAIRS_1000_NAME", "description": "ACH_PAIRS_1000_DESC", "hidden": false, "target": 1000, "stat": "pairs_total" },
+    { "id": "ACH_PAIRS_6000", "name": "ACH_PAIRS_6000_NAME", "description": "ACH_PAIRS_6000_DESC", "hidden": false, "target": 6000, "stat": "pairs_total" },
+    { "id": "ACH_HALFWAY", "name": "ACH_HALFWAY_NAME", "description": "ACH_HALFWAY_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_LAUNDRY_DAY", "name": "ACH_LAUNDRY_DAY_NAME", "description": "ACH_LAUNDRY_DAY_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_SOCK_DIMENSION", "name": "ACH_SOCK_DIMENSION_NAME", "description": "ACH_SOCK_DIMENSION_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_FLAWLESS", "name": "ACH_FLAWLESS_NAME", "description": "ACH_FLAWLESS_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_EAGLE_EYE", "name": "ACH_EAGLE_EYE_NAME", "description": "ACH_EAGLE_EYE_DESC", "hidden": false, "target": 50, "stat": "best_streak" },
+    { "id": "ACH_NEAR_MISS", "name": "ACH_NEAR_MISS_NAME", "description": "ACH_NEAR_MISS_DESC", "hidden": false, "target": 10, "stat": "near_misses" },
+    { "id": "ACH_FAST_LAUNDRY", "name": "ACH_FAST_LAUNDRY_NAME", "description": "ACH_FAST_LAUNDRY_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_RAINBOW", "name": "ACH_RAINBOW_NAME", "description": "ACH_RAINBOW_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_PATTERNS", "name": "ACH_PATTERNS_NAME", "description": "ACH_PATTERNS_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_KING_OF_THE_HILL", "name": "ACH_KING_OF_THE_HILL_NAME", "description": "ACH_KING_OF_THE_HILL_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_YEET", "name": "ACH_YEET_NAME", "description": "ACH_YEET_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_AVALANCHE", "name": "ACH_AVALANCHE_NAME", "description": "ACH_AVALANCHE_DESC", "hidden": true, "target": 1 },
+    { "id": "ACH_TRICK_SHOT", "name": "ACH_TRICK_SHOT_NAME", "description": "ACH_TRICK_SHOT_DESC", "hidden": true, "target": 1 },
+    { "id": "ACH_NIGHT_OWL", "name": "ACH_NIGHT_OWL_NAME", "description": "ACH_NIGHT_OWL_DESC", "hidden": true, "target": 1 },
+    { "id": "ACH_MARATHON", "name": "ACH_MARATHON_NAME", "description": "ACH_MARATHON_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_COMPLETIONIST", "name": "ACH_COMPLETIONIST_NAME", "description": "ACH_COMPLETIONIST_DESC", "hidden": false, "target": 1 }
+  ]
+}
