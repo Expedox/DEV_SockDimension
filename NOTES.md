@@ -40,8 +40,7 @@ not the player. The player collides with world and socks.
 
 ### Sock format
 
-- `pair_id`: 0 to pairs-1. `sock_id = pair_id * 2 + side` (side 0 or 1).
-- Pair of a sock: `sock_id / 2`. Partner: `sock_id ^ 1`.
+- `sock_id` is the index into `SockSet`, not derived from `pair_id`.
 - The generator, mesh and display API is written by the sock designs work:
   `SockSet.generate(seed, pair_count, near_share)`, `sock_count()`,
   `custom_data(i)`, `SockMesh.get_mesh()`, `make_material()`, `collision_size()`.
@@ -65,9 +64,10 @@ not the player. The player collides with world and socks.
 - `surface_height() -> Vector3`: highest point of the pile right now
 - Emits `Events.socks_moving(count)` when the count changes noticeably
 
-### Cellar
+### Basement
 
-`scenes/cellar.tscn`, root `class_name Cellar extends Node3D`:
+`scenes/basement.tscn`, root `Basement`, with `.basket: LaundryBasket`. The list
+below is the first draft; `scripts/level/` is authoritative.
 
 - `player_spawn() -> Transform3D`
 - `basket_mouth() -> Vector3`
@@ -88,7 +88,8 @@ not the player. The player collides with world and socks.
 ### Pairs
 
 `class_name PairController extends Node`, child of the game scene:
-`setup(player: Player, field: SockField, cellar: Cellar)`. Handles the `pair`
+`setup(player: Player, field: SockField, basement: Basement, socks: SockSet)`.
+The player calls `GameState.register_throw(sock_id)` on every throw. Handles the `pair`
 action and calls `GameState.register_match(pair_id, base_color, pattern_type)`
 or `GameState.register_mismatch(near_miss)`. These emit
 `Events.pair_matched(pair_id, base_color, pattern_type)` and
