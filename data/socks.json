@@ -1,0 +1,48 @@
+{
+	"mesh": {
+		"foot_length": 0.26,
+		"leg_length": 0.24,
+		"width": 0.1,
+		"thickness": 0.035,
+		"heel_angle_deg": 112,
+		"sides": 8,
+		"cuff_band": 0.1,
+		"toe_start": 0.86,
+		"collision_fit": 0.85
+	},
+	"lengths": [
+		{ "id": "ankle", "scale": 0.6 },
+		{ "id": "crew", "scale": 1.0 },
+		{ "id": "knee", "scale": 1.5 }
+	],
+	"patterns": [
+		{ "id": "plain", "weight": 0.03, "uses_accent": false, "counts": [0] },
+		{ "id": "stripes", "weight": 0.37, "uses_accent": true, "counts": [2, 3, 4, 5, 6] },
+		{ "id": "dots", "weight": 0.25, "uses_accent": true, "counts": [2, 3, 4] },
+		{ "id": "toe_heel", "weight": 0.1, "uses_accent": true, "counts": [0] },
+		{ "id": "cuff_rings", "weight": 0.25, "uses_accent": true, "counts": [1, 2, 3] }
+	],
+	"min_accent_distance": 0.3,
+	"palette": [
+		{ "id": "white", "color": "#f2efe8" },
+		{ "id": "grey", "color": "#9a9ca0" },
+		{ "id": "charcoal", "color": "#44464c" },
+		{ "id": "black", "color": "#1d1d21" },
+		{ "id": "red", "color": "#c8302c" },
+		{ "id": "burgundy", "color": "#6e1a2c" },
+		{ "id": "orange", "color": "#ec7a22" },
+		{ "id": "mustard", "color": "#d3a21f" },
+		{ "id": "yellow", "color": "#f5d94a" },
+		{ "id": "lime", "color": "#a4cf3e" },
+		{ "id": "green", "color": "#2f8f4a" },
+		{ "id": "forest", "color": "#1f4d38" },
+		{ "id": "teal", "color": "#1d8a8a" },
+		{ "id": "sky", "color": "#73bde8" },
+		{ "id": "blue", "color": "#2a62c4" },
+		{ "id": "navy", "color": "#1b2a5c" },
+		{ "id": "purple", "color": "#6f3fa6" },
+		{ "id": "pink", "color": "#ee8fb4" },
+		{ "id": "magenta", "color": "#c62a84" },
+		{ "id": "brown", "color": "#6f4a2d" }
+	]
+}
