@@ -1,0 +1,50 @@
+{
+  "sample_rate": 32000,
+  "bus": "SFX",
+  "pool_3d": 12,
+  "pool_2d": 4,
+  "unit_size": 2.5,
+  "max_distance": 45.0,
+  "sounds": {
+    "match": {
+      "volume_db": -6.0,
+      "pitch_jitter": 0.02,
+      "variants": 2,
+      "max_per_second": 6,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "cutoff_start": 900, "cutoff_end": 2600, "resonance": 0.8, "duration": 0.16, "attack": 0.03, "curve": 2.5, "gain": 0.16 },
+        { "type": "tone", "delay": 0.05, "duration": 0.5, "freq_start": 523.25, "freq_end": 523.25, "harmonics": [1.0, 0.0, 0.3, 0.0, 0.1], "attack": 0.004, "curve": 7.0, "gain": 0.42 },
+        { "type": "tone", "delay": 0.15, "duration": 0.75, "freq_start": 783.99, "freq_end": 783.99, "harmonics": [1.0, 0.0, 0.3, 0.0, 0.1], "attack": 0.004, "curve": 6.0, "gain": 0.42 }
+      ]
+    },
+    "mismatch": {
+      "volume_db": -5.0,
+      "pitch_jitter": 0.05,
+      "variants": 2,
+      "max_per_second": 6,
+      "layers": [
+        { "type": "tone", "duration": 0.42, "freq_start": 185, "freq_end": 150, "harmonics": [1.0, 0.45, 0.12], "attack": 0.008, "curve": 4.5, "gain": 0.62, "vibrato_hz": 13.0, "vibrato_depth": 0.13 },
+        { "type": "noise", "filter": "lowpass", "cutoff_start": 700, "cutoff_end": 250, "resonance": 0.7, "duration": 0.08, "attack": 0.002, "curve": 5.0, "gain": 0.3 }
+      ]
+    },
+    "throw": {
+      "volume_db": -7.0,
+      "pitch_jitter": 0.1,
+      "variants": 3,
+      "max_per_second": 10,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "cutoff_start": 450, "cutoff_end": 1900, "resonance": 1.4, "duration": 0.3, "attack": 0.11, "curve": 3.5, "gain": 0.95 }
+      ]
+    },
+    "plop": {
+      "volume_db": -8.0,
+      "pitch_jitter": 0.14,
+      "variants": 4,
+      "max_per_second": 14,
+      "layers": [
+        { "type": "tone", "duration": 0.15, "freq_start": 150, "freq_end": 62, "harmonics": [1.0, 0.2], "attack": 0.003, "curve": 6.0, "gain": 0.6 },
+        { "type": "noise", "filter": "lowpass", "cutoff_start": 1200, "cutoff_end": 220, "resonance": 0.7, "duration": 0.1, "attack": 0.001, "curve": 6.0, "gain": 0.42 }
+      ]
+    }
+  }
+}

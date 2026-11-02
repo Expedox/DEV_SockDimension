@@ -4,5 +4,49 @@
   "basket_position": [13.5, 0.0, -9.5],
   "basket_radius": 0.7,
   "basket_height": 0.8,
-  "washer_position": [-15.5, 0.0, -11.5]
+  "washer_position": [-15.5, 0.0, -11.5],
+  "shell_thickness": 2.0,
+  "rug_radius": 8.0,
+  "wall_band_height": 1.1,
+  "basket_radius_bottom": 0.56,
+  "basket_wall_thickness": 0.12,
+  "basket_wall_segments": 14,
+  "basket_detect_inset": 0.1,
+  "basket_pile_step": 0.0012,
+  "basket_pile_max": 0.72,
+  "washer_yaw_degrees": 45.0,
+  "washer_size": [0.9, 1.15, 0.85],
+  "colors": {
+    "floor": "#6f6a61",
+    "floor_dark": "#47433c",
+    "wall": "#d9cfb9",
+    "wall_mortar": "#b8ad97",
+    "wall_band": "#4f7168",
+    "ceiling": "#8f8a7e",
+    "rug_a": "#b4553f",
+    "rug_b": "#e0b45c",
+    "rug_c": "#4f7f8c",
+    "basket": "#3f8fb5",
+    "machine_body": "#ece8df",
+    "machine_panel": "#c9c5bb",
+    "machine_trim": "#7d8387",
+    "machine_glass": "#39505c",
+    "pipe": "#8d6a4f",
+    "lamp_shade": "#3f5c55"
+  },
+  "lamps": [
+    { "position": [0.0, 0.0], "drop": 0.9, "color": "#ffd9a8", "energy": 24.0, "range": 24.0, "attenuation": 1.1, "shade_radius": 0.7, "shadow": true },
+    { "position": [12.0, -8.0], "drop": 1.6, "color": "#ffcf96", "energy": 7.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false },
+    { "position": [-13.0, -9.0], "drop": 1.6, "color": "#ffcf96", "energy": 7.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false },
+    { "position": [-11.0, 9.0], "drop": 1.6, "color": "#ffcf96", "energy": 6.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false },
+    { "position": [12.0, 9.0], "drop": 1.6, "color": "#ffcf96", "energy": 6.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false }
+  ],
+  "environment": {
+    "background": "#14110e",
+    "ambient": "#d8c6ae",
+    "ambient_energy": 0.32,
+    "tonemap_exposure": 1.0,
+    "ssao": true,
+    "glow": true
+  }
 }
