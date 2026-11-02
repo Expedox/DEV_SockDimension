@@ -1,10 +1,26 @@
 {
-  "room_size": [34.0, 6.0, 26.0],
-  "player_spawn": [0.0, 0.1, 11.5],
-  "basket_position": [13.5, 0.0, -9.5],
+  "room_size": [
+    34.0,
+    6.0,
+    26.0
+  ],
+  "player_spawn": [
+    0.0,
+    0.1,
+    11.5
+  ],
+  "basket_position": [
+    13.5,
+    0.0,
+    -9.5
+  ],
   "basket_radius": 0.7,
   "basket_height": 0.8,
-  "washer_position": [-15.5, 0.0, -11.5],
+  "washer_position": [
+    -15.5,
+    0.0,
+    -11.5
+  ],
   "shell_thickness": 2.0,
   "rug_radius": 8.0,
   "wall_band_height": 1.1,
@@ -15,38 +31,249 @@
   "basket_pile_step": 0.0012,
   "basket_pile_max": 0.72,
   "washer_yaw_degrees": 45.0,
-  "washer_size": [0.9, 1.15, 0.85],
+  "washer_size": [
+    0.9,
+    1.15,
+    0.85
+  ],
   "colors": {
-    "floor": "#6f6a61",
-    "floor_dark": "#47433c",
-    "wall": "#d9cfb9",
-    "wall_mortar": "#b8ad97",
-    "wall_band": "#4f7168",
-    "ceiling": "#8f8a7e",
-    "rug_a": "#b4553f",
-    "rug_b": "#e0b45c",
-    "rug_c": "#4f7f8c",
-    "basket": "#3f8fb5",
+    "floor": "#5f574c",
+    "floor_dark": "#3b342c",
+    "wall": "#c8c4ba",
+    "wall_mortar": "#9f9583",
+    "wall_band": "#4a675d",
+    "ceiling": "#7a5a40",
+    "rug_a": "#74392c",
+    "rug_b": "#8c6c3c",
+    "rug_c": "#4b5c51",
+    "basket": "#4b8fae",
     "machine_body": "#ece8df",
     "machine_panel": "#c9c5bb",
     "machine_trim": "#7d8387",
     "machine_glass": "#39505c",
-    "pipe": "#8d6a4f",
-    "lamp_shade": "#3f5c55"
+    "pipe": "#8a5f42",
+    "lamp_shade": "#2f4a43",
+    "wall_grime": "#3d3127",
+    "beam": "#5e4230",
+    "wood_dark": "#2e1f15",
+    "rug_d": "#9c8f78",
+    "window_frame": "#4f6b63",
+    "shelf": "#7b5a3e",
+    "cardboard": "#a98059",
+    "jar": "#c9d6c8",
+    "jar_lid": "#9a8a6a"
   },
   "lamps": [
-    { "position": [0.0, 0.0], "drop": 0.9, "color": "#ffd9a8", "energy": 24.0, "range": 24.0, "attenuation": 1.1, "shade_radius": 0.7, "shadow": true },
-    { "position": [12.0, -8.0], "drop": 1.6, "color": "#ffcf96", "energy": 7.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false },
-    { "position": [-13.0, -9.0], "drop": 1.6, "color": "#ffcf96", "energy": 7.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false },
-    { "position": [-11.0, 9.0], "drop": 1.6, "color": "#ffcf96", "energy": 6.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false },
-    { "position": [12.0, 9.0], "drop": 1.6, "color": "#ffcf96", "energy": 6.0, "range": 11.0, "attenuation": 1.2, "shade_radius": 0.4, "shadow": false }
+    {
+      "position": [
+        0.0,
+        0.0
+      ],
+      "drop": 1.1,
+      "color": "#ffc58c",
+      "energy": 12.0,
+      "range": 18.0,
+      "attenuation": 1.0,
+      "spot_angle": 70.0,
+      "spot_softness": 0.55,
+      "light_size": 0.25,
+      "shadow": true,
+      "shadow_blur": 2.0,
+      "fill_energy": 9.0,
+      "fill_range": 30.0,
+      "fill_attenuation": 1.1,
+      "shade_radius": 0.7,
+      "bulb_glow": 10.0,
+      "fog_energy": 1.0
+    },
+    {
+      "position": [
+        12.0,
+        -8.0
+      ],
+      "drop": 1.6,
+      "color": "#ffbb80",
+      "energy": 10.0,
+      "range": 10.0,
+      "attenuation": 1.1,
+      "spot_angle": 55.0,
+      "spot_softness": 0.6,
+      "light_size": 0.15,
+      "shadow": false,
+      "fill_energy": 3.5,
+      "fill_range": 12.0,
+      "shade_radius": 0.4,
+      "bulb_glow": 8.0,
+      "fog_energy": 0.8
+    },
+    {
+      "position": [
+        -13.0,
+        -9.0
+      ],
+      "drop": 1.6,
+      "color": "#ffbb80",
+      "energy": 10.0,
+      "range": 10.0,
+      "attenuation": 1.1,
+      "spot_angle": 55.0,
+      "spot_softness": 0.6,
+      "light_size": 0.15,
+      "shadow": false,
+      "fill_energy": 3.5,
+      "fill_range": 12.0,
+      "shade_radius": 0.4,
+      "bulb_glow": 8.0,
+      "fog_energy": 0.8
+    },
+    {
+      "position": [
+        -11.0,
+        9.0
+      ],
+      "drop": 1.6,
+      "color": "#ffbb80",
+      "energy": 10.0,
+      "range": 10.0,
+      "attenuation": 1.1,
+      "spot_angle": 55.0,
+      "spot_softness": 0.6,
+      "light_size": 0.15,
+      "shadow": false,
+      "fill_energy": 3.5,
+      "fill_range": 12.0,
+      "shade_radius": 0.4,
+      "bulb_glow": 8.0,
+      "fog_energy": 0.8
+    },
+    {
+      "position": [
+        12.0,
+        9.0
+      ],
+      "drop": 1.6,
+      "color": "#ffbb80",
+      "energy": 10.0,
+      "range": 10.0,
+      "attenuation": 1.1,
+      "spot_angle": 55.0,
+      "spot_softness": 0.6,
+      "light_size": 0.15,
+      "shadow": false,
+      "fill_energy": 3.5,
+      "fill_range": 12.0,
+      "shade_radius": 0.4,
+      "bulb_glow": 8.0,
+      "fog_energy": 0.8
+    }
   ],
   "environment": {
-    "background": "#14110e",
-    "ambient": "#d8c6ae",
-    "ambient_energy": 0.32,
-    "tonemap_exposure": 1.0,
+    "background": "#0b0907",
+    "ambient": "#5c4b3d",
+    "ambient_energy": 0.38,
+    "tonemap_exposure": 1.05,
+    "tonemap_white": 6.0,
     "ssao": true,
-    "glow": true
+    "ssao_radius": 1.2,
+    "ssao_intensity": 2.6,
+    "ssao_power": 1.6,
+    "ssao_light_affect": 0.25,
+    "ssil": true,
+    "ssil_radius": 4.0,
+    "ssil_intensity": 1.2,
+    "glow": true,
+    "glow_intensity": 0.7,
+    "glow_bloom": 0.04,
+    "glow_threshold": 0.9,
+    "volumetric_fog": true,
+    "fog_density": 0.012,
+    "fog_albedo": "#d8c1a2",
+    "fog_anisotropy": 0.45,
+    "fog_length": 40.0,
+    "saturation": 0.95,
+    "contrast": 1.04
+  },
+  "beam_size": [
+    0.0,
+    0.26,
+    0.2
+  ],
+  "beam_spacing": 3.0,
+  "windows": [
+    {
+      "x": -5.5,
+      "y": 4.7,
+      "size": [
+        1.3,
+        0.6
+      ],
+      "color": "#7f9cc4",
+      "glow": 1.4,
+      "energy": 1.2,
+      "range": 14.0,
+      "spot_angle": 28.0,
+      "tilt_degrees": 38.0,
+      "fog_energy": 3.0
+    },
+    {
+      "x": 6.0,
+      "y": 4.7,
+      "size": [
+        1.3,
+        0.6
+      ],
+      "color": "#7f9cc4",
+      "glow": 1.4,
+      "energy": 1.2,
+      "range": 14.0,
+      "spot_angle": 28.0,
+      "tilt_degrees": 38.0,
+      "fog_energy": 3.0
+    }
+  ],
+  "fairy_lights": {
+    "from_x": -14.0,
+    "to_x": 14.0,
+    "height": 3.9,
+    "span": 2.0,
+    "sag": 0.28,
+    "count": 113,
+    "glow": 4.0,
+    "colors": [
+      "#ffcf8a",
+      "#ffb36b",
+      "#ffd9a0",
+      "#ff9f5a"
+    ]
+  },
+  "shelf": {
+    "z": 3.0,
+    "size": [
+      2.6,
+      2.0,
+      0.45
+    ],
+    "boards": 4
+  },
+  "clothesline": {
+    "from": [
+      -16.8,
+      2.4,
+      -5.5
+    ],
+    "to": [
+      -9.5,
+      2.4,
+      -12.8
+    ],
+    "sag": 0.18,
+    "laundry": [
+      "#c9b79a",
+      "#8a9c8f",
+      "#b06a4f",
+      "#e0d6c2",
+      "#6f7f99",
+      "#c7a35f"
+    ]
   }
 }
