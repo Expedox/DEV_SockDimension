@@ -50,10 +50,10 @@ func _refresh_pairs() -> void:
 	_pairs_label.text = tr("HUD_PAIRS").format({"found": GameState.pairs_found, "total": GameState.pairs_total})
 
 
-## The player joins the "player" group; the HUD only reads from it.
+## Reads the player from the game scene (GameState.world_provider.player).
 func _update_aim() -> void:
-	if not is_instance_valid(_player):
-		_player = get_tree().get_first_node_in_group(&"player")
+	if not is_instance_valid(_player) and GameState.world_provider:
+		_player = GameState.world_provider.get("player")
 	var holding := false
 	var aiming := false
 	if _player:

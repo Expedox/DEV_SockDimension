@@ -147,8 +147,8 @@ Close uses `GameState.near_misses` (or `pair_mismatched(true)`).
   `mouse_sensitivity, invert_mouse, fov, volume_master, volume_sfx, fullscreen,
   vsync, language`. Read them live (the player should read sensitivity, invert
   and FOV every frame or on `Settings.changed`).
-- The player node joins the group `player`; the HUD reads `held_sock()` and
-  `aimed_sock()` from it for the crosshair and the control hint.
+- The HUD reads `held_sock()` and `aimed_sock()` from
+  `GameState.world_provider.player` for the crosshair and the control hint.
 - Mouse capture: the loading screen captures on `pile_ready`, the pause menu
   frees it on open and captures on resume. The end screen frees it.
 - The pause menu opens on `pause` (and when the window loses focus) only while
