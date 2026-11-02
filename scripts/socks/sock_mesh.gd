@@ -13,15 +13,18 @@ extends RefCounted
 
 const SHADER_PATH := "res://shaders/sock.gdshader"
 
-static var _meshes: Array[ArrayMesh] = []
+static var _meshes: Array[ArrayMesh] = [] # detailed, for socks near the camera
+static var _far_meshes: Array[ArrayMesh] = [] # fewer vertices, the knit is all in the shader
+static var _offsets: Array[Vector3] = []
 static var _materials: Array[ShaderMaterial] = []
 static var _sizes: Array[Vector3] = []
 static var _marks: Array[Dictionary] = [] # per shape: length, heel, toe, rib in meters along UV.y
 
 
-static func get_mesh(shape: int) -> ArrayMesh:
+## detailed: the near mesh (held, close by). Otherwise the cheap mesh for the pile.
+static func get_mesh(shape: int, detailed := false) -> ArrayMesh:
 	_ensure_built()
-	return _meshes[shape]
+	return _meshes[shape] if detailed else _far_meshes[shape]
 
 
 ## Shared by every sock of that shape. Also set as the mesh surface material.
@@ -44,7 +47,8 @@ static func collision_size(shape: int) -> Vector3:
 static func _ensure_built() -> void:
 	if _meshes.is_empty():
 		for shape in SockCatalog.shape_count():
-			_build(shape)
+			_build(shape, true)
+			_build(shape, false)
 
 
 static func _make_materials() -> void:
@@ -68,6 +72,7 @@ static func _make_materials() -> void:
 		material.set_shader_parameter("rib_length", marks["rib"])
 		material.set_shader_parameter("pattern_end", marks["pattern_end"])
 		_meshes[shape].surface_set_material(0, material)
+		_far_meshes[shape].surface_set_material(0, material)
 		_materials.append(material)
 
 
@@ -112,10 +117,11 @@ static func _bell(x: float, width: float) -> float:
 	return exp(-x * x / (2.0 * width * width))
 
 
-static func _build(shape_index: int) -> void:
+static func _build(shape_index: int, detailed: bool) -> void:
 	var mesh_values := SockCatalog.mesh_values()
 	var shape := SockCatalog.shape(shape_index)
-	var sides: int = int(mesh_values["sides"]) / 2 * 2
+	var sides: int = int(mesh_values["sides" if detailed else "far_sides"]) / 2 * 2
+	var step: float = mesh_values["step" if detailed else "far_step"]
 	var flatness: float = mesh_values["flatness"]
 	var half_t: float = mesh_values["thickness"] * 0.5
 	var radius: float = mesh_values["bend_radius"]
@@ -138,18 +144,18 @@ static func _build(shape_index: int) -> void:
 	var arc_to := -PI * 0.5
 
 	var points: Array[Vector2] = []
-	var leg_steps := maxi(1, ceili((leg_len - reach) / 0.045))
+	var leg_steps := maxi(1, ceili((leg_len - reach) / step))
 	for i in leg_steps:
 		points.append(leg_dir * lerpf(leg_len, reach, float(i) / leg_steps))
-	var arc_steps := 6
+	var arc_steps := 6 if detailed else 4
 	for i in arc_steps + 1:
 		var a := lerp_angle(arc_from, arc_to, float(i) / arc_steps)
 		points.append(arc_center + Vector2(cos(a), sin(a)) * radius)
 	var toe_start := foot_len - toe_len
-	var foot_steps := maxi(1, ceili((toe_start - reach) / 0.045))
+	var foot_steps := maxi(1, ceili((toe_start - reach) / step))
 	for i in range(1, foot_steps + 1):
 		points.append(Vector2(lerpf(reach, toe_start, float(i) / foot_steps), 0.0))
-	var toe_marks := [0.3, 0.55, 0.75, 0.88, 0.96]
+	var toe_marks := [0.3, 0.55, 0.75, 0.88, 0.96] if detailed else [0.45, 0.8, 0.96]
 	for u: float in toe_marks:
 		points.append(Vector2(toe_start + toe_len * u, 0.0))
 
@@ -282,11 +288,11 @@ static func _build(shape_index: int) -> void:
 	for k in sides:
 		m.wind(last + k, last + k + 1, tip)
 
-	# Center the bounding box.
+	# Center the bounding box. The far mesh reuses the near offset, so swapping is seamless.
 	var aabb := AABB(m.vertices[0], Vector3.ZERO)
 	for pos in m.vertices:
 		aabb = aabb.expand(pos)
-	var offset := -aabb.get_center()
+	var offset := -aabb.get_center() if detailed else _offsets[shape_index]
 	for i in m.vertices.size():
 		m.vertices[i] += offset
 
@@ -300,7 +306,11 @@ static func _build(shape_index: int) -> void:
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 
+	if not detailed:
+		_far_meshes.append(mesh)
+		return
 	_meshes.append(mesh)
+	_offsets.append(offset)
 	_sizes.append(aabb.size)
 	_marks.append({
 		"length": total,

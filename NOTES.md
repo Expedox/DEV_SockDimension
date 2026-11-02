@@ -57,14 +57,16 @@ not the player. The player collides with world and socks.
 - `sock_info(sock_id) -> {pair_id, base_color, accent_color, pattern, count, shape, heel_toe}`
 - `custom_data(sock_id) -> Color` for the MultiMesh, `validate() -> PackedStringArray`
 
-`SockMesh` (static): `get_mesh(shape)`, `get_material(shape)`, `collision_size(shape) -> Vector3`
+`SockMesh` (static): `get_mesh(shape, detailed := false)`, `get_material(shape)`, `collision_size(shape) -> Vector3`
 (box size for that shape; a sock body uses `collision_size(socks.shape_of(sock_id))`).
 Mesh origin is the center of its bounding box, so body and box share the origin.
 
 `SockCatalog` (static, `data/socks.json`): `colors()`, `palette_size()`, `pattern_count()`,
 `shape_count()`, `color_id(i)`, `pattern_id(i)`, `shape_id(i)`, `capacity()`.
 
-`SockRenderer extends Node3D` draws every sock, one MultiMesh per shape:
+`SockRenderer extends Node3D` draws every sock: per shape a cheap MultiMesh for the
+pile and a detailed one for up to `detail_capacity` socks within `detail_radius` of the
+camera (`data/socks.json`). It swaps socks between them on its own each frame.
 
 - `setup(socks: SockSet, bounds: AABB, shadows := SHADOW_CASTING_SETTING_ON)`: all socks start hidden
 - `set_sock_transform(sock_id, xform)` (world space; push only for awake bodies), `hide_sock(sock_id)`,
@@ -267,8 +269,9 @@ instances, shadows from the main lamp) is unmeasured until it runs on the PC.
 - Socks: the new knit shader and the three sock meshes were only checked in a
   software preview, not yet in Godot. First run on the PC: look for shader errors
   in the output, and check that the cuff opening is dark and the rib reads.
-- Socks: one sock is 236 (sneaker) to 340 (knee) vertices, so 10,000 socks are about
-  2.8 million vertices, more with lamp shadows. Measure; if it is too much, drop
-  `sides` in `data/socks.json` to 10 or switch sock shadows off in `SockRenderer.setup`.
+- FPS check on Mike's PC (Sock Dimension mode, 10,000 socks): the pile uses the far
+  mesh (110 to 146 vertices, about 1.25 million in total), only socks within 2 m use
+  the detailed one (236 to 340). Note FPS here. If it is short of 60: lower
+  `far_sides` to 6, `detail_capacity`, or switch sock shadows off in `SockRenderer.setup`.
 - Socks: a knee sock is a long L, so its box shape is mostly empty. If the pile looks
   too airy, try a smaller `collision_fit` for that shape.

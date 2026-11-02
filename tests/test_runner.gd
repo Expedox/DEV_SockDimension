@@ -189,8 +189,10 @@ func _test_socks() -> void:
 	var again := SockSet.generate(77, 5000, 0.2)
 	check(again.sock_pairs == socks.sock_pairs and again.base_colors == socks.base_colors, "same seed, same socks")
 	for shape in SockCatalog.shape_count():
-		var mesh := SockMesh.get_mesh(shape)
-		check(mesh != null and mesh.get_surface_count() == 1, "mesh for " + SockCatalog.shape_id(shape))
+		var near := SockMesh.get_mesh(shape, true)
+		var far := SockMesh.get_mesh(shape)
+		check(near != null and near.get_surface_count() == 1, "mesh for " + SockCatalog.shape_id(shape))
+		check(far.surface_get_array_len(0) < near.surface_get_array_len(0), "far mesh is cheaper for " + SockCatalog.shape_id(shape))
 		var size := SockMesh.collision_size(shape)
 		check(size.x > 0.05 and size.y > 0.01 and size.z > 0.05, "box for " + SockCatalog.shape_id(shape))
 

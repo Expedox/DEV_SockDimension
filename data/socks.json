@@ -1,6 +1,11 @@
 {
 	"mesh": {
 		"sides": 12,
+		"far_sides": 8,
+		"step": 0.045,
+		"far_step": 0.09,
+		"detail_radius": 2.0,
+		"detail_capacity": 96,
 		"thickness": 0.022,
 		"heel_angle_deg": 108,
 		"bend_radius": 0.042,
