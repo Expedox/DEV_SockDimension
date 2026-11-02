@@ -40,17 +40,41 @@ not the player. The player collides with world and socks.
 
 ### Sock format
 
-- `sock_id` is the index into `SockSet`, not derived from `pair_id`.
-- The generator, mesh and display API is written by the sock designs work:
-  `SockSet.generate(seed, pair_count, near_share)`, `sock_count()`,
-  `custom_data(i)`, `SockMesh.get_mesh()`, `make_material()`, `collision_size()`.
-  `near_share` comes from the mode in `data/modes.json`.
+- `sock_id` is the index into `SockSet` (0 .. `sock_count() - 1`), not derived from
+  `pair_id`. Index order is shuffled and doubles as the pour order.
+- `pair_id = SockSet.pair_of(sock_id)`, two socks per pair.
+- Traits per pair: `shape` (sneaker, sport, knee), `base_color`, design (`pattern` +
+  `count`), `accent_color`, `heel_toe` (contrast heel and toe). The accent only counts
+  where it is visible. Near pairs differ from another pair in exactly one visible trait.
+- Patterns are known to `sock.gdshader` by position: keep the order in `data/socks.json`
+  (`SockCatalog.PATTERN_ORDER`).
+
+`SockSet` (scripts/socks/sock_set.gd):
+
+- `SockSet.generate(seed, pair_count, near_share) -> SockSet` (null if the data cannot fit);
+  `near_share` comes from the mode in `data/modes.json`. `seed_from_text(text)`.
+- `sock_count()`, `pair_of(sock_id)`, `shape_of(sock_id)`, `is_match(a, b)`, `is_near_miss(a, b)`
+- `sock_info(sock_id) -> {pair_id, base_color, accent_color, pattern, count, shape, heel_toe}`
+- `custom_data(sock_id) -> Color` for the MultiMesh, `validate() -> PackedStringArray`
+
+`SockMesh` (static): `get_mesh(shape)`, `get_material(shape)`, `collision_size(shape) -> Vector3`
+(box size for that shape; a sock body uses `collision_size(socks.shape_of(sock_id))`).
+Mesh origin is the center of its bounding box, so body and box share the origin.
+
+`SockCatalog` (static, `data/socks.json`): `colors()`, `palette_size()`, `pattern_count()`,
+`shape_count()`, `color_id(i)`, `pattern_id(i)`, `shape_id(i)`, `capacity()`.
+
+`SockRenderer extends Node3D` draws every sock, one MultiMesh per shape:
+
+- `setup(socks: SockSet, bounds: AABB, shadows := SHADOW_CASTING_SETTING_ON)`: all socks start hidden
+- `set_sock_transform(sock_id, xform)` (world space; push only for awake bodies), `hide_sock(sock_id)`,
+  `get_sock_transform(sock_id)`
 
 ### Socks in the world
 
 `class_name Sock extends RigidBody3D` with `var sock_id: int`.
 
-`class_name SockField extends Node3D` owns all bodies and the `SockRenderer`:
+`class_name SockField extends Node3D` owns all bodies and `var renderer: SockRenderer`:
 
 - `pour(socks: SockSet, mode: Dictionary)`: emits `Events.pile_progress`, then `Events.pile_ready`
 - `restore(socks: SockSet, state: Dictionary)`: same signals, no pouring; socks come back asleep and frozen. An empty state (saved while pouring) pours fresh
@@ -61,6 +85,7 @@ not the player. The player collides with world and socks.
 - `end_hold(sock: Sock)`: normal physics again
 - `throw_sock(sock: Sock, velocity: Vector3)`: ends the hold and tracks the flight; emits `Events.sock_landed`
 - `wake_around(position: Vector3, radius: float)`
+- `set_aside(sock: Sock)`: takes a matched sock out of physics at once, its transform stays in the renderer for the flight animation
 - `remove_pair(a: Sock, b: Sock)`: removes both for good and wakes around them
 - `surface_height() -> Vector3`: highest resting sock, refreshed over about 20 frames
 - `set_aside(sock: Sock)`: takes a matched sock out of physics and out of
@@ -239,3 +264,11 @@ instances, shadows from the main lamp) is unmeasured until it runs on the PC.
 
 - The project folder is on the Google Drive mount. Git works there, but Drive
   syncing a live `.git` folder can corrupt it. Push often, or move the checkout.
+- Socks: the new knit shader and the three sock meshes were only checked in a
+  software preview, not yet in Godot. First run on the PC: look for shader errors
+  in the output, and check that the cuff opening is dark and the rib reads.
+- Socks: one sock is 236 (sneaker) to 340 (knee) vertices, so 10,000 socks are about
+  2.8 million vertices, more with lamp shadows. Measure; if it is too much, drop
+  `sides` in `data/socks.json` to 10 or switch sock shadows off in `SockRenderer.setup`.
+- Socks: a knee sock is a long L, so its box shape is mostly empty. If the pile looks
+  too airy, try a smaller `collision_fit` for that shape.
