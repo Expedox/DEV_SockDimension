@@ -115,7 +115,7 @@ Each UI scene does its work from signals and `GameState`. The pause menu handles
 - `GameState.capture() -> Dictionary`: the full save payload, keys `mode, seed,
   play_time, mistakes, throws, completed, streak, near_misses, found, world`.
   `world` is `{socks: SockField.capture(), player: Player.capture()}`.
-- `SafeFile.write_var(path, data, version)` and `SafeFile.read_var(path)` in
+- `SafeFile.write(path, version, data)` and `SafeFile.read(path)` in
   `scripts/save/safe_file.gd` do the safe `.tmp`/`.bak` writing for both save
   files and achievements.
 
