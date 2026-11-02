@@ -62,6 +62,11 @@ not the player. The player collides with world and socks.
 - `wake_around(position: Vector3, radius: float)`
 - `remove_pair(a: Sock, b: Sock)`: removes both for good and wakes around them
 - `surface_height() -> Vector3`: highest point of the pile right now
+- `set_aside(sock: Sock)`: takes a matched sock out of physics and out of
+  `sock_entered_basket` (no collision, no body), but keeps it in `capture()`
+  until `remove_pair()`, so a save during the flight to the basket loses nothing
+- `renderer: SockRenderer`: the MultiMesh display; the pair flight moves and
+  hides the two matched socks through it
 - Emits `Events.socks_moving(count)` when the count changes noticeably
 
 ### Cellar
@@ -97,18 +102,25 @@ Bus `SFX` is created on start if missing, sending to `Master`.
 - `wiggle_held()`: short shake for a wrong pair
 - `capture() -> Dictionary` and `apply(state: Dictionary)`: `position, yaw, pitch, held` (sock_id or -1)
 - `place(spawn: Transform3D)`: feet position and facing
-- Emits `Events.summit_reached` once per run, `sock_grabbed`, `sock_released`; calls `GameState.register_throw`
 - To give back the held sock after loading it needs `SockField.sock_by_id(id) -> Sock` (physics, please add)
+- Emits `Events.sock_grabbed(sock_id)` / `Events.sock_released(sock_id)`, and
+  calls `GameState.register_throw(sock_id)` on every throw (that emits
+  `Events.sock_thrown`, so do not emit it yourself)
+- Emits `Events.summit_reached` once per run when standing on the floor within
+  `Config.gameplay.summit_radius` (horizontal) of `field.surface_height()`
 
 ### Pairs
 
 `class_name PairController extends Node`, child of the game scene:
-`setup(player: Player, field: SockField, cellar: Cellar, socks: SockSet)`.
-The player calls `GameState.register_throw(sock_id)` on every throw. Handles the `pair`
+`setup(player: Player, field: SockField, cellar: Cellar, socks: SockSet)`
+(player, field and socks typed loosely in code until `SockField` exists).
+Handles the `pair`
 action and calls `GameState.register_match(pair_id, base_color, pattern_type)`
 or `GameState.register_mismatch(near_miss)`. These emit
 `Events.pair_matched(pair_id, base_color, pattern_type)` and
-`Events.pair_mismatched(near_miss)`. It also emits `Events.sock_in_basket`.
+`Events.pair_mismatched(near_miss)`. A match counts on landing in the basket,
+not on the key press. It emits `Events.sock_in_basket(sock_id)` when a single
+thrown sock (thrown and not grabbed since) lands in the basket.
 
 ### Game scene
 
@@ -128,11 +140,20 @@ Each UI scene does its work from signals and `GameState`. The pause menu handles
 
 - `GameState.start_new(mode_id, seed_text)`
 - `SaveManager.continue_run(mode_id)` reads the file, then calls `GameState.start_loaded(data)`
-- `GameState.to_main_menu()`
+- `GameState.to_main_menu()`: does not save; callers save first
+- `SaveManager.save_current() -> bool`: no-op until the pile is ready; emits `Events.game_saved`
+- `SaveManager.save_and_quit()`: use for every Quit button instead of `get_tree().quit()`
+- `SaveManager.has_save(mode_id) -> bool`: any save, finished or not (for "Overwrite?")
+- `SaveManager.latest_save() -> String`: newest unfinished save's mode, or "" (Continue shows only if not "")
+- `SaveManager.save_info(mode_id) -> Dictionary`: `mode, completed, pairs_found,
+  play_time, saved_at` (unix seconds), or `{}`. Reads the whole file, so cache it in menus.
+- Autosave every `Config.gameplay.autosave_seconds`, once right after a fresh
+  pour, when a run finishes, and on window close.
 - `GameState.capture() -> Dictionary`: the full save payload, keys `mode, seed,
   play_time, mistakes, throws, completed, streak, near_misses, found, world`.
   `world` is `{socks: SockField.capture(), player: Player.capture()}`.
-- `SafeFile.write(path, version, data)` and `SafeFile.read(path)` in
+- `SafeFile.write(path, version, data) -> bool` and `SafeFile.read(path)` (returns
+  `{version, data, from_backup}` or `{}`) in
   `scripts/save/safe_file.gd` do the safe `.tmp`/`.bak` writing for both save
   files and achievements.
 
@@ -156,6 +177,14 @@ Close uses `GameState.near_misses` (or `pair_mismatched(true)`).
 - Sub screens (`ModeSelect`, `SettingsPanel`, `AchievementsMenu`) are full-screen
   Controls with `signal closed`; the opener frees them.
 - `UiKit.format_time()` is the shared clock format.
+
+## Tests
+
+`godot --headless --path . --import` once, then
+`godot --headless --path . res://tests/test_runner.tscn` (exit code 0 = passed).
+It writes only under `user://tests/`. GitHub Actions runs the same on every push
+(`.github/workflows/tests.yml`). Fakes for the player and field are in
+`tests/fakes.gd`; replace them with the real scenes once those exist.
 
 ## Measurement
 
