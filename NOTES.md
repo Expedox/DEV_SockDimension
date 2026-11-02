@@ -64,17 +64,17 @@ not the player. The player collides with world and socks.
 - `surface_height() -> Vector3`: highest point of the pile right now
 - Emits `Events.socks_moving(count)` when the count changes noticeably
 
-### Basement
+### Cellar
 
-`scenes/basement.tscn`, root `Basement`, with `.basket: LaundryBasket`. The list
-below is the first draft; `scripts/level/` is authoritative.
+`scenes/cellar.tscn`, root `class_name Cellar` (`scripts/world/cellar.gd`), with
+`.basket: LaundryBasket`. The level is called Cellar everywhere; there is no Basement class.
 
 - `player_spawn() -> Transform3D`
 - `basket_mouth() -> Vector3`
 - `signal sock_entered_basket(body: Node3D)`
 - Floor, walls and basket walls are `StaticBody3D` on layer 1. Pile centre is the origin, floor at y = 0.
 - `room_bounds() -> AABB`: inside of the room
-- `basket: LaundryBasket`: `receive_pair()` when a pair lands (pile grows, `signal pair_received(total)`), `set_pair_count(n)` after loading, `get_pile_top() -> Vector3`
+- `basket: LaundryBasket`: `mouth()` (drop point above the rim), `receive_pair()` when a pair lands (pile grows, `signal pair_received(total)`), `set_pair_count(n)` after loading, `get_pile_top() -> Vector3`
 - `sock_entered_basket` fires for anything on layer 2 inside the basket, so freeze or remove a rolled-up pair before it arrives, or it reads as a trick shot.
 
 Layout, colours and lamps are in `data/world.json`, shaders are `shaders/cellar_*`.
@@ -100,7 +100,7 @@ Bus `SFX` is created on start if missing, sending to `Master`.
 ### Pairs
 
 `class_name PairController extends Node`, child of the game scene:
-`setup(player: Player, field: SockField, basement: Basement, socks: SockSet)`.
+`setup(player: Player, field: SockField, cellar: Cellar, socks: SockSet)`.
 The player calls `GameState.register_throw(sock_id)` on every throw. Handles the `pair`
 action and calls `GameState.register_match(pair_id, base_color, pattern_type)`
 or `GameState.register_mismatch(near_miss)`. These emit

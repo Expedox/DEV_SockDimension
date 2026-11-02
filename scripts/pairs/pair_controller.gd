@@ -22,10 +22,10 @@ func _ready() -> void:
 	Events.sock_grabbed.connect(_on_sock_grabbed)
 
 
-func setup(player: Player, field: SockField, basement: Basement, socks: SockSet) -> void:
+func setup(player: Player, field: SockField, cellar: Cellar, socks: SockSet) -> void:
 	_player = player
 	_field = field
-	_basket = basement.basket
+	_basket = cellar.basket
 	_socks = socks
 	_basket.set_pair_count(GameState.pairs_found)
 	_basket.sock_entered.connect(_on_sock_entered_basket)
@@ -69,7 +69,7 @@ func _send_to_basket(held: Sock, aimed: Sock) -> void:
 	flight.landed.connect(_on_flight_landed.bind(held, aimed, info))
 	flight.launch(_field.renderer, PackedInt32Array([held.sock_id, aimed.sock_id]), starts,
 			PackedColorArray([SockCatalog.colors()[info.base_color], SockCatalog.colors()[info.accent_color]]),
-			_basket.get_drop_position(), _basket.get_pile_top(), _tuning)
+			_basket.mouth(), _basket.get_pile_top(), _tuning)
 
 
 func _on_flight_landed(a: Sock, b: Sock, info: Dictionary) -> void:

@@ -2,3 +2,4 @@
 *.translation
 export/
 *.tmp
+_preview/
