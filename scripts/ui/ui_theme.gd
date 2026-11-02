@@ -74,6 +74,7 @@ static func _build() -> Theme:
 	_build_toggles(t)
 	_build_popups(t)
 	_build_scroll(t)
+	_build_progress(t)
 	return t
 
 
@@ -275,6 +276,16 @@ static func _build_scroll(t: Theme) -> void:
 	t.set_stylebox("grabber", "VScrollBar", grab)
 	t.set_stylebox("grabber_highlight", "VScrollBar", grab_hot)
 	t.set_stylebox("grabber_pressed", "VScrollBar", grab_hot)
+
+
+static func _build_progress(t: Theme) -> void:
+	var track := _flat("paper_shade", 8)
+	track.border_color = color("paper_edge")
+	track.set_border_width_all(2)
+	var fill := _flat("teal", 8)
+	t.set_stylebox("background", "ProgressBar", track)
+	t.set_stylebox("fill", "ProgressBar", fill)
+	t.set_color("font_color", "ProgressBar", color("ink"))
 
 
 ## Antialiased filled disc with a contrasting rim.
