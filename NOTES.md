@@ -139,6 +139,24 @@ Each UI scene does its work from signals and `GameState`. The pause menu handles
 Marathon uses `GameState.session_time`; Eagle Eye uses `GameState.streak`; So
 Close uses `GameState.near_misses` (or `pair_mismatched(true)`).
 
+### Menus, settings and HUD
+
+- `Settings` (autoload) loads `user://settings.cfg` with defaults and ranges from
+  `data/settings.json`, applies volume (buses `Master`, `SFX`), language,
+  window mode and VSync, and sets the shared theme on the root window. Fields:
+  `mouse_sensitivity, invert_mouse, fov, volume_master, volume_sfx, fullscreen,
+  vsync, language`. Read them live (the player should read sensitivity, invert
+  and FOV every frame or on `Settings.changed`).
+- The player node joins the group `player`; the HUD reads `held_sock()` and
+  `aimed_sock()` from it for the crosshair and the control hint.
+- Mouse capture: the loading screen captures on `pile_ready`, the pause menu
+  frees it on open and captures on resume. The end screen frees it.
+- The pause menu opens on `pause` (and when the window loses focus) only while
+  `GameState.running` is true and the tree is not paused.
+- Sub screens (`ModeSelect`, `SettingsPanel`, `AchievementsMenu`) are full-screen
+  Controls with `signal closed`; the opener frees them.
+- `UiKit.format_time()` is the shared clock format.
+
 ## Measurement
 
 (5,000 mode results go here.)
