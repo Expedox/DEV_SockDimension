@@ -78,6 +78,7 @@ func _build() -> void:
 	_panel.offset_top = -MARGIN
 	_panel.offset_bottom = -MARGIN
 	_panel.custom_minimum_size.x = WIDTH
+	_panel.theme = UiTheme.get_theme()
 	_panel.theme_type_variation = &"CardPanel"
 	_panel.hide()
 	add_child(_panel)
