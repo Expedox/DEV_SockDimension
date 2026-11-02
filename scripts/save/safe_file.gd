@@ -17,7 +17,8 @@ const FOOTER_SIZE := 4
 
 ## Writes data safely. version is the caller's own schema version.
 static func write(path: String, version: int, data: Variant) -> bool:
-	if DirAccess.make_dir_recursive_absolute(path.get_base_dir()) != OK:
+	var dir := path.get_base_dir()
+	if not DirAccess.dir_exists_absolute(dir) and DirAccess.make_dir_recursive_absolute(dir) != OK:
 		return false
 
 	var tmp_path := path + TMP_SUFFIX
