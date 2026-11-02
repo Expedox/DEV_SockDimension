@@ -1,0 +1,58 @@
+{
+	"colors": {
+		"backdrop_dark": "#2b2130",
+		"backdrop_light": "#3a2c3d",
+		"backdrop_rib": "#46364a",
+		"dim": "#1d1620b8",
+		"paper": "#f4e9d8",
+		"paper_shade": "#e6d6bd",
+		"paper_edge": "#c9b393",
+		"ink": "#3d2c2e",
+		"ink_soft": "#7a6459",
+		"ink_faint": "#a8957f",
+		"on_dark": "#f8efe1",
+		"on_dark_soft": "#cdbcae",
+		"tomato": "#d9674a",
+		"tomato_dark": "#a9472f",
+		"tomato_light": "#ea8366",
+		"mustard": "#e8b84f",
+		"mustard_dark": "#b98a2a",
+		"teal": "#4f9d94",
+		"teal_dark": "#37736c",
+		"stitch": "#c9b393",
+		"stitch_on_tomato": "#f6c9b7",
+		"shadow": "#14101866"
+	},
+	"sock_colors": ["#d9674a", "#e8b84f", "#4f9d94", "#8d6fb5", "#e59bb0", "#6e9fd1", "#f4e9d8"],
+	"fonts": {
+		"body": ["Nunito", "Trebuchet MS", "Segoe UI", "Verdana", "DejaVu Sans"],
+		"title": ["Segoe Print", "Chalkboard SE", "Comic Neue", "Trebuchet MS"]
+	},
+	"sizes": {
+		"font_body": 22,
+		"font_small": 17,
+		"font_heading": 34,
+		"font_title": 84,
+		"font_hud": 24,
+		"corner": 18,
+		"corner_small": 12,
+		"button_min_width": 300,
+		"button_min_height": 56,
+		"panel_margin": 36
+	},
+	"backdrop": {
+		"sock_count": 16,
+		"fall_speed_min": 14.0,
+		"fall_speed_max": 42.0,
+		"sock_scale_min": 0.7,
+		"sock_scale_max": 1.7,
+		"sway": 26.0
+	},
+	"animation": {
+		"screen_fade": 0.18,
+		"button_hover_scale": 1.035,
+		"button_hover_time": 0.09,
+		"saved_visible": 1.6,
+		"saved_fade": 0.35
+	}
+}

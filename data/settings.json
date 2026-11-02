@@ -1,0 +1,22 @@
+{
+	"defaults": {
+		"mouse_sensitivity": 0.0025,
+		"invert_mouse": false,
+		"fov": 75.0,
+		"volume_master": 0.8,
+		"volume_sfx": 1.0,
+		"fullscreen": false,
+		"vsync": true,
+		"language": "en"
+	},
+	"ranges": {
+		"mouse_sensitivity": { "min": 0.0005, "max": 0.008, "step": 0.0001 },
+		"fov": { "min": 60.0, "max": 110.0, "step": 1.0 },
+		"volume": { "min": 0.0, "max": 1.0, "step": 0.01 }
+	},
+	"languages": [
+		{ "locale": "en", "key": "SETTINGS_LANGUAGE_EN" },
+		{ "locale": "de", "key": "SETTINGS_LANGUAGE_DE" }
+	],
+	"sfx_bus": "SFX"
+}
