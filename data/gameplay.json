@@ -13,11 +13,15 @@
   "summit_radius": 1.0,
   "starter_pairs": 3,
   "tutorial": {
-    "move_seconds": 7.0,
-    "carry_seconds": 12.0,
-    "inspect_seconds": 12.0,
-    "tip_seconds": 4.0,
-    "done_seconds": 9.0
+    "min_read_seconds": 6.0,
+    "move_seconds": 21.0,
+    "carry_seconds": 36.0,
+    "inspect_seconds": 36.0,
+    "tip_seconds": 12.0,
+    "done_seconds": 27.0
+  },
+  "intro": {
+    "min_beat_seconds": 6.0
   },
   "cheat_code": "MIKE"
 }

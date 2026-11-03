@@ -1,7 +1,7 @@
 class_name Tutorial
 extends CanvasLayer
 ## First-steps card at the top of the screen. Each step waits for the player to
-## do the thing it names, then moves on. Tab skips the rest. Steps and timings
+## do the thing it names, then moves on once the card stood long enough to read. Tab skips the rest. Steps and timings
 ## are in data/gameplay.json.
 
 const STEPS := ["move", "grab", "carry", "inspect", "throw", "pair", "done", "blast"]
@@ -13,6 +13,7 @@ var _skip: Label
 var _step := -1
 var _step_time := 0.0
 var _tip_time := 0.0
+var _queued := -1 # step to go to once the current card was up long enough
 var _cfg: Dictionary
 
 
@@ -55,6 +56,10 @@ func _process(delta: float) -> void:
 		_tip_time -= delta
 		if _tip_time <= 0.0:
 			_show_step()
+	if _queued > _step and _step_time >= float(_cfg.get("min_read_seconds", 6.0)):
+		_step = _queued - 1
+		_advance()
+		return
 	match STEPS[_step]:
 		"move":
 			if _step_time > float(_cfg.get("move_seconds", 7.0)):
@@ -63,8 +68,9 @@ func _process(delta: float) -> void:
 			if _step_time > float(_cfg.get("carry_seconds", 12.0)):
 				_advance()
 		"inspect":
-			if Input.is_action_pressed("inspect") and _step_time > 1.0 \
-					or _step_time > float(_cfg.get("inspect_seconds", 12.0)):
+			if Input.is_action_pressed("inspect"):
+				_request(_step + 1)
+			if _step_time > float(_cfg.get("inspect_seconds", 12.0)):
 				_advance()
 		"blast":
 			if _step_time > float(_cfg.get("done_seconds", 6.0)):
@@ -76,22 +82,26 @@ func _process(delta: float) -> void:
 
 func _done_if(step: String) -> void:
 	if STEPS[_step] == step:
-		_advance()
+		_request(_step + 1)
+
+
+func _request(target: int) -> void:
+	_queued = maxi(_queued, target)
 
 
 func _on_grabbed(_id: int) -> void:
 	# Grabbing early also covers the walk step; a second grab fills the bundle.
-	if STEPS[_step] == "move":
-		_step = STEPS.find("grab")
-	if STEPS[_step] in ["grab", "carry"]:
-		_advance()
+	match STEPS[_step]:
+		"move", "grab":
+			_request(STEPS.find("carry"))
+		"carry":
+			_request(STEPS.find("inspect"))
 
 
 func _on_matched(_pair_id: int, _color: int, _pattern: int) -> void:
 	# A pair found early skips the rest of the lesson.
 	if _step < STEPS.find("done"):
-		_step = STEPS.find("pair")
-		_advance()
+		_request(STEPS.find("done"))
 
 
 func _on_mismatched(_near_miss: bool) -> void:
@@ -105,6 +115,8 @@ func _advance() -> void:
 	_step = mini(_step + 1, STEPS.size() - 1)
 	_step_time = 0.0
 	_tip_time = 0.0
+	if _queued <= _step:
+		_queued = -1
 	_show_step()
 	if _step > 0:
 		var tween := _card.create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

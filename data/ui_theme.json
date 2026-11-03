@@ -52,7 +52,7 @@
 		"screen_fade": 0.18,
 		"button_hover_scale": 1.035,
 		"button_hover_time": 0.09,
-		"saved_visible": 1.6,
+		"saved_visible": 4.8,
 		"saved_fade": 0.35
 	}
 }

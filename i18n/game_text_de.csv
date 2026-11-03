@@ -127,7 +127,7 @@ INTRO_4_LINE,Heute Nacht hat sich die Falte in deiner Waschmaschine geöffnet.
 INTRO_4_BODY,"Ein paar Socken sind schon auf den Deckel gerutscht. Etwas viel Größeres rumpelt noch in der Trommel."
 INTRO_5_LINE,Bring sie wieder zusammen.
 INTRO_5_BODY,"Finde für jede Socke ihren Zwilling, dann rollen sich die beiden zusammen und hüpfen in den Wäschekorb. Fang mit den Paaren auf der Waschmaschine an."
-INTRO_CONTINUE,Klick oder Leertaste: weiter  ·  Esc: überspringen
+INTRO_CONTINUE,Klick oder Leertaste: weiter
 INTRO_WAIT,Die letzten Socken landen noch ...
 INTRO_START,Klick oder Leertaste: los geht's
 TUT_MOVE_TITLE,Sieh dich um

@@ -8,7 +8,7 @@
     "night_owl_start_hour": 0,
     "night_owl_end_hour": 4,
     "marathon_seconds": 7200,
-    "toast_seconds": 4.0,
+    "toast_seconds": 12.0,
     "save_interval_seconds": 30,
     "per_run": true
   },

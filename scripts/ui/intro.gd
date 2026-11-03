@@ -1,7 +1,8 @@
 class_name Intro
 extends CanvasLayer
-## Story beats shown over the loading screen on a first new game. Click, Space
-## or Enter goes on, Esc skips. The last beat waits for the pile, then fades to
+## Story beats shown over the loading screen on a first new game. Each beat
+## stays up for a minimum time (data/gameplay.json), then click, Space or Enter
+## goes on. There is no skip, the story is meant to be read. The last beat waits for the pile, then fades to
 ## show the cellar. Holds the game paused while it covers a ready pile.
 
 signal finished
@@ -27,11 +28,15 @@ var _beat := -1
 var _pile_ready := false
 var _done := false
 var _busy := false
+var _beat_time := 0.0
+var _min_beat := 6.0
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	layer = 40
+	var cfg: Dictionary = Config.gameplay.get("intro", {})
+	_min_beat = float(cfg.get("min_beat_seconds", 6.0))
 	_build()
 	Events.pile_ready.connect(_on_pile_ready)
 	_next()
@@ -40,17 +45,23 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if _done:
 		return
-	var skip: bool = event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel")
 	var next: bool = event.is_action_pressed("ui_accept") or event.is_action_pressed("jump") \
 			or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT)
 	if event is InputEventKey or event is InputEventMouseButton:
 		get_viewport().set_input_as_handled()
 	if event.is_echo():
 		return
-	if skip:
-		_finish()
-	elif next and not _busy:
+	if next and not _busy and _beat_time >= _min_beat:
 		_next()
+
+
+func _process(delta: float) -> void:
+	if _done or _busy:
+		return
+	var was_ready := _beat_time >= _min_beat
+	_beat_time += delta
+	if not was_ready and _beat_time >= _min_beat:
+		_refresh_hint()
 
 
 func _next() -> void:
@@ -60,6 +71,7 @@ func _next() -> void:
 		return
 	_beat += 1
 	_busy = true
+	_beat_time = 0.0
 	var tween := create_tween()
 	if _beat > 0:
 		tween.tween_property(_sheet, "modulate:a", 0.0, FADE * 0.6)
@@ -80,7 +92,9 @@ func _show_beat() -> void:
 
 func _refresh_hint() -> void:
 	var last := _beat == BEATS.size() - 1
-	if last and not _pile_ready:
+	if _beat_time < _min_beat and not (last and not _pile_ready):
+		_hint.text = ""
+	elif last and not _pile_ready:
 		_hint.text = "INTRO_WAIT"
 	elif last:
 		_hint.text = "INTRO_START"
