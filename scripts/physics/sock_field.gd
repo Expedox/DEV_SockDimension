@@ -108,9 +108,9 @@ func prepare(sock_set: SockSet, placements: Dictionary) -> void:
 
 ## Pours every sock that is not in play yet into a field that is already
 ## running. skip holds sock ids to leave out, such as found pairs. With burst
-## ({origin: Vector3, area: AABB, wave_size, flight_min, flight_max, and
-## optional center, radius, cone_power}) the socks are thrown from origin into
-## a heap around center (or all over area) instead.
+## ({origin, area, direction, reach, gap, spray_deg, falloff, flight_min,
+## flight_max, chaos, spin, wave_size, spawn_spread}) the socks are thrown from
+## origin instead; see _burst_target().
 ## Emits Events.rain_finished instead of pile_ready when done.
 func pour_rest(mode: Dictionary, skip: Dictionary, burst := {}) -> void:
 	_burst = burst
@@ -387,8 +387,15 @@ func _burst_wave() -> void:
 		var velocity := Vector3((target.x - start.x) / reach,
 				(target.y - start.y + gravity * t / damp) / reach - gravity / damp,
 				(target.z - start.z) / reach)
+		# Chaos: a random kick on top of the clean arc.
+		var chaos := float(_burst.get("chaos", 0.0))
+		if chaos > 0.0:
+			velocity += Vector3(_rng.randfn(), _rng.randfn() * 0.5, _rng.randfn()) * velocity.length() * chaos * 0.3
 		var basis := Basis.from_euler(Vector3(_rng.randf() * TAU, _rng.randf() * TAU, _rng.randf() * TAU))
 		_spawn(_next, Transform3D(basis, start), velocity, false)
+		var spin := float(_burst.get("spin", 0.0))
+		if spin > 0.0:
+			_bodies[_next].angular_velocity = Vector3(_rng.randfn(), _rng.randfn(), _rng.randfn()).normalized() * spin
 		# Fly through the other socks so the cloud does not stall in mid-air;
 		# they collide again shortly before landing.
 		_bodies[_next].collision_mask = WORLD_LAYER
@@ -397,24 +404,47 @@ func _burst_wave() -> void:
 	_skip_reserved()
 
 
-## Landing spot: a heap around burst.center (denser in the middle, thinning out
-## to burst.radius), or anywhere on the floor of area without a center.
+## Landing spot. With burst.direction: a fan in front of the origin, spray
+## degrees wide, from gap to gap + reach metres out; falloff above 1 keeps
+## most socks close, below 1 pushes them far. Without: anywhere in area.
 func _burst_target(area: AABB) -> Vector3:
-	if not _burst.has("center"):
-		return Vector3(_rng.randf_range(area.position.x, area.end.x), 0.2,
+	var target: Vector3
+	if _burst.has("direction"):
+		var origin: Vector3 = _burst.origin
+		var dir: Vector3 = _burst.direction
+		var half := deg_to_rad(float(_burst.get("spray_deg", 100.0))) * 0.5
+		var angle := atan2(dir.x, dir.z) + _rng.randf_range(-half, half)
+		var distance := float(_burst.get("gap", 0.5)) \
+				+ float(_burst.get("reach", 8.0)) * pow(_rng.randf(), float(_burst.get("falloff", 1.5)))
+		target = Vector3(origin.x + sin(angle) * distance, 0.2, origin.z + cos(angle) * distance)
+	else:
+		target = Vector3(_rng.randf_range(area.position.x, area.end.x), 0.2,
 				_rng.randf_range(area.position.z, area.end.z))
-	var center: Vector3 = _burst.center
-	var radius := float(_burst.get("radius", 3.0))
-	var power := float(_burst.get("cone_power", 1.0))
-	var spot := Vector2.ZERO
-	for attempt in 16:
-		spot = Vector2.from_angle(_rng.randf() * TAU) * radius * sqrt(_rng.randf())
-		if _rng.randf() <= pow(1.0 - spot.length() / radius, power):
-			break
-	var target := Vector3(center.x + spot.x, 0.2, center.z + spot.y)
 	target.x = clampf(target.x, area.position.x, area.end.x)
 	target.z = clampf(target.z, area.position.z, area.end.z)
 	return target
+
+
+## Takes every sock lying in the room back out (not held, carried or on its
+## way to the basket), so pour_rest() can throw them again. Tuning tool.
+func recall() -> void:
+	if state != State.READY:
+		return
+	for sock_id in _bodies.size():
+		var sock := _bodies[sock_id]
+		if sock == null or _ghosts.has(sock_id) or _aside.has(sock_id):
+			continue
+		_bodies[sock_id] = null
+		_awake.erase(sock_id)
+		_flights.erase(sock_id)
+		_airborne.erase(sock_id)
+		renderer.hide_sock(sock_id)
+		sock.queue_free()
+	var keep: Array[Sock] = []
+	for sock in _to_freeze:
+		if _bodies[sock.sock_id] == sock:
+			keep.append(sock)
+	_to_freeze = keep
 
 
 func _land_airborne(delta: float) -> void:

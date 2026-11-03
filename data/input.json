@@ -1,15 +1,41 @@
 {
   "keys": {
-    "move_forward": ["W"],
-    "move_back": ["S"],
-    "move_left": ["A"],
-    "move_right": ["D"],
-    "jump": ["Space"],
-    "pair": ["E"],
-    "inspect": ["F"],
-    "drop_all": ["Q"],
-    "pause": ["Escape"],
-    "debug": ["F1"]
+    "move_forward": [
+      "W"
+    ],
+    "move_back": [
+      "S"
+    ],
+    "move_left": [
+      "A"
+    ],
+    "move_right": [
+      "D"
+    ],
+    "jump": [
+      "Space"
+    ],
+    "pair": [
+      "E"
+    ],
+    "inspect": [
+      "F"
+    ],
+    "drop_all": [
+      "Q"
+    ],
+    "pause": [
+      "Escape"
+    ],
+    "debug": [
+      "F1"
+    ],
+    "washer_tuning": [
+      "F2"
+    ],
+    "washer_retrigger": [
+      "F3"
+    ]
   },
   "mouse": {
     "grab": 1,

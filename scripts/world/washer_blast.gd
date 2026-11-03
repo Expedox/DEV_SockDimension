@@ -18,11 +18,12 @@ var _shake := 0.0
 var _rng := RandomNumberGenerator.new()
 
 
-## machine: the washer body to shake. Place this node at the lid centre.
-func setup(machine: Node3D) -> void:
+## machine: the washer body to shake; tuning: live settings (washer_blast).
+## Place this node at the lid centre.
+func setup(machine: Node3D, tuning: Dictionary) -> void:
 	_machine = machine
 	_rest = machine.position
-	_cfg = Config.world.get("washer_blast", {})
+	_cfg = tuning
 	_build()
 	set_process(false)
 

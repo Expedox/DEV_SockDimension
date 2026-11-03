@@ -7,6 +7,7 @@ const PLAYER_SCENE := "res://scenes/player.tscn"
 const FIELD_SCRIPT := "res://scripts/physics/sock_field.gd"
 const INTRO_SCENE := "res://scenes/ui/intro.tscn"
 const TUTORIAL_SCENE := "res://scenes/ui/tutorial.tscn"
+const TUNING_SCENE := "res://scenes/ui/washer_tuning.tscn"
 const UI_SCENES := [
 	"res://scenes/ui/hud.tscn",
 	"res://scenes/ui/loading_screen.tscn",
@@ -69,7 +70,8 @@ func _ready() -> void:
 	blast.name = "WasherBlast"
 	add_child(blast)
 	blast.global_transform = cellar.washer_top()
-	blast.setup(cellar.washer())
+	load_burst_tuning()
+	blast.setup(cellar.washer(), burst_tuning)
 	blast.burst.connect(_on_washer_burst)
 
 	# Story and first steps on a fresh pile, once, until switched on again in Settings.
@@ -79,6 +81,8 @@ func _ready() -> void:
 		var intro: Node = (load(INTRO_SCENE) as PackedScene).instantiate()
 		intro.finished.connect(_start_tutorial)
 		add_child(intro)
+
+	add_child((load(TUNING_SCENE) as PackedScene).instantiate())
 
 	Events.pile_ready.connect(_on_pile_ready)
 	Events.rain_finished.connect(_on_rain_finished)
@@ -131,30 +135,69 @@ func _check_starters() -> void:
 	blast.start()
 
 
+## Live washer settings: data/world.json -> washer_blast, overridden by
+## the values saved from the F2 tuning panel.
+var burst_tuning: Dictionary = {}
+const TUNING_PATH := "user://washer_tuning.json"
+
+
+func load_burst_tuning() -> void:
+	# Cleared in place: the washer keeps a reference to this dictionary.
+	burst_tuning.clear()
+	burst_tuning.merge(Config.world.get("washer_blast", {}))
+	var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string(TUNING_PATH)) if FileAccess.file_exists(TUNING_PATH) else null
+	if saved is Dictionary:
+		burst_tuning.merge(saved, true)
+
+
+func save_burst_tuning() -> void:
+	var file := FileAccess.open(TUNING_PATH, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(burst_tuning, "  "))
+
+
+func reset_burst_tuning() -> void:
+	if FileAccess.file_exists(TUNING_PATH):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(TUNING_PATH))
+	load_burst_tuning()
+
+
+## Tuning tool: takes the socks back into the washer and lets it boil over again.
+func retrigger_burst() -> void:
+	if not field.is_ready() or (_blast_started and not _rain_done):
+		return
+	field.recall()
+	_rain_done = false
+	_blast_started = true
+	blast.start()
+
+
 func _on_washer_burst() -> void:
-	var cfg: Dictionary = Config.world.get("washer_blast", {})
+	var cfg := burst_tuning
 	var room := cellar.room_bounds()
 	var margin := float(cfg.get("wall_margin", 0.8))
 	var top := cellar.washer_top()
 	var lid := cellar.washer_lid()
 	var front := top.basis.z
-	# Socks gush out of the door like foam boiling over and heap up in front
-	# of the machine, leaving the rest of the floor free for sorting.
+	# Socks gush out of the door like foam boiling over and spread in a fan in
+	# front of the machine. Reach is a share of the room's diagonal.
 	var door := top.origin + Vector3.DOWN * float(cfg.get("door_depth", 0.65)) \
-			+ front * (lid.y * 0.5 + float(cfg.get("door_out", 0.35)))
-	var mode := Config.mode(GameState.mode_id)
-	var radius := float(mode.get("pile_radius", 3.0)) * float(cfg.get("heap_radius_scale", 1.4))
-	var center := door + front * (radius + float(cfg.get("heap_gap", 0.6)))
+			+ front * (lid.y * 0.5 + float(cfg.get("door_out", 0.45)))
+	var diagonal := Vector2(room.size.x, room.size.z).length()
 	var burst := {
 		"origin": door,
 		"area": room.grow(-margin),
-		"center": Vector3(center.x, 0.0, center.z),
-		"radius": radius,
-		"cone_power": float(cfg.get("heap_cone_power", 1.0)),
-		"wave_size": int(cfg.get("wave_size", 60)),
-		"flight_min": float(cfg.get("flight_min", 0.8)),
-		"flight_max": float(cfg.get("flight_max", 1.6)),
-		"spawn_spread": float(cfg.get("spawn_spread", 0.4)),
+		"direction": Vector3(front.x, 0.0, front.z).normalized(),
+		"reach": diagonal * float(cfg.get("reach_share", 0.4)),
+		"gap": float(cfg.get("gap", 0.5)),
+		"spray_deg": float(cfg.get("spray_deg", 100.0)),
+		"falloff": float(cfg.get("falloff", 1.5)),
+		"chaos": float(cfg.get("chaos", 0.0)),
+		"spin": float(cfg.get("spin", 0.0)),
+		"wave_size": int(cfg.get("wave_size", 30)),
+		"flight_min": float(cfg.get("flight_min", 0.6)),
+		"flight_max": float(cfg.get("flight_max", 1.4)),
+		"spawn_spread": float(cfg.get("spawn_spread", 0.15)),
 	}
 	var skip := {}
 	var found := {}
