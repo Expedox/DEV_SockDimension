@@ -32,8 +32,10 @@ func _show_results() -> void:
 	for child in _stats.get_children():
 		child.queue_free()
 	_add_stat(tr("END_TIME").format({"time": format_time(GameState.play_time)}))
+	_add_stat(tr("END_PAIRS").format({"found": GameState.pairs_found, "total": GameState.pairs_total}))
 	_add_stat(tr("END_FAILED").format({"count": GameState.mistakes}))
 	_add_stat(tr("END_THROWS").format({"count": GameState.throws}))
+	_add_stat(tr("END_CAT").format({"stolen": GameState.cat_steals, "caught": GameState.cat_catches}))
 	_root.show()
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

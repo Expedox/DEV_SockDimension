@@ -38,8 +38,10 @@ HINT_DROP,Linksklick ins Leere: fallen lassen
 HINT_CARRY,"Trägst {count}/{max}     Mausrad: Socke wechseln     Q: alle fallen lassen"
 END_TITLE,Alles gepaart!
 END_TIME,Zeit: {time}
+END_PAIRS,Paare: {found} / {total}
 END_FAILED,Fehlversuche: {count}
 END_THROWS,Würfe: {count}
+END_CAT,"Von der Katze gestohlen: {stolen} (auf frischer Tat ertappt: {caught})"
 END_MAIN_MENU,Zurück zum Hauptmenü
 SETTINGS_TITLE,Einstellungen
 SETTINGS_MOUSE_SENSITIVITY,Mausempfindlichkeit

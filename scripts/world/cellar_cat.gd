@@ -261,6 +261,7 @@ func _grab_wanted() -> void:
 	_sock = _wanted
 	_wanted = null
 	_field.begin_hold(_sock)
+	GameState.cat_steals += 1
 	Sfx.play("meow", _mouth.global_position)
 	# Half the time the loot goes to its bed, a little stash for the player to find.
 	var dest := _bed + Vector3(_rng.randf_range(-0.2, 0.2), 0.0, _rng.randf_range(-0.2, 0.2))
@@ -289,6 +290,7 @@ func _check_caught() -> void:
 		return
 	if _player.global_position.distance_to(global_position) <= float(_cfg.get("caught_distance", 2.5)):
 		_caught = true
+		GameState.cat_catches += 1
 		Sfx.play("meow", _mouth.global_position)
 		Events.cat_caught.emit()
 

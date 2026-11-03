@@ -38,8 +38,10 @@ HINT_DROP,Left click on empty space: drop
 HINT_CARRY,"Carrying {count}/{max}     Wheel: switch sock     Q: drop all"
 END_TITLE,All Paired Up!
 END_TIME,Time: {time}
+END_PAIRS,Pairs: {found} / {total}
 END_FAILED,Failed attempts: {count}
 END_THROWS,Throws: {count}
+END_CAT,"Socks stolen by the cat: {stolen} (caught red-pawed: {caught})"
 END_MAIN_MENU,Back to Main Menu
 SETTINGS_TITLE,Settings
 SETTINGS_MOUSE_SENSITIVITY,Mouse sensitivity

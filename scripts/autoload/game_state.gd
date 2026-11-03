@@ -17,6 +17,8 @@ var throws := 0
 var completed := false
 var streak := 0
 var near_misses := 0
+var cat_steals := 0
+var cat_catches := 0
 var found_pair_ids := PackedInt32Array()
 
 ## Sock and player state to restore; empty for a fresh pile.
@@ -56,6 +58,8 @@ func start_loaded(data: Dictionary, from_slot := 1) -> void:
 	completed = data.completed
 	streak = data.get("streak", 0)
 	near_misses = data.get("near_misses", 0)
+	cat_steals = data.get("cat_steals", 0)
+	cat_catches = data.get("cat_catches", 0)
 	found_pair_ids = data.found
 	pairs_found = found_pair_ids.size()
 	pending_world = data.world
@@ -74,6 +78,8 @@ func capture() -> Dictionary:
 		"completed": completed,
 		"streak": streak,
 		"near_misses": near_misses,
+		"cat_steals": cat_steals,
+		"cat_catches": cat_catches,
 		"found": found_pair_ids,
 		"world": world_provider.capture_world() if world_provider else {},
 		"achievements": Achievements.capture_run(),
@@ -131,6 +137,8 @@ func _reset(new_mode: String) -> void:
 	completed = false
 	streak = 0
 	near_misses = 0
+	cat_steals = 0
+	cat_catches = 0
 	found_pair_ids = PackedInt32Array()
 	running = false
 	cheat_mode = false

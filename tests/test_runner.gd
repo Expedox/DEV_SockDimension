@@ -178,6 +178,10 @@ func _test_game_state_counters() -> void:
 	check(GameState.mistakes == 1 and GameState.near_misses == 1 and GameState.streak == 0, "mismatch counters")
 	GameState.register_throw(5)
 	check(GameState.throws == 1, "throw counter")
+	GameState.cat_steals = 3
+	GameState.cat_catches = 1
+	var cat_saved := GameState.capture()
+	check(cat_saved.cat_steals == 3 and cat_saved.cat_catches == 1, "cat counters go into the save")
 	GameState.register_match(0, 1, 1)
 	check(GameState.pairs_found == 1 and GameState.streak == 1, "match counters")
 	check(not finished[0], "not finished after one of two")
