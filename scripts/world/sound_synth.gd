@@ -50,6 +50,8 @@ static func _render_layers(recipe: Dictionary, sample_rate: int, seed_value: int
 		match String(layer.get("type", "tone")):
 			"noise":
 				_mix_noise(mix, layer, sample_rate, rng)
+			"crackle":
+				_mix_crackle(mix, layer, sample_rate, rng)
 			_:
 				_mix_tone(mix, layer, sample_rate)
 	return mix
@@ -121,6 +123,40 @@ static func _mix_noise(
 		if drift_hz > 0.0:
 			level *= 1.0 - drift_depth * (0.5 + 0.5 * sin(TAU * drift_hz * i * dt + drift_phase))
 		mix[start + i] += sample * gain * level
+
+
+## Scattered short blips, e.g. rain drops on glass or socks tumbling in a drum.
+## Each blip is a damped sine with a random pitch; "pulse_hz" bunches them up
+## into regular waves (a drum turning), "density" is blips per second.
+static func _mix_crackle(
+	mix: PackedFloat32Array, layer: Dictionary, sample_rate: int, rng: RandomNumberGenerator
+) -> void:
+	var start := int(float(layer.get("delay", 0.0)) * sample_rate)
+	var count := mini(int(float(layer.get("duration", 0.1)) * sample_rate), mix.size() - start)
+	var density := float(layer.get("density", 20.0))
+	var freq_min := float(layer.get("freq_min", 2000.0))
+	var freq_max := float(layer.get("freq_max", 5000.0))
+	var decay := float(layer.get("decay", 0.01))
+	var gain := float(layer.get("gain", 0.3))
+	var gain_jitter := float(layer.get("gain_jitter", 0.7))
+	var pulse_hz := float(layer.get("pulse_hz", 0.0))
+	var pulse_depth := float(layer.get("pulse_depth", 0.0))
+	var dt := 1.0 / sample_rate
+	var tail := ceili(decay * 6.0 * sample_rate)
+	var chance := density * dt
+
+	for i in count:
+		var p := chance
+		if pulse_hz > 0.0:
+			p *= 1.0 - pulse_depth * (0.5 - 0.5 * cos(TAU * pulse_hz * i * dt))
+		if rng.randf() >= p:
+			continue
+		var freq := freq_min * pow(freq_max / freq_min, rng.randf())
+		var amp := gain * (1.0 - gain_jitter * rng.randf())
+		var phase := rng.randf() * TAU
+		for k in mini(tail, count - i):
+			var t := k * dt
+			mix[start + i + k] += amp * exp(-t / decay) * sin(phase + TAU * freq * t)
 
 
 static func _envelope(seconds: float, t: float, attack: float, curve: float) -> float:

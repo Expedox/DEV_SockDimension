@@ -12,6 +12,8 @@ var invert_mouse := false
 var fov := 75.0
 var volume_master := 0.8
 var volume_sfx := 1.0
+var volume_ambience := 0.8
+var graphics_quality := "high"
 var fullscreen := false
 var vsync := true
 var language := "en"
@@ -36,6 +38,11 @@ func languages() -> Array:
 	return data.get("languages", [])
 
 
+## Graphics presets as {id, key}; the values per preset live in data/world.json.
+func quality_levels() -> Array:
+	return data.get("quality_levels", [])
+
+
 ## Sets one field, applies it and tells listeners. Call save() when done.
 func set_value(key: String, value: Variant) -> void:
 	if get(key) == value:
@@ -47,7 +54,8 @@ func set_value(key: String, value: Variant) -> void:
 
 func apply() -> void:
 	_set_bus_volume(&"Master", volume_master)
-	_set_bus_volume(_sfx_bus(), volume_sfx)
+	_set_bus_volume(_bus(String(data.get("sfx_bus", "SFX"))), volume_sfx)
+	_set_bus_volume(_bus(String(data.get("ambience_bus", "Ambience"))), volume_ambience)
 	TranslationServer.set_locale(language)
 	if not Engine.is_embedded_in_editor() and DisplayServer.get_name() != "headless":
 		var window_mode := DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED
@@ -94,8 +102,8 @@ func _read_data() -> Dictionary:
 	return {}
 
 
-func _sfx_bus() -> StringName:
-	var bus := StringName(data.get("sfx_bus", "SFX"))
+func _bus(name: String) -> StringName:
+	var bus := StringName(name)
 	if AudioServer.get_bus_index(bus) == -1:
 		var index := AudioServer.bus_count
 		AudioServer.add_bus(index)

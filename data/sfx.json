@@ -226,7 +226,8 @@
           "curve": 10.0,
           "gain": 0.12
         }
-      ]
+      ],
+      "ambient": true
     },
     "pipe_knock": {
       "volume_db": -15.0,
@@ -282,7 +283,8 @@
           "curve": 6.0,
           "gain": 0.3
         }
-      ]
+      ],
+      "ambient": true
     },
     "rift_open": {
       "volume_db": -3.0,
@@ -397,39 +399,128 @@
         }
       ]
     },
-    "boiler_hum": {
-      "volume_db": -22.0,
-      "unit_size": 2.5,
-      "max_distance": 22.0,
-      "loop_seconds": 4.0,
-      "crossfade_seconds": 0.5,
+    "washer": {
+      "volume_db": -19.0,
+      "unit_size": 2.0,
+      "max_distance": 20.0,
+      "far_cutoff_hz": 4000.0,
+      "loop_seconds": 6.0,
+      "crossfade_seconds": 0.6,
       "sample_rate": 16000,
       "layers": [
         {
           "type": "tone",
-          "freq_start": 50.0,
+          "freq_start": 48.0,
           "harmonics": [
             1.0,
             0.55,
-            0.25,
-            0.12
+            0.3,
+            0.15,
+            0.08
           ],
-          "gain": 0.5,
+          "gain": 0.35,
           "sustain": true,
           "tremolo_hz": 0.5,
-          "tremolo_depth": 0.2
+          "tremolo_depth": 0.15
         },
         {
           "type": "noise",
           "filter": "bandpass",
-          "cutoff_start": 420,
-          "resonance": 1.2,
-          "gain": 0.25,
+          "cutoff_start": 650,
+          "resonance": 0.8,
+          "gain": 0.55,
+          "sustain": true,
+          "drift_hz": 0.8333,
+          "drift_depth": 0.8
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "cutoff_start": 280,
+          "resonance": 0.6,
+          "gain": 0.45,
+          "sustain": true,
+          "drift_hz": 0.8333,
+          "drift_depth": 0.6
+        },
+        {
+          "type": "crackle",
+          "sustain": true,
+          "density": 4.0,
+          "freq_min": 65,
+          "freq_max": 140,
+          "decay": 0.035,
+          "gain": 0.7,
+          "gain_jitter": 0.6,
+          "pulse_hz": 0.8333,
+          "pulse_depth": 0.95
+        },
+        {
+          "type": "crackle",
+          "sustain": true,
+          "density": 3.0,
+          "freq_min": 1400,
+          "freq_max": 3200,
+          "decay": 0.003,
+          "gain": 0.18,
+          "pulse_hz": 0.8333,
+          "pulse_depth": 0.9
+        }
+      ]
+    },
+    "rain": {
+      "volume_db": -21.0,
+      "unit_size": 3.0,
+      "max_distance": 30.0,
+      "far_cutoff_hz": 3500.0,
+      "loop_seconds": 8.0,
+      "crossfade_seconds": 1.0,
+      "sample_rate": 22050,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "cutoff_start": 1800,
+          "resonance": 0.5,
+          "gain": 0.55,
+          "sustain": true,
+          "drift_hz": 0.125,
+          "drift_depth": 0.35
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "cutoff_start": 4200,
+          "resonance": 0.6,
+          "gain": 0.22,
           "sustain": true,
           "drift_hz": 0.25,
-          "drift_depth": 0.5
+          "drift_depth": 0.3
+        },
+        {
+          "type": "crackle",
+          "sustain": true,
+          "density": 45.0,
+          "freq_min": 1800,
+          "freq_max": 6000,
+          "decay": 0.003,
+          "gain": 0.35
+        },
+        {
+          "type": "crackle",
+          "sustain": true,
+          "density": 6.0,
+          "freq_min": 450,
+          "freq_max": 1200,
+          "decay": 0.012,
+          "gain": 0.3
         }
       ]
     }
+  },
+  "pool_ambient": 4,
+  "ambience": {
+    "bus": "Ambience",
+    "wet": 0.2
   }
 }

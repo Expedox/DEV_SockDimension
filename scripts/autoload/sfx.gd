@@ -11,6 +11,9 @@ var _next_2d := 0
 var _last_played: Dictionary = {}
 var _loops: Dictionary = {}
 var _room_bus: StringName
+var _ambience_bus: StringName
+var _players_ambient: Array[AudioStreamPlayer3D] = []
+var _next_ambient := 0
 var _loop_settings: Dictionary = {}
 
 
@@ -19,6 +22,11 @@ func _ready() -> void:
 	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH))
 	var bus := _ensure_bus(String(data.get("bus", "SFX")))
 	_room_bus = _ensure_room_bus(data.get("room", {}), bus)
+	# Background sounds get their own bus so they have their own volume slider.
+	var ambience: Dictionary = data.get("room", {}).duplicate()
+	ambience.merge(data.get("ambience", {}), true)
+	ambience["bus"] = String(data.get("ambience", {}).get("bus", "Ambience"))
+	_ambience_bus = _ensure_room_bus(ambience, &"Master")
 	_build_pool(data, bus)
 	_render_sounds(data)
 	_render_loops(data)
@@ -42,8 +50,13 @@ func play(sound: String, position: Variant = null, volume_db: float = 0.0) -> vo
 	var level: float = entry["volume_db"] + volume_db
 
 	if position is Vector3 and is_inside_tree():
-		var player := _players_3d[_next_3d]
-		_next_3d = (_next_3d + 1) % _players_3d.size()
+		var player: AudioStreamPlayer3D
+		if entry["ambient"]:
+			player = _players_ambient[_next_ambient]
+			_next_ambient = (_next_ambient + 1) % _players_ambient.size()
+		else:
+			player = _players_3d[_next_3d]
+			_next_3d = (_next_3d + 1) % _players_3d.size()
 		player.global_position = position
 		player.stream = stream
 		player.pitch_scale = pitch
@@ -73,7 +86,9 @@ func start_loop(loop: String, parent: Node, position: Variant = null) -> Node:
 	var player: Node
 	if position is Vector3:
 		var player_3d := AudioStreamPlayer3D.new()
-		player_3d.bus = _room_bus
+		player_3d.bus = _ambience_bus
+		player_3d.attenuation_filter_cutoff_hz = float(settings.get("far_cutoff_hz", 5000.0))
+		player_3d.pitch_scale = float(settings.get("pitch", 1.0))
 		player_3d.unit_size = float(settings.get("unit_size", 3.0))
 		player_3d.max_distance = float(settings.get("max_distance", 30.0))
 		player_3d.volume_db = float(settings.get("volume_db", -20.0))
@@ -83,7 +98,7 @@ func start_loop(loop: String, parent: Node, position: Variant = null) -> Node:
 		player = player_3d
 	else:
 		var player_2d := AudioStreamPlayer.new()
-		player_2d.bus = _room_bus
+		player_2d.bus = _ambience_bus
 		player_2d.volume_db = float(settings.get("volume_db", -20.0))
 		player_2d.stream = stream
 		player_2d.autoplay = true
@@ -112,15 +127,18 @@ func _ensure_bus(bus: String) -> StringName:
 	return StringName(bus)
 
 
-## Bus for sounds in the cellar: a short, soft room echo, then on to the SFX bus.
+## Bus for sounds in the cellar: a short, soft room echo, then on to `send_to`.
 func _ensure_room_bus(config: Dictionary, send_to: StringName) -> StringName:
 	var bus := String(config.get("bus", "Room"))
-	if AudioServer.get_bus_index(bus) != -1:
-		return StringName(bus)
-	var index := AudioServer.bus_count
-	AudioServer.add_bus(index)
-	AudioServer.set_bus_name(index, bus)
+	var index := AudioServer.get_bus_index(bus)
+	if index == -1:
+		index = AudioServer.bus_count
+		AudioServer.add_bus(index)
+		AudioServer.set_bus_name(index, bus)
 	AudioServer.set_bus_send(index, send_to)
+	# The settings may have made the bus already, just for its volume.
+	if AudioServer.get_bus_effect_count(index) > 0:
+		return StringName(bus)
 	var reverb := AudioEffectReverb.new()
 	reverb.room_size = float(config.get("room_size", 0.45))
 	reverb.damping = float(config.get("damping", 0.7))
@@ -142,6 +160,14 @@ func _build_pool(data: Dictionary, bus: StringName) -> void:
 		player.max_distance = float(data.get("max_distance", 45.0))
 		add_child(player)
 		_players_3d.append(player)
+	for i in int(data.get("pool_ambient", 4)):
+		var player := AudioStreamPlayer3D.new()
+		player.bus = _ambience_bus
+		player.attenuation_filter_cutoff_hz = float(data.get("far_cutoff_hz", 6000.0))
+		player.unit_size = float(data.get("unit_size", 2.5))
+		player.max_distance = float(data.get("max_distance", 45.0))
+		add_child(player)
+		_players_ambient.append(player)
 	for i in int(data.get("pool_2d", 4)):
 		var player := AudioStreamPlayer.new()
 		player.bus = bus
@@ -162,6 +188,7 @@ func _render_sounds(data: Dictionary) -> void:
 			"volume_db": float(recipe.get("volume_db", 0.0)),
 			"pitch_jitter": float(recipe.get("pitch_jitter", 0.0)),
 			"max_per_second": float(recipe.get("max_per_second", 20.0)),
+			"ambient": bool(recipe.get("ambient", false)),
 		}
 
 

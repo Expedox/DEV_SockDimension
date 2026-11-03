@@ -74,9 +74,11 @@ func _build() -> void:
 	_section(rows, "SETTINGS_SECTION_SOUND")
 	_slider(rows, "SETTINGS_VOLUME_MASTER", "volume_master", "volume")
 	_slider(rows, "SETTINGS_VOLUME_SFX", "volume_sfx", "volume")
+	_slider(rows, "SETTINGS_VOLUME_AMBIENCE", "volume_ambience", "volume")
 	_section(rows, "SETTINGS_SECTION_DISPLAY")
 	_display_mode(rows)
 	_toggle(rows, "SETTINGS_VSYNC", "vsync")
+	_quality(rows)
 	_language(rows)
 
 	_back_button = UiKit.button("MENU_BACK", &"PrimaryButton")
@@ -159,6 +161,18 @@ func _language(parent: Control) -> void:
 	options.item_selected.connect(func(index: int) -> void:
 		Settings.set_value("language", String(languages[index].locale)))
 	_row(parent, "SETTINGS_LANGUAGE", options)
+
+
+func _quality(parent: Control) -> void:
+	var options := _option_button()
+	var levels := Settings.quality_levels()
+	for i in levels.size():
+		options.add_item(levels[i].key)
+		if levels[i].id == Settings.graphics_quality:
+			options.selected = i
+	options.item_selected.connect(func(index: int) -> void:
+		Settings.set_value("graphics_quality", String(levels[index].id)))
+	_row(parent, "SETTINGS_QUALITY", options)
 
 
 func _option_button() -> OptionButton:

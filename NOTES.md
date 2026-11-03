@@ -341,3 +341,11 @@ throws), audio, and the real FPS.
 - Setting `show_intro` ("Story and tutorial on next new game") turns itself off after one showing; switch it on again in Settings to replay.
 - A new run starts with only `starter_pairs` (data/gameplay.json, 3) whole pairs side by side on the washing machine lid (`SockField.prepare`). The rest of the pile rains in through a rift under the ceiling (`scripts/world/rift.gd`, look in data/world.json -> `rift`) once the tutorial pair is made, or after `rift.delay_seconds` without the tutorial (`SockField.pour_rest`, then `Events.rain_finished`).
 - Saves carry `rain_done`. Saved before the rain: starters come back and the rift opens on load. Saved mid-rain: no stable snapshot, so it starts again from the starters (minus found pairs). Old saves count as done.
+
+## Cellar atmosphere
+
+- Sound: all background sound is synthesised at start (data/sfx.json "loops"). The washer churns in its corner (motor hum, sloshing drum, socks thumping in time with the drum), rain patters at both windows, plus the old room tone, drips and pipe knocks. A new "crackle" layer type in SoundSynth makes the drops and thumps. Background sounds run on their own "Ambience" bus with its own slider in Settings.
+- Dust: GPUParticles3D under every lamp and along both moonbeams (amounts in data/world.json "dust" and per lamp/window). The shader only lights a mote where a lamp reaches it, so they sparkle in the cones.
+- Windows: rain runs down the glass; the moonlight now points into the room (it pointed into the wall before).
+- Graphics quality (Settings → Display): low / medium / high presets in data/world.json "quality" switch SSAO, SSIL, volumetric fog, SSAO detail, soft-shadow filter, shadow atlas and dust amount. Default high.
+- Not yet measured on a real GPU: the cloud only has the Compatibility renderer (no fog, SSAO). Please check FPS with F1 on high and medium in Sock Dimension mode.

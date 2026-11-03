@@ -6,6 +6,8 @@ const FLOOR_SHADER := preload("res://shaders/cellar_floor.gdshader")
 const WALL_SHADER := preload("res://shaders/cellar_wall.gdshader")
 const WOOD_SHADER := preload("res://shaders/cellar_wood.gdshader")
 const CLOTH_SHADER := preload("res://shaders/cellar_cloth.gdshader")
+const WINDOW_SHADER := preload("res://shaders/cellar_window.gdshader")
+const DUST_SHADER := preload("res://shaders/cellar_dust.gdshader")
 const WORLD_LAYER := 1
 const SOCK_LAYER := 2
 
@@ -17,6 +19,10 @@ var _data: Dictionary
 var _colors: Dictionary
 var _room_size := Vector3.ONE
 var _ambience_rng := RandomNumberGenerator.new()
+var _env: Environment
+var _dust: Array[GPUParticles3D] = []
+var _dust_material: ShaderMaterial
+var _quality := ""
 
 
 static func vec3(values: Array) -> Vector3:
@@ -41,6 +47,8 @@ func _ready() -> void:
 	_build_clothesline()
 	_build_basket()
 	_build_ambience()
+	apply_quality()
+	Settings.changed.connect(apply_quality)
 
 
 ## Feet position and level facing for a fresh game (-Z points towards the pile).
@@ -175,6 +183,7 @@ func _build_environment() -> void:
 	env.adjustment_saturation = float(config.get("saturation", 1.0))
 	env.adjustment_contrast = float(config.get("contrast", 1.0))
 
+	_env = env
 	var world := WorldEnvironment.new()
 	world.name = "WorldEnvironment"
 	world.environment = env
@@ -277,6 +286,12 @@ func _build_lamp(config: Dictionary) -> void:
 		fill.shadow_enabled = false
 		lamp.add_child(fill)
 
+	# Dust floating in the cone, from just under the shade down to the floor.
+	var height := _room_size.y + light_y
+	var reach := minf(tan(deg_to_rad(spot.spot_angle)) * height * 0.6, float(config.get("dust_radius", 3.5)))
+	_add_dust(lamp, Transform3D(Basis(), Vector3(0, light_y - height * 0.5, 0)),
+		Vector3(reach, height * 0.5, reach), int(config.get("dust", 0)))
+
 
 func _build_washing_machine() -> void:
 	var size := vec3(_data["washer_size"])
@@ -359,15 +374,14 @@ func _build_window(config: Dictionary) -> void:
 	window.position = at
 	add_child(window)
 
-	var glass_material := StandardMaterial3D.new()
-	glass_material.albedo_color = color.darkened(0.6)
-	glass_material.emission_enabled = true
-	glass_material.emission = color
-	glass_material.emission_energy_multiplier = float(config.get("glow", 1.5))
-	glass_material.roughness = 0.2
-	var glass_mesh := BoxMesh.new()
-	glass_mesh.size = Vector3(size.x, size.y, 0.02)
-	_add_part(window, glass_mesh, glass_material, Vector3(0, 0, 0.0))
+	var glass_material := ShaderMaterial.new()
+	glass_material.shader = WINDOW_SHADER
+	glass_material.set_shader_parameter("sky", color)
+	glass_material.set_shader_parameter("glow", float(config.get("glow", 1.5)))
+	glass_material.set_shader_parameter("rain", float(config.get("rain", 1.0)))
+	var glass_mesh := QuadMesh.new()
+	glass_mesh.size = size
+	_add_part(window, glass_mesh, glass_material, Vector3(0, 0, 0.01))
 
 	var frame_material := _wood(2, 0.08, _color("window_frame"), _color("wood_dark"), false)
 	var bar := 0.07
@@ -389,7 +403,8 @@ func _build_window(config: Dictionary) -> void:
 	var light := SpotLight3D.new()
 	light.name = "Moonlight"
 	light.position = Vector3(0, 0, 0.1)
-	light.rotation.x = -deg_to_rad(float(config.get("tilt_degrees", 40.0)))
+	# Turned to face into the room (+Z), then tilted down towards the floor.
+	light.rotation = Vector3(-deg_to_rad(float(config.get("tilt_degrees", 40.0))), PI, 0.0)
 	light.light_color = color
 	light.light_energy = float(config["energy"])
 	light.spot_range = float(config["range"])
@@ -399,6 +414,11 @@ func _build_window(config: Dictionary) -> void:
 	light.light_specular = 0.3
 	light.shadow_enabled = false
 	window.add_child(light)
+
+	# Dust along the moonbeam, so the cone shows up as a slanted shaft.
+	var beam_length := float(_data.get("dust", {}).get("window_reach", 5.0))
+	_add_dust(window, light.transform * Transform3D(Basis(), Vector3(0, 0, -beam_length * 0.5)),
+		Vector3(size.x * 0.6, size.y * 0.8, beam_length * 0.5), int(config.get("dust", 0)))
 
 
 func _build_beams() -> void:
@@ -622,12 +642,13 @@ func _build_clothesline() -> void:
 
 
 func _build_ambience() -> void:
-	# Quiet room tone, a humming boiler in the washer corner and now and then a drip or a pipe knock.
+	# Quiet room tone, the washer churning, rain at the windows and now and then a drip or a pipe knock.
 	var config: Dictionary = _data.get("ambience", {})
 	if config.is_empty():
 		return
-	Sfx.start_loop("room_tone", self)
-	Sfx.start_loop("boiler_hum", self, vec3(config["hum_position"]))
+	for entry: Dictionary in config.get("loops", []):
+		var at: Variant = vec3(entry["position"]) if entry.has("position") else null
+		Sfx.start_loop(String(entry["loop"]), self, at)
 	_ambience_rng.randomize()
 	for entry: Dictionary in config["random_sounds"]:
 		var timer := Timer.new()
@@ -636,6 +657,96 @@ func _build_ambience() -> void:
 		add_child(timer)
 		timer.timeout.connect(_on_ambient_timer.bind(timer, entry))
 		timer.start(_ambience_rng.randf_range(float(entry["min_seconds"]), float(entry["max_seconds"])))
+
+
+## Applies the graphics preset from the settings: screen-space shadows, fog
+## detail, shadow filtering and how much dust floats in the light.
+func apply_quality() -> void:
+	var presets: Dictionary = _data.get("quality", {})
+	if presets.is_empty() or Settings.graphics_quality == _quality:
+		return
+	_quality = Settings.graphics_quality
+	var preset: Dictionary = presets.get(_quality, presets.get("high", {}))
+	var config: Dictionary = _data["environment"]
+	_env.ssao_enabled = bool(config["ssao"]) and bool(preset.get("ssao", true))
+	_env.ssil_enabled = bool(config.get("ssil", false)) and bool(preset.get("ssil", true))
+	_env.volumetric_fog_enabled = bool(config.get("volumetric_fog", false)) and bool(preset.get("volumetric_fog", true))
+	RenderingServer.environment_set_ssao_quality(
+		int(preset.get("ssao_quality", 2)) as RenderingServer.EnvironmentSSAOQuality, true, 0.5, 2, 50.0, 300.0)
+	var fog_volume: Array = preset.get("fog_volume", [64, 64])
+	RenderingServer.environment_set_volumetric_fog_volume_size(int(fog_volume[0]), int(fog_volume[1]))
+	RenderingServer.positional_soft_shadow_filter_set_quality(
+		int(preset.get("soft_shadows", 2)) as RenderingServer.ShadowQuality)
+	get_viewport().positional_shadow_atlas_size = int(preset.get("shadow_atlas", 4096))
+	var dust_scale := float(preset.get("dust", 1.0))
+	for emitter in _dust:
+		var amount := roundi(int(emitter.get_meta("full_amount")) * dust_scale)
+		emitter.visible = amount > 0
+		emitter.emitting = amount > 0
+		if amount > 0 and emitter.amount != amount:
+			emitter.amount = amount
+			emitter.restart()
+
+
+func _add_dust(parent: Node3D, at: Transform3D, extents: Vector3, amount: int) -> void:
+	if amount <= 0 or not _data.has("dust"):
+		return
+	var config: Dictionary = _data["dust"]
+	if _dust_material == null:
+		_dust_material = ShaderMaterial.new()
+		_dust_material.shader = DUST_SHADER
+		_dust_material.set_shader_parameter("tint", Color(config.get("tint", "#ffe6c4")))
+		_dust_material.set_shader_parameter("strength", float(config.get("strength", 0.6)))
+
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+	process.emission_box_extents = extents
+	process.direction = Vector3.UP
+	process.spread = 180.0
+	var speed: Array = config.get("speed", [0.005, 0.03])
+	process.initial_velocity_min = float(speed[0])
+	process.initial_velocity_max = float(speed[1])
+	process.gravity = Vector3(0, -float(config.get("sink", 0.003)), 0)
+	process.damping_min = 0.0
+	process.damping_max = 0.002
+	process.turbulence_enabled = true
+	process.turbulence_noise_strength = 1.0
+	process.turbulence_noise_scale = 4.0
+	process.turbulence_noise_speed_random = 0.1
+	process.turbulence_influence_min = float(config.get("turbulence", 0.08)) * 0.5
+	process.turbulence_influence_max = float(config.get("turbulence", 0.08))
+	var size: Array = config.get("size", [0.008, 0.018])
+	process.scale_min = float(size[0])
+	process.scale_max = float(size[1])
+	# Fade in and out so no mote pops into view.
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0))
+	fade.set_color(1, Color(1, 1, 1, 0))
+	fade.add_point(0.2, Color.WHITE)
+	fade.add_point(0.8, Color.WHITE)
+	var ramp := GradientTexture1D.new()
+	ramp.gradient = fade
+	process.color_ramp = ramp
+
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE
+	quad.material = _dust_material
+
+	var emitter := GPUParticles3D.new()
+	emitter.name = "Dust"
+	emitter.transform = at
+	emitter.amount = amount
+	emitter.lifetime = float(config.get("lifetime", 16.0))
+	emitter.preprocess = emitter.lifetime
+	emitter.randomness = 1.0
+	emitter.local_coords = false
+	emitter.process_material = process
+	emitter.draw_pass_1 = quad
+	emitter.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	emitter.visibility_aabb = AABB(-extents - Vector3.ONE * 0.5, extents * 2.0 + Vector3.ONE)
+	emitter.set_meta("full_amount", amount)
+	parent.add_child(emitter)
+	_dust.append(emitter)
 
 
 func _on_ambient_timer(timer: Timer, entry: Dictionary) -> void:

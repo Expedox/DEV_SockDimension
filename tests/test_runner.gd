@@ -306,6 +306,9 @@ func _test_pair_controller() -> void:
 	for node: Node in [controller, player, field, field.renderer, cellar]:
 		node.queue_free()
 	_end_fake_run()
+	# Let the audio server drop the cellar's looping sounds before quitting.
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 
 func _sock(sock_id: int) -> Fakes.FakeSock:

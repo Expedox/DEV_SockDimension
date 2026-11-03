@@ -5,6 +5,8 @@
 		"fov": 75.0,
 		"volume_master": 0.8,
 		"volume_sfx": 1.0,
+		"volume_ambience": 0.8,
+		"graphics_quality": "high",
 		"fullscreen": false,
 		"vsync": true,
 		"language": "en",
@@ -19,5 +21,11 @@
 		{ "locale": "en", "key": "SETTINGS_LANGUAGE_EN" },
 		{ "locale": "de", "key": "SETTINGS_LANGUAGE_DE" }
 	],
-	"sfx_bus": "SFX"
+	"quality_levels": [
+		{ "id": "low", "key": "SETTINGS_QUALITY_LOW" },
+		{ "id": "medium", "key": "SETTINGS_QUALITY_MEDIUM" },
+		{ "id": "high", "key": "SETTINGS_QUALITY_HIGH" }
+	],
+	"sfx_bus": "SFX",
+	"ambience_bus": "Ambience"
 }
