@@ -163,25 +163,30 @@ or `GameState.register_mismatch(near_miss)`. These emit
 not on the key press. It emits `Events.sock_in_basket(sock_id)` when a single
 thrown sock (thrown and not grabbed since) lands in the basket.
 
-### Sock wall
+### Sock wall and room size
 
 `SockWall` (`scripts/world/sock_wall.gd`), built by `game.gd` under the cellar,
 values in `data/world.json` → `pair_wall`. Found pairs hang on peg rails on
-wooden boards that cover all four walls up to the beams (six panels, about
-240 m², around the shelf, washer corner, clothesline and back windows). The rails
-read like a book, panel by panel from the east wall round to the back wall:
-shape first (new row plus a found/total label), then base colour (small gap
-between colours), then pattern, count, accent and heel/toe. Every pair of the
-set has a fixed slot from the start, so empty pegs show what is missing.
-Neighbouring pairs overlap like in a sock shop (`overlap`), every other column
-hangs a little further out. The layout picks the largest scale up to 1.0 (pile
-size) at which the whole set fits: 0.76 for 1,500 pairs, 0.43 for 5,000. As pile
-socks are 1.3x life size, Laundry Day wall socks are about life size.
-Real pile size would need about 1.75x the wall area for 1,500 pairs and 5x for
-5,000. One MultiMesh per shape (far mesh, sock shader, no shadows) plus one for
-the rails. `Events.pair_matched` adds a pair with a short pop; nothing extra is
-saved, the wall is rebuilt from `found`.
-Screenshots: `scenes/dev/wall_shot.tscn -- <pairs> <share> <png prefix>`.
+wooden boards over all four walls up to the beams (six panels, kept clear of the
+shelf, washer corner, clothesline and back windows). The rails read like a book,
+panel by panel from the east wall round to the back wall: shape first (new row
+plus a found/total label), then base colour (small gap between colours), then
+pattern, count, accent and heel/toe. Every pair of the set has a fixed slot from
+the start, so empty pegs show what is missing. Neighbouring pairs overlap a
+little like in a sock shop (`overlap`). The layout picks the largest scale up to
+1.0 (pile size) at which the whole set fits. One MultiMesh per shape (far mesh,
+sock shader, no shadows) plus one for the rails. `Events.pair_matched` adds a
+pair with a short pop; nothing extra is saved, the wall is rebuilt from `found`.
+
+Mike wants every pair on the wall at pile size, so each mode has its own cellar
+size in `data/modes.json` → `room_size`: Laundry Day 26 × 7.5 × 20 m, Sock
+Dimension 46 × 12 × 36 m, both 1:1. `data/world.json` stays written for its own
+18 × 14 × 6 m room; `Config.use_mode_room()` (called by `GameState._reset`)
+stretches it: things near a wall move with the wall, things near the middle
+stay, things in the upper half move with the ceiling, lamps hang lower and a
+grid of extra side lamps fills a big floor (`lamp_spacing`, default 9 m). Spawn
+and basket stay near the pile.
+Screenshots: `scenes/dev/wall_shot.tscn -- <mode> <share> <png prefix>`.
 
 ### Game scene
 

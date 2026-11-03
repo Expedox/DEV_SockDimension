@@ -233,15 +233,18 @@ func _test_socks() -> void:
 
 
 func _test_sock_wall() -> void:
-	var config: Dictionary = Config.world["pair_wall"]
-	var room := AABB(Vector3(-9, 0, -7), Vector3(18, 6, 14))
-	for pairs in [1500, 5000]:
+	for mode_id in ["laundry_day", "sock_dimension"]:
+		Config.use_mode_room(mode_id)
+		var config: Dictionary = Config.world["pair_wall"]
+		var size := Cellar.vec3(Config.world.room_size)
+		var room := AABB(Vector3(-size.x * 0.5, 0.0, -size.z * 0.5), size)
+		var pairs := int(Config.mode(mode_id).pairs)
 		var socks := SockSet.generate(5, pairs, 0.2)
 		var wall := SockWall.new()
 		add_child(wall)
 		var found := PackedInt32Array([0, 7, pairs - 1])
 		wall.setup(socks, config, found, room)
-		check(wall.sock_scale > 0.3, "wall socks readable for %d pairs (scale %.2f)" % [pairs, wall.sock_scale])
+		check(wall.sock_scale > 0.99, "%s wall hangs pairs at pile size (scale %.2f)" % [mode_id, wall.sock_scale])
 		check(wall.is_shown(7) and not wall.is_shown(8), "wall shows exactly the found pairs")
 		wall.on_pair_matched(8, 0, 0)
 		check(wall.is_shown(8), "a new match goes on the wall")
@@ -256,6 +259,7 @@ func _test_sock_wall() -> void:
 		check(inside, "all %d slots in the room" % pairs)
 		check(seen.size() == pairs, "one slot per pair (%d of %d)" % [seen.size(), pairs])
 		wall.free()
+	Config.use_mode_room("laundry_day")
 
 
 func _test_pair_controller() -> void:

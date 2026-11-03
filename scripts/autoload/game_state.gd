@@ -118,6 +118,7 @@ func to_main_menu() -> void:
 
 func _reset(new_mode: String) -> void:
 	mode_id = new_mode
+	Config.use_mode_room(new_mode)
 	pairs_total = int(Config.mode(new_mode).pairs)
 	pairs_found = 0
 	play_time = 0.0

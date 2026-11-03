@@ -1,10 +1,11 @@
 extends Node3D
 ## Hangs a share of a mode's pairs on the sock wall and takes screenshots:
-##   xvfb-run godot --rendering-driver opengl3 --path . res://scenes/dev/wall_shot.tscn -- <pairs> <share> <out_prefix>
+##   xvfb-run godot --rendering-driver opengl3 --path . res://scenes/dev/wall_shot.tscn -- <mode> <share> <out_prefix>
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	var pairs := int(args[0])
+	Config.use_mode_room(args[0])
+	var pairs := int(Config.mode(args[0]).pairs)
 	var share := float(args[1])
 	var prefix := args[2]
 	var cellar: Cellar = load("res://scenes/cellar.tscn").instantiate()
@@ -25,10 +26,10 @@ func _ready() -> void:
 	camera.fov = 70.0
 	add_child(camera)
 	camera.current = true
+	var half := Cellar.vec3(Config.world.room_size) * 0.5
 	var shots := [
-		[Vector3(-1.0, 2.2, -3.0), Vector3(9.0, 2.6, 2.0), "east"],
-		[Vector3(-2.0, 2.2, -4.0), Vector3(4.0, 2.4, 7.0), "south"],
-		[Vector3(7.0, 1.6, -3.0), Vector3(9.0, 1.3, -4.5), "close"],
+		[Vector3(-half.x * 0.3, 2.0, -half.z * 0.4), Vector3(half.x, 3.0, half.z * 0.3), "room"],
+		[Vector3(half.x - 2.5, 1.7, -2.0), Vector3(half.x, 1.4, -3.5), "close"],
 	]
 	for shot: Array in shots:
 		camera.position = shot[0]
