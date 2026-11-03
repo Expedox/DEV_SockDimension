@@ -50,24 +50,26 @@ not the player. The player collides with world and socks.
 
 `class_name Sock extends RigidBody3D` with `var sock_id: int`.
 
-`class_name SockField extends Node3D` owns all bodies and a `SockDisplay`:
+`class_name SockField extends Node3D` owns all bodies and the `SockRenderer`:
 
 - `pour(socks: SockSet, mode: Dictionary)`: emits `Events.pile_progress`, then `Events.pile_ready`
-- `restore(socks: SockSet, state: Dictionary)`: same signals, no pouring
-- `capture() -> Dictionary`: saved under `world.socks`, binary friendly (packed arrays), never includes paired socks
+- `restore(socks: SockSet, state: Dictionary)`: same signals, no pouring; socks come back asleep and frozen. An empty state (saved while pouring) pours fresh
+- `capture() -> Dictionary`: saved under `world.socks`, binary friendly (`ids`, `positions`, `rotations` as packed arrays, quaternions xyzw), never includes paired socks, empty while pouring
 - `sock_at(collider: Object) -> Sock`: null if it is not a sock
+- `sock_by_id(sock_id: int) -> Sock`: null if gone or set aside
 - `begin_hold(sock: Sock)`: makes it dynamic, weightless, and wakes its surroundings within `wake_radius`
 - `end_hold(sock: Sock)`: normal physics again
 - `throw_sock(sock: Sock, velocity: Vector3)`: ends the hold and tracks the flight; emits `Events.sock_landed`
 - `wake_around(position: Vector3, radius: float)`
 - `remove_pair(a: Sock, b: Sock)`: removes both for good and wakes around them
-- `surface_height() -> Vector3`: highest point of the pile right now
+- `surface_height() -> Vector3`: highest resting sock, refreshed over about 20 frames
 - `set_aside(sock: Sock)`: takes a matched sock out of physics and out of
   `sock_entered_basket` (no collision, no body), but keeps it in `capture()`
   until `remove_pair()`, so a save during the flight to the basket loses nothing
 - `renderer: SockRenderer`: the MultiMesh display; the pair flight moves and
   hides the two matched socks through it
-- Emits `Events.socks_moving(count)` when the count changes noticeably
+- Emits `Events.socks_moving(count)` after the pile is ready when the count of socks faster than `moving_speed` changes noticeably (awake but still socks do not count)
+- Debug values: `awake_count()`, `body_count()`, `moving_count`, `pour_seconds`, `script_usec`; the field is in group `sock_field`
 
 ### Cellar
 
@@ -194,7 +196,44 @@ It writes only under `user://tests/`. GitHub Actions runs the same on every push
 
 ## Measurement
 
-(5,000 mode results go here.)
+Headless timing in the cloud (Godot 4.7.2 Linux, Jolt, 4 threads of a shared
+Xeon at 2.8 GHz, no rendering). Run it again with:
+
+    godot --headless --fixed-fps 60 --path . res://scenes/dev/pour_benchmark.tscn -- sock_dimension [nofreeze]
+
+`--fixed-fps 60` makes every frame exactly one physics step, so the numbers are
+CPU cost per frame. **The real FPS check (with rendering of 10,000 socks) still
+has to happen on Mike's PC**, with F1 open.
+
+**Plain Jolt sleeping is not enough.** Jolt sleeps whole groups of touching
+bodies, and a pile is one group. Without freezing (`nofreeze`), pouring the
+5,000 mode kept all 9,000 socks awake for minutes at 200 to 250 ms per frame,
+and in the laundry mode waking 512 socks at the summit cost about 40 ms per
+frame until the pile slept again.
+
+**Fallback in use: resting socks are frozen** (`freeze_settled` in
+`data/physics.json`). A sock that has barely moved for `rest_seconds` is put to
+sleep and frozen (static), so the pile is never one big group. Grabbing,
+removing a pair or setting a sock aside unfreezes everything within
+`wake_radius` (1.5 m). Socks faster than `chain_wake_speed` wake their direct
+neighbours, so a slide spreads on its own. Pour waves wait while more than
+`pour_max_awake` socks are moving. Set `freeze_settled` to false to compare.
+
+5,000 mode (10,000 socks), with freezing:
+
+| Phase | avg ms | median | p95 | max |
+|---|---|---|---|---|
+| Pour (558 frames, ready after 8.8 s, summit 2.4 m) | 15.9 | 15.9 | 30.7 | 43.5 |
+| Idle pile, 300 frames | 1.4 | 0.8 | 7.3 | 15.0 |
+| After waking 512 socks at the summit | 1.8 | 0.8 | 9.5 | 27.6 |
+| First second after restore | 1.4 | 0.7 | 1.2 | 36.7 |
+
+- Generating the set: 50 ms. `capture()`: 25 ms, 312 KB. Restore: 0.3 s.
+- Laundry day (2,000 socks): pour ready after 2.8 s, idle 0.6 ms, waking 512 socks 1.5 ms average.
+- Physics is the cost; the field's own script work stays under 0.7 ms per frame.
+
+Open: these are CPU numbers only. The GPU side (one MultiMesh, 10,000
+instances, shadows from the main lamp) is unmeasured until it runs on the PC.
 
 ## Open points
 
