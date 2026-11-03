@@ -259,6 +259,13 @@ neighbours, so a slide spreads on its own. Pour waves wait while more than
 - Laundry day (2,000 socks): pour ready after 2.8 s, idle 0.6 ms, waking 512 socks 1.5 ms average.
 - Physics is the cost; the field's own script work stays under 0.7 ms per frame.
 
+**Pile shape (Nov 3):** waves now land more often near the centre (`pour_cone_power`),
+so the pile is a hill, not a drum with straight walls. Boxes hold the slope;
+capsules (`sock_shape`) slid into a flat 0.6 m mound. Measured headless:
+Laundry day summit 1.7 m, pour 6 s; 5,000 mode summit 4.6 m, 90 % of socks
+within 3 m, pour 55 s at 33 ms per frame, idle 0.8 ms, waking the summit 4.8 ms.
+The held sock leaves its collision layer, so it never pushes the player.
+
 Open: these are CPU numbers only. The GPU side (one MultiMesh, 10,000
 instances, shadows from the main lamp) is unmeasured until it runs on the PC.
 
