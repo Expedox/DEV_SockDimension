@@ -134,12 +134,16 @@ func begin_hold(sock: Sock) -> void:
 	_flights.erase(sock.sock_id)
 	sock.gravity_scale = 0.0
 	sock.can_sleep = false
+	# Off every layer: nothing (above all the player) bumps into it, while its
+	# own mask still lets it push other socks around.
+	sock.collision_layer = 0
 	_wake(sock)
 	wake_around(sock.global_position, float(_tuning.wake_radius))
 
 
 func end_hold(sock: Sock) -> void:
 	sock.gravity_scale = 1.0
+	sock.collision_layer = SOCK_LAYER
 	sock.can_sleep = true
 
 

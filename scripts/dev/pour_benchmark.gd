@@ -67,6 +67,7 @@ func _on_pile_ready() -> void:
 	if _phase == "pour":
 		_report("Pour")
 		print("Pile ready after %.1f s, %d socks, summit %.2f m" % [_field.pour_seconds, _field.body_count(), _field.surface_height().y])
+		_print_shape()
 		_next("idle")
 	elif _phase == "restore":
 		print("Restored %d socks in %.2f s, %d awake" % [_field.body_count(), _field.pour_seconds, _field.awake_count()])
@@ -117,3 +118,25 @@ func _report(label: String) -> void:
 	print("  bodies not sleeping: %d, field script %.2f ms" % [not_sleeping, _field.script_usec / 1000.0])
 	print("%s: %d frames, avg %.2f ms, median %.2f ms, p95 %.2f ms, max %.2f ms" % [label, sorted.size(),
 			total / sorted.size(), sorted[sorted.size() / 2], sorted[int(sorted.size() * 0.95)], sorted[-1]])
+
+
+## Rough pile profile: how high the socks sit at each distance from the centre.
+func _print_shape() -> void:
+	var rings := {}
+	var radii := PackedFloat32Array()
+	for child in _field.get_children():
+		if child is Sock:
+			var p: Vector3 = child.global_position
+			var r := Vector2(p.x, p.z).length()
+			radii.append(r)
+			var ring := int(r / 0.5)
+			rings[ring] = maxf(rings.get(ring, 0.0), p.y)
+	radii.sort()
+	print("Footprint: half the socks within %.2f m, 90 %% within %.2f m, outermost %.2f m" % [
+			radii[radii.size() / 2], radii[int(radii.size() * 0.9)], radii[-1]])
+	var keys := rings.keys()
+	keys.sort()
+	var line := "Highest sock per 0.5 m ring:"
+	for ring: int in keys:
+		line += " %.1f-%.1f m: %.2f |" % [ring * 0.5, ring * 0.5 + 0.5, rings[ring]]
+	print(line)
