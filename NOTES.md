@@ -266,6 +266,16 @@ Laundry day summit 1.7 m, pour 6 s; 5,000 mode summit 4.6 m, 90 % of socks
 within 3 m, pour 55 s at 33 ms per frame, idle 0.8 ms, waking the summit 4.8 ms.
 The held sock leaves its collision layer, so it never pushes the player.
 
+**Bigger pile (Nov 3, Mike: more and somewhat bigger socks):** socks are drawn
+and collide at 1.3x life size (`scale` in `data/socks.json`), Laundry Day has
+1,500 pairs, and pour noise (`pour_lumpiness`) makes humps and dips. Sock
+Dimension stays at 5,000 pairs, because 7,500 at this size reached the spawn
+point and the lamp in the 18 x 14 x 6 m cellar. Its pile is capped by
+`pour_max_height`. Headless:
+Laundry Day summit 3.0 m, pour 11 s, idle 0.9 ms; Sock Dimension summit 4.6 m,
+pour 37 s at 25 ms per frame, idle 1.0 ms, waking 512 socks at the top 3.9 ms
+avg with a 40 ms p95 for the first second while the top slides.
+
 Open: these are CPU numbers only. The GPU side (one MultiMesh, 10,000
 instances, shadows from the main lamp) is unmeasured until it runs on the PC.
 
