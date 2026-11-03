@@ -142,6 +142,11 @@ func _print_shape() -> void:
 			var ring := int(r / 0.5)
 			rings[ring] = maxf(rings.get(ring, 0.0), p.y)
 	radii.sort()
+	var low := 0
+	for child in _field.get_children():
+		if child is Sock and child.global_position.y < 0.012:
+			low += 1
+	print("Socks with their centre less than 12 mm above the floor (sunk in): %d" % low)
 	print("Footprint: half the socks within %.2f m, 90 %% within %.2f m, outermost %.2f m" % [
 			radii[radii.size() / 2], radii[int(radii.size() * 0.9)], radii[-1]])
 	var keys := rings.keys()
