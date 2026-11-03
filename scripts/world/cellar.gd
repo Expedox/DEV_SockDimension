@@ -46,6 +46,7 @@ func _ready() -> void:
 	_build_pipes()
 	_build_fairy_lights()
 	_build_shelf()
+	_build_lost_found()
 	_build_clothesline()
 	_build_basket()
 	_build_ambience()
@@ -604,6 +605,55 @@ func _build_shelf() -> void:
 					_add_part(body, lid, lid_material, jar_at + Vector3.UP * (jar.height * 0.5 + 0.01))
 					cursor += 0.13
 				cursor += 0.08
+
+
+func _build_lost_found() -> void:
+	# Open cardboard crate where socks that escaped the room turn up again.
+	var config: Dictionary = _data.get("lost_found", {})
+	if config.is_empty():
+		return
+	var size := vec3(config["size"])
+	var t := float(config["wall_thickness"])
+	var body := StaticBody3D.new()
+	body.name = "LostAndFound"
+	body.position = vec3(config["position"])
+	body.collision_layer = WORLD_LAYER
+	body.collision_mask = 0
+	add_child(body)
+	var card := _plain(_color("cardboard"), 0.95)
+	var inside := _plain(_color("cardboard").darkened(0.3), 0.95)
+	var parts := [
+		[Vector3(size.x, t, size.z), Vector3(0, t * 0.5, 0), inside],
+		[Vector3(size.x, size.y, t), Vector3(0, size.y * 0.5, size.z * 0.5 - t * 0.5), card],
+		[Vector3(size.x, size.y, t), Vector3(0, size.y * 0.5, -size.z * 0.5 + t * 0.5), card],
+		[Vector3(t, size.y, size.z - t * 2.0), Vector3(size.x * 0.5 - t * 0.5, size.y * 0.5, 0), card],
+		[Vector3(t, size.y, size.z - t * 2.0), Vector3(-size.x * 0.5 + t * 0.5, size.y * 0.5, 0), card],
+	]
+	for part: Array in parts:
+		var box := BoxMesh.new()
+		box.size = part[0]
+		_add_part(body, box, part[2], part[1]).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		var shape := BoxShape3D.new()
+		shape.size = part[0]
+		var collider := CollisionShape3D.new()
+		collider.shape = shape
+		collider.position = part[1]
+		body.add_child(collider)
+	# The label faces the middle of the room.
+	var label := Label3D.new()
+	label.text = String(config["label_key"])
+	label.pixel_size = float(config["label_pixel_size"])
+	label.modulate = Color(config["label_color"])
+	label.outline_size = 0
+	label.shaded = true
+	label.font_size = 48
+	var toward := -body.position * Vector3(1, 0, 1)
+	var front := Vector3(0, 0, signf(toward.z)) if absf(toward.z) >= absf(toward.x) else Vector3(signf(toward.x), 0, 0)
+	var half_depth := size.z * 0.5 if front.z != 0.0 else size.x * 0.5
+	label.position = front * (half_depth + 0.005) + Vector3.UP * size.y * 0.55
+	body.add_child(label)
+	label.look_at(label.global_position + front, Vector3.UP)
+	label.rotate_object_local(Vector3.UP, PI)
 
 
 func _build_clothesline() -> void:

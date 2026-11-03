@@ -24,6 +24,7 @@
   "settle_timeout_seconds": 20.0,
   "restore_batch": 2000,
   "fall_limit_y": -2.0,
+  "lost_margin": 0.3,
   "land_speed": 0.4,
   "land_min_seconds": 0.2,
   "moving_report_step": 10,

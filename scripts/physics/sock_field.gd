@@ -60,6 +60,8 @@ var _airborne := {} # sock_id -> seconds left flying through other socks after a
 var _summit := Vector3.ZERO
 var _scan_best := Vector3(0.0, -INF, 0.0)
 var _scan_index := 0
+var _room := AABB() # inside of the cellar; socks beyond it go to lost and found
+var _lost_count := 0 # socks sent to lost and found, spreads them in the crate
 
 
 func _ready() -> void:
@@ -288,6 +290,7 @@ func _begin(sock_set: SockSet) -> void:
 	socks = sock_set
 	var count := socks.sock_count()
 	var room := Cellar.vec3(Config.world.room_size)
+	_room = AABB(Vector3(-room.x * 0.5, 0.0, -room.z * 0.5), room)
 	renderer.setup(socks, AABB(Vector3(-room.x * 0.5, -1.0, -room.z * 0.5), room + Vector3(0, 2, 0)))
 	_bodies.resize(count)
 	_bodies.fill(null)
@@ -610,8 +613,11 @@ func _push_awake(delta: float) -> void:
 	var moving := 0
 	for sock: Sock in _awake.values():
 		var xform := sock.global_transform
-		if xform.origin.y < fall_limit:
-			_rescue(sock)
+		if not _ghosts.has(sock.sock_id) and is_lost(_room, xform.origin, float(_tuning.lost_margin), fall_limit):
+			if state == State.POURING and not _raining:
+				_rescue(sock)
+			else:
+				send_to_lost_found(sock)
 			continue
 		renderer.set_sock_transform(sock.sock_id, xform)
 		var speed := sock.linear_velocity.length()
@@ -699,7 +705,45 @@ func _freeze_sleepers() -> void:
 	_to_freeze.clear()
 
 
-## A sock that slipped through the floor drops back onto the pile.
+## Outside the room: past a wall, above the ceiling or below the floor.
+static func is_lost(room: AABB, at: Vector3, margin: float, floor_limit: float) -> bool:
+	var lo := room.position
+	var hi := room.end
+	return at.x < lo.x - margin or at.x > hi.x + margin or at.z < lo.z - margin \
+			or at.z > hi.z + margin or at.y > hi.y + margin or at.y < floor_limit
+
+
+## Spot above the lost and found crate (data/world.json lost_found) where the
+## n-th escaped sock is dropped, spread over the crate's opening.
+static func lost_found_drop(config: Dictionary, n: int) -> Vector3:
+	var at := Cellar.vec3(config.position)
+	var size := Cellar.vec3(config.size)
+	var spread := float(config.drop_spread)
+	# Golden angle spiral: neighbours in the order never land on each other.
+	var angle := float(n) * 2.39996
+	var reach := sqrt(float(n % 16) / 16.0)
+	var offset := Vector2(cos(angle), sin(angle)) * reach * spread
+	return at + Vector3(offset.x * size.x * 0.5, size.y + float(config.drop_height), offset.y * size.z * 0.5)
+
+
+## Puts an escaped sock into the lost and found crate. Its flight does not
+## count, so throwing a sock out of the room is no Yeet.
+func send_to_lost_found(sock: Sock) -> void:
+	_flights.erase(sock.sock_id)
+	sock.freeze = false
+	sock.collision_layer = SOCK_LAYER
+	sock.global_transform = Transform3D(Basis(Vector3.UP, float(_lost_count)), lost_found_drop(Config.world.lost_found, _lost_count))
+	sock.linear_velocity = Vector3.ZERO
+	sock.angular_velocity = Vector3.ZERO
+	sock.sleeping = false
+	_lost_count += 1
+	_still[sock.sock_id] = 0.0
+	_awake[sock.sock_id] = sock
+	renderer.set_sock_transform(sock.sock_id, sock.global_transform)
+	Events.sock_lost.emit(sock.sock_id)
+
+
+## A sock that slipped through the floor while pouring drops back onto the pile.
 func _rescue(sock: Sock) -> void:
 	sock.global_position = Vector3(0.0, _summit.y + float(_tuning.pour_gap), 0.0)
 	sock.linear_velocity = Vector3.ZERO
@@ -730,6 +774,11 @@ func _scan_summit() -> void:
 		# Only resting socks: a held or flying sock is not part of the hill.
 		if sock != null and sock.sleeping and not _aside.has(i):
 			var at := sock.global_position
+			# A frozen sock can rest outside too, e.g. from an older save.
+			if state == State.READY and not _ghosts.has(i) \
+					and is_lost(_room, at, float(_tuning.lost_margin), float(_tuning.fall_limit_y)):
+				send_to_lost_found(sock)
+				continue
 			if at.y > _scan_best.y:
 				_scan_best = at
 	_scan_index = end

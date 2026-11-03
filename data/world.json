@@ -30,6 +30,24 @@
   "basket_pile_step": 0.0012,
   "basket_pile_max": 0.72,
   "washer_yaw_degrees": 45.0,
+  "lost_found": {
+    "position": [
+      -4.8,
+      0.0,
+      -6.35
+    ],
+    "size": [
+      1.2,
+      0.5,
+      0.8
+    ],
+    "wall_thickness": 0.04,
+    "drop_height": 0.5,
+    "drop_spread": 0.7,
+    "label_key": "LOST_AND_FOUND",
+    "label_pixel_size": 0.0028,
+    "label_color": "#2e1f15"
+  },
   "washer_size": [
     0.9,
     1.15,

@@ -26,6 +26,7 @@ func _ready() -> void:
 	_test_socks()
 	_test_sock_wall()
 	_test_daylight()
+	await _test_lost_found()
 	await _test_pair_controller()
 
 	print("%d checks, %d failed" % [_checks, _failures])
@@ -368,6 +369,68 @@ func _test_sock_wall() -> void:
 		check(seen.size() == pairs, "one slot per pair (%d of %d)" % [seen.size(), pairs])
 		wall.free()
 	Config.use_mode_room("laundry_day")
+
+
+func _test_lost_found() -> void:
+	var margin := float(Config.physics.lost_margin)
+	var floor_limit := float(Config.physics.fall_limit_y)
+	for mode_id in ["laundry_day", "sock_dimension"]:
+		Config.use_mode_room(mode_id)
+		var size := Cellar.vec3(Config.world.room_size)
+		var room := AABB(Vector3(-size.x * 0.5, 0.0, -size.z * 0.5), size)
+		var config: Dictionary = Config.world.lost_found
+		var crate := AABB(Cellar.vec3(config.position) - Cellar.vec3(config.size) * Vector3(0.5, 0, 0.5), Cellar.vec3(config.size))
+		check(room.encloses(crate), "%s: lost and found crate inside the room" % mode_id)
+		var all_above := true
+		for n in 40:
+			var drop := SockField.lost_found_drop(config, n)
+			if SockField.is_lost(room, drop, margin, floor_limit) or drop.y <= crate.end.y \
+					or not Rect2(crate.position.x, crate.position.z, crate.size.x, crate.size.z).has_point(Vector2(drop.x, drop.z)):
+				all_above = false
+		check(all_above, "%s: escaped socks drop into the crate" % mode_id)
+		check(not SockField.is_lost(room, Vector3(size.x * 0.5 - 0.1, 0.1, 0.0), margin, floor_limit), "%s: sock at the wall is not lost" % mode_id)
+		check(SockField.is_lost(room, Vector3(size.x * 0.5 + 1.0, 0.1, 0.0), margin, floor_limit), "%s: sock behind a wall is lost" % mode_id)
+		check(SockField.is_lost(room, Vector3(0.0, size.y + 1.0, 0.0), margin, floor_limit), "%s: sock above the ceiling is lost" % mode_id)
+		check(SockField.is_lost(room, Vector3(0.0, floor_limit - 1.0, 0.0), margin, floor_limit), "%s: sock under the floor is lost" % mode_id)
+	Config.use_mode_room("laundry_day")
+
+	# Real field: one sock flies out through a wall, one rests outside frozen
+	# (as in an older save), one stays in the room.
+	var cellar := Cellar.new()
+	add_child(cellar)
+	var field := SockField.new()
+	add_child(field)
+	var socks := SockSet.generate(9, 3, 0.0)
+	var half := Cellar.vec3(Config.world.room_size) * 0.5
+	field.prepare(socks, {
+		0: Transform3D(Basis.IDENTITY, Vector3(0.0, 0.2, 0.0)),
+		1: Transform3D(Basis.IDENTITY, Vector3(half.x + 1.5, 0.2, 0.0)),
+		2: Transform3D(Basis.IDENTITY, Vector3(0.0, 0.2, -half.z - 1.5)),
+	})
+	field.sock_by_id(2).freeze = true
+	field.sock_by_id(2).sleeping = true
+	var lost := []
+	var on_lost := func(sock_id: int) -> void: lost.append(sock_id)
+	Events.sock_lost.connect(on_lost)
+	var config: Dictionary = Config.world.lost_found
+	var crate := AABB(Cellar.vec3(config.position) - Cellar.vec3(config.size) * Vector3(0.5, 0, 0.5), Cellar.vec3(config.size))
+	var waited := 0.0
+	var landed := false
+	while waited < 6.0 and not landed:
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
+		landed = lost.size() == 2
+		for sock_id in [1, 2]:
+			var sock := field.sock_by_id(sock_id)
+			if sock == null or not crate.grow(0.05).has_point(sock.global_position) or sock.linear_velocity.length() > 0.1:
+				landed = false
+	Events.sock_lost.disconnect(on_lost)
+	check(lost.has(1) and lost.has(2) and not lost.has(0), "escaped socks reported, the one in the room not (%s)" % str(lost))
+	check(landed, "escaped socks come to rest in the lost and found crate")
+	check(field.sock_by_id(0).global_position.distance_to(Vector3(0.0, 0.2, 0.0)) < 0.5, "a sock in the room stays where it is")
+	field.queue_free()
+	cellar.queue_free()
+	await get_tree().process_frame
 
 
 func _test_daylight() -> void:

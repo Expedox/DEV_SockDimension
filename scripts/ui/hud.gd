@@ -1,6 +1,7 @@
 extends CanvasLayer
 ## In-run overlay: found pairs and play time at the top, crosshair, control
-## hints, and a short "Saved" note whenever the game is written to disk.
+## hints, and a short "Saved" note whenever the game is written to disk, and
+## a note when an escaped sock turns up in lost and found.
 
 var _top: HBoxContainer
 var _pairs_label: Label
@@ -11,6 +12,8 @@ var _crosshair: Crosshair
 var _hint: Label
 var _saved: PanelContainer
 var _saved_tween: Tween
+var _lost: PanelContainer
+var _lost_tween: Tween
 var _player: Node
 var _shown_pairs := -1
 var _shown_seconds := -1
@@ -22,6 +25,7 @@ func _ready() -> void:
 	layer = 5
 	_build()
 	Events.game_saved.connect(_on_saved)
+	Events.sock_lost.connect(func(_id: int) -> void: _lost_tween = _flash(_lost, _lost_tween))
 	Events.pair_matched.connect(func(_a: int, _b: int, _c: int) -> void: _pulse(_pairs_chip))
 
 
@@ -122,6 +126,12 @@ func _build() -> void:
 	_saved.modulate.a = 0.0
 	margin.add_child(_saved)
 
+	_lost = _chip(UiKit.label("HUD_LOST_FOUND", &"HudLabel"), _sock_icon())
+	_lost.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_lost.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_lost.modulate.a = 0.0
+	margin.add_child(_lost)
+
 
 func _chip(label: Label, icon: Control = null) -> PanelContainer:
 	var chip := PanelContainer.new()
@@ -172,9 +182,15 @@ func _pulse(chip: Control) -> void:
 
 
 func _on_saved() -> void:
-	if _saved_tween:
-		_saved_tween.kill()
-	_saved_tween = create_tween()
-	_saved_tween.tween_property(_saved, "modulate:a", 1.0, 0.15)
-	_saved_tween.tween_interval(UiTheme.anim("saved_visible"))
-	_saved_tween.tween_property(_saved, "modulate:a", 0.0, UiTheme.anim("saved_fade"))
+	_saved_tween = _flash(_saved, _saved_tween)
+
+
+## Fades a note in, keeps it a moment and fades it out again.
+func _flash(chip: Control, old: Tween) -> Tween:
+	if old:
+		old.kill()
+	var tween := create_tween()
+	tween.tween_property(chip, "modulate:a", 1.0, 0.15)
+	tween.tween_interval(UiTheme.anim("saved_visible"))
+	tween.tween_property(chip, "modulate:a", 0.0, UiTheme.anim("saved_fade"))
+	return tween

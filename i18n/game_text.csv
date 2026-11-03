@@ -170,3 +170,5 @@ UNLOCK_ZOOM_NAME,Silver Socks
 UNLOCK_ZOOM_TEXT,Zoom unlocked for this run. Hold C to look closer.
 HINT_SPRINT,Shift: sprint
 HINT_ZOOM,Hold C: zoom
+LOST_AND_FOUND,LOST & FOUND
+HUD_LOST_FOUND,A sock turned up in Lost & Found

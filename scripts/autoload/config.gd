@@ -48,6 +48,7 @@ static func stretched_world(base: Dictionary, size: Vector3) -> Dictionary:
 	var r := _Room.new(old, size)
 	w.room_size = [size.x, size.y, size.z]
 	w.washer_position = r.point(w.washer_position)
+	w.lost_found.position = r.point(w.lost_found.position)
 	# Lamps hang lower and reach further under a higher ceiling, and a bigger
 	# floor gets more of the plain side lamps on a grid.
 	var tall := size.y / old.y

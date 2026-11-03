@@ -170,3 +170,5 @@ UNLOCK_ZOOM_NAME,Silberne Socken
 UNLOCK_ZOOM_TEXT,Zoom freigeschaltet für dieses Spiel. C halten zum Heranzoomen.
 HINT_SPRINT,Shift: sprinten
 HINT_ZOOM,C halten: zoomen
+LOST_AND_FOUND,FUNDSACHEN
+HUD_LOST_FOUND,Eine Socke liegt jetzt bei den Fundsachen

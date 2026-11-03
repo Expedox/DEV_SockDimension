@@ -8,6 +8,8 @@ signal sock_grabbed(sock_id: int)
 signal sock_released(sock_id: int)
 signal sock_thrown(sock_id: int)
 signal sock_landed(sock_id: int, distance: float)
+## An escaped sock was put into the lost and found crate.
+signal sock_lost(sock_id: int)
 signal sock_in_basket(sock_id: int)
 signal socks_moving(count: int)
 signal summit_reached
