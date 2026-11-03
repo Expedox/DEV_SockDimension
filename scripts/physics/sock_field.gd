@@ -47,7 +47,8 @@ var _reported_done := -1
 var _reported_moving := 0
 var _restore_data: Dictionary
 var _ghosts := {} # sock_id -> held Sock that still passes through other socks
-var _reserved := {} # sock_id -> Transform3D, left out of the pour and laid down at the end
+var _skip := {} # sock_id -> true, left out of the current pour
+var _raining := false # pour_rest() on a field that is already in play
 
 var _summit := Vector3.ZERO
 var _scan_best := Vector3(0.0, -INF, 0.0)
@@ -77,6 +78,7 @@ func _exit_tree() -> void:
 ## Fresh pile: drops all socks in waves until everything sleeps.
 func pour(sock_set: SockSet, mode: Dictionary) -> void:
 	_begin(sock_set)
+	_skip = {}
 	_radius = float(mode.get("pile_radius", 3.0))
 	_rng.seed = sock_set.seed_value
 	_lumps.seed = sock_set.seed_value
@@ -85,10 +87,37 @@ func pour(sock_set: SockSet, mode: Dictionary) -> void:
 	Events.pile_progress.emit(0, socks.sock_count())
 
 
-## Keeps these socks out of the next pour and lays them down at their
-## transforms once the rest of the pile is in. Call before pour().
-func reserve(placements: Dictionary) -> void:
-	_reserved = placements.duplicate()
+## Starts a run with only these socks (sock_id -> Transform3D) in the room;
+## the rest comes later with pour_rest(). Emits pile_ready right away.
+func prepare(sock_set: SockSet, placements: Dictionary) -> void:
+	_begin(sock_set)
+	_skip = {}
+	for sock_id: int in placements:
+		_spawn(sock_id, placements[sock_id], Vector3.ZERO, false)
+	state = State.READY
+	pour_seconds = 0.0
+	Events.pile_ready.emit()
+
+
+## Pours every sock that is not in play yet into a field that is already
+## running (the rift). skip holds sock ids to leave out, such as found pairs.
+## Emits Events.rain_finished instead of pile_ready when done.
+func pour_rest(mode: Dictionary, skip: Dictionary) -> void:
+	_skip = skip.duplicate()
+	for sock_id in _bodies.size():
+		if _bodies[sock_id] != null:
+			_skip[sock_id] = true
+	_radius = float(mode.get("pile_radius", 3.0))
+	_rng.seed = socks.seed_value
+	_next = 0
+	_frame = 0
+	_top = 0.0
+	_settle_seconds = 0.0
+	_reported_done = -1
+	_started_msec = Time.get_ticks_msec()
+	_raining = true
+	state = State.POURING
+	_skip_reserved()
 
 
 ## Saved pile: every sock comes back asleep where it was. state comes from capture().
@@ -278,7 +307,7 @@ func _physics_process(delta: float) -> void:
 				state = State.SETTLING
 		State.SETTLING:
 			_settle_seconds += delta
-			if _awake.is_empty() or _settle_seconds >= float(_tuning.settle_timeout_seconds):
+			if _awake.size() <= _ghosts.size() or _settle_seconds >= float(_tuning.settle_timeout_seconds):
 				_finish()
 		State.RESTORING:
 			_restore_batch()
@@ -350,7 +379,7 @@ func _pour_wave() -> void:
 
 
 func _skip_reserved() -> void:
-	while _next < socks.sock_count() and _reserved.has(_next):
+	while _next < socks.sock_count() and _skip.has(_next):
 		_next += 1
 
 
@@ -397,20 +426,27 @@ func _spawn(sock_id: int, xform: Transform3D, velocity: Vector3, asleep: bool) -
 
 
 func _finish() -> void:
+	# A sock in the player's hand (possible while the rift pours) stays awake.
+	var held := {}
 	for sock: Sock in _awake.values():
+		if _ghosts.has(sock.sock_id):
+			held[sock.sock_id] = sock
+			continue
 		sock.sleeping = true
 		sock.freeze = _freeze_settled
 		_lift_out_of_floor(sock)
 		renderer.set_sock_transform(sock.sock_id, sock.global_transform)
-	_awake.clear()
+	_awake = held
 	_to_freeze.clear()
 	state = State.READY
-	for sock_id: int in _reserved:
-		_spawn(sock_id, _reserved[sock_id], Vector3.ZERO, false)
-	_reserved = {}
+	_skip = {}
 	pour_seconds = (Time.get_ticks_msec() - _started_msec) / 1000.0
 	_reported_moving = 0
-	Events.pile_ready.emit()
+	if _raining:
+		_raining = false
+		Events.rain_finished.emit()
+	else:
+		Events.pile_ready.emit()
 
 
 func _wake(sock: Sock) -> void:

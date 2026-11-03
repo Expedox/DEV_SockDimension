@@ -3,6 +3,9 @@ extends CanvasLayer
 ## First-steps card at the top of the screen. Each step waits for the player to
 ## do the thing it names, then moves on. Steps and timings are in data/gameplay.json.
 
+## The player made a pair: time for the rest of the socks.
+signal lesson_done
+
 const STEPS := ["move", "grab", "inspect", "throw", "pair", "done"]
 
 var _card: PanelContainer
@@ -75,6 +78,8 @@ func _advance() -> void:
 	_step_time = 0.0
 	_tip_time = 0.0
 	_show_step()
+	if STEPS[_step] == "done":
+		lesson_done.emit()
 	if _step > 0:
 		var tween := _card.create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_card.scale = Vector2.ONE * 0.92

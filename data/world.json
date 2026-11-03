@@ -318,5 +318,29 @@
         ]
       }
     ]
+  },
+  "rift": {
+    "position": [
+      0.0,
+      5.5,
+      0.0
+    ],
+    "size": [
+      5.0,
+      0.0,
+      2.6
+    ],
+    "yaw_degrees": 20.0,
+    "edge_color": "#7b4dff",
+    "core_color": "#d9c4ff",
+    "tear_energy": 0.9,
+    "light_energy": 4.0,
+    "light_range": 11.0,
+    "open_seconds": 2.2,
+    "close_seconds": 3.0,
+    "scar_amount": 0.12,
+    "spark_count": 160,
+    "spark_lifetime": 1.6,
+    "delay_seconds": 3.0
   }
 }

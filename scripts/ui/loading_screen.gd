@@ -13,7 +13,7 @@ func _ready() -> void:
 	layer = 30
 	_build()
 	Events.pile_progress.connect(_on_progress)
-	Events.pile_ready.connect(_on_ready)
+	Events.pile_ready.connect(_on_ready, CONNECT_ONE_SHOT)
 
 
 func _notification(what: int) -> void:
@@ -64,6 +64,8 @@ func _refresh() -> void:
 
 
 func _on_ready() -> void:
+	# Later progress comes from the rift pouring in plain sight.
+	Events.pile_progress.disconnect(_on_progress)
 	_done = _total
 	_refresh()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
