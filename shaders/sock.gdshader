@@ -145,7 +145,7 @@ float sd_heart(vec2 p) {
 // Five-pointed star, outer radius r, inner share rf, one point up.
 float sd_star5(vec2 p, float r, float rf) {
 	const vec2 k1 = vec2(0.809016994375, -0.587785252292);
-	const vec2 k2 = vec2(-k1.x, k1.y);
+	vec2 k2 = vec2(-k1.x, k1.y);
 	p.x = abs(p.x);
 	p -= 2.0 * max(dot(k1, p), 0.0) * k1;
 	p -= 2.0 * max(dot(k2, p), 0.0) * k2;
