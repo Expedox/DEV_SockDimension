@@ -46,8 +46,11 @@
 		{ "id": "snowflakes", "special": true, "weight": 1.0, "uses_accent": true, "counts": [1, 2] },
 		{ "id": "rainbow", "special": true, "weight": 0.8, "uses_accent": false, "counts": [1, 2] },
 		{ "id": "paws", "special": true, "weight": 1.0, "uses_accent": true, "counts": [1, 2] },
-		{ "id": "lettering", "special": true, "weight": 0.0, "uses_accent": true, "counts": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] }
+		{ "id": "lettering", "special": true, "weight": 0.0, "uses_accent": true, "counts": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] },
+		{ "id": "gold", "special": true, "weight": 0.0, "uses_accent": false, "counts": [0], "unlocks": "sprint" },
+		{ "id": "silver", "special": true, "weight": 0.0, "uses_accent": false, "counts": [0], "unlocks": "zoom" }
 	],
+	"metal": { "gold": "#c9a14c", "silver": "#b9bdc3", "shine": 1.1, "glitter": 0.8 },
 	"special_share": 0.1,
 	"lettering_shape": "knee",
 	"heel_toe_share": 0.35,

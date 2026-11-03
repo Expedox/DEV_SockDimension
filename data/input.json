@@ -15,6 +15,12 @@
     "jump": [
       "Space"
     ],
+    "sprint": [
+      "Shift"
+    ],
+    "zoom": [
+      "C"
+    ],
     "pair": [
       "E"
     ],

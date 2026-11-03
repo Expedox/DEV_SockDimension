@@ -186,10 +186,24 @@ func _test_game_state_counters() -> void:
 	GameState.register_match(0, 1, 1)
 	check(GameState.pairs_found == 1 and GameState.streak == 1, "match counters")
 	check(not finished[0], "not finished after one of two")
-	GameState.register_match(1, 2, 2)
+	var unlocked := []
+	var on_unlock := func(ability: String) -> void: unlocked.append(ability)
+	Events.ability_unlocked.connect(on_unlock)
+	check(not GameState.has_ability("sprint") and not GameState.has_ability("zoom"), "no sprint or zoom at the start")
+	GameState.register_match(1, 2, SockCatalog.pattern_index("gold"))
+	check(GameState.has_ability("sprint") and unlocked == ["sprint"], "golden pair unlocks sprint")
+	check(Array(GameState.capture().abilities) == ["sprint"], "unlocks go into the save")
+	GameState.unlock_ability("sprint")
+	check(unlocked.size() == 1, "sprint unlocks only once")
+	Events.ability_unlocked.disconnect(on_unlock)
 	check(finished[0] and GameState.completed and not GameState.running, "finishes on the last pair")
-
 	Events.run_finished.disconnect(on_finish)
+	_end_fake_run()
+
+	_start_fake_run("laundry_day", 2)
+	check(GameState.abilities.is_empty(), "a new run starts without unlocks")
+	GameState.register_match(0, 1, SockCatalog.pattern_index("silver"))
+	check(GameState.has_ability("zoom") and not GameState.has_ability("sprint"), "silver pair unlocks zoom")
 	_end_fake_run()
 
 
@@ -290,7 +304,7 @@ func _test_socks() -> void:
 			designs[socks.patterns[pair]] = true
 	var share := float(SockCatalog.data()["special_share"])
 	var words := SockCatalog.LETTERING_TEXTS.size()
-	check(special == roundi(5000 * share) + words and special == socks.special_total, "rare designs on %d pairs" % special)
+	check(special == roundi(5000 * share) + words + SockCatalog.unlock_patterns().size() and special == socks.special_total, "rare designs on %d pairs" % special)
 	check(designs.size() == SockCatalog.special_patterns().size(), "every rare design shows up")
 	var texts := {}
 	var left_right := -1
@@ -306,6 +320,15 @@ func _test_socks() -> void:
 			if socks.pair_of(sock) == left_right:
 				feet.append(socks.custom_data(sock).a)
 		check(feet.size() == 2 and feet[0] != feet[1], "LEFT and RIGHT socks differ")
+	for design in SockCatalog.unlock_patterns():
+		var found := 0
+		for pair in socks.pair_count:
+			if socks.patterns[pair] == design:
+				found += 1
+				check(not socks.shows_accent(pair), "metal pair is all one yarn")
+		check(found == 1, "one %s pair per game" % SockCatalog.pattern_id(design))
+	var small := SockSet.generate(5, 1000, 0.2)
+	check(small.validate().is_empty() and small.patterns.has(SockCatalog.pattern_index("gold")) and small.patterns.has(SockCatalog.pattern_index("silver")), "gold and silver in Laundry Day too")
 	var again := SockSet.generate(77, 5000, 0.2)
 	check(again.sock_pairs == socks.sock_pairs and again.base_colors == socks.base_colors and again.patterns == socks.patterns, "same seed, same socks")
 	for shape in SockCatalog.shape_count():

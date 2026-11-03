@@ -46,6 +46,8 @@ func _ready() -> void:
 	Events.socks_moving.connect(_on_socks_moving)
 	Events.summit_reached.connect(_on_summit_reached)
 	Events.cat_caught.connect(func() -> void: unlock("ACH_CAT_BURGLAR"))
+	Events.ability_unlocked.connect(func(ability: String) -> void:
+		notify("UNLOCK_%s_NAME" % ability.to_upper(), "UNLOCK_%s_TEXT" % ability.to_upper()))
 	Events.game_saved.connect(flush)
 
 
@@ -187,6 +189,12 @@ func _on_summit_reached() -> void:
 func is_night_owl_hour(hour: int) -> bool:
 	return hour >= int(params.get("night_owl_start_hour", 0)) \
 			and hour < int(params.get("night_owl_end_hour", 4))
+
+
+## Shows any notice in the achievement window. Takes translation keys.
+func notify(name_key: String, description_key: String) -> void:
+	if _toast != null:
+		_toast.enqueue(name_key, description_key)
 
 
 func unlock(id: String) -> void:

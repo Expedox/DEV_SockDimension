@@ -84,6 +84,13 @@ static func _make_materials() -> void:
 		material.set_shader_parameter("palette", linear)
 		for key: String in knit:
 			material.set_shader_parameter(key, float(knit[key]))
+		var metal: Dictionary = SockCatalog.data().get("metal", {})
+		for yarn: String in ["gold", "silver"]:
+			if metal.has(yarn):
+				var c := Color.html(metal[yarn]).srgb_to_linear()
+				material.set_shader_parameter(yarn + "_yarn", Vector3(c.r, c.g, c.b))
+		material.set_shader_parameter("metal_shine", float(metal.get("shine", 2.2)))
+		material.set_shader_parameter("metal_glitter", float(metal.get("glitter", 0.6)))
 		var marks := _marks[shape]
 		material.set_shader_parameter("sock_length", marks["length"])
 		material.set_shader_parameter("heel_at", marks["heel"])

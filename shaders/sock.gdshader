@@ -24,6 +24,9 @@ const int PATTERN_SNOWFLAKES = 8;
 const int PATTERN_RAINBOW = 9;
 const int PATTERN_PAWS = 10;
 const int PATTERN_LETTERING = 11;
+// Rare metallic yarn, one pair each per game; they unlock sprint and zoom.
+const int PATTERN_GOLD = 12;
+const int PATTERN_SILVER = 13;
 
 // 5x5 knitting font, one int per glyph, top row in the highest bits.
 // Order: A D E F G H I L M N O R S T U W Y heart
@@ -69,6 +72,11 @@ uniform float drape = 0.03;
 uniform float fold_shade = 0.35;
 uniform float highlight_glow = 0.5;
 uniform float highlight_rim = 1.6;
+// From "metal" in data/socks.json (colors arrive linear).
+uniform vec3 gold_yarn = vec3(0.68, 0.42, 0.08);
+uniform vec3 silver_yarn = vec3(0.56, 0.58, 0.62);
+uniform float metal_shine = 2.2;
+uniform float metal_glitter = 0.6;
 
 varying flat vec3 v_base;
 varying flat vec3 v_accent;
@@ -390,6 +398,10 @@ void fragment() {
 	if (v_heel_toe > 0.5) {
 		color = mix(color, v_accent, heel_toe_mask(pm, aa));
 	}
+	bool metal = v_pattern == PATTERN_GOLD || v_pattern == PATTERN_SILVER;
+	if (metal) {
+		color = v_pattern == PATTERN_GOLD ? gold_yarn : silver_yarn;
+	}
 
 	// Yarn relief: height, its slope for the normal, and dark gaps between stitches.
 	float h = yarn(st, rib, detail);
@@ -416,6 +428,12 @@ void fragment() {
 	// Soft occlusion in fold valleys and inside the opening; also dims direct light a bit.
 	AO = clamp(1.0 - fold_shade * (0.5 - 0.5 * v_fold), 0.0, 1.0) * mix(1.0, 0.4, smoothstep(0.0, -0.01, m.y));
 	AO_LIGHT_AFFECT = 0.45;
+	if (metal) {
+		// Lurex yarn: a metallic glint in light(), and single stitches that twinkle.
+		METALLIC = 1.0;
+		float twinkle = step(0.94, hash12(floor(st) + floor(TIME * 1.5 + hash12(floor(st)) * 7.0)));
+		EMISSION = color * twinkle * metal_glitter * detail;
+	}
 
 	// Aimed sock: soft warm glow plus a bright rim, so it stands out from its neighbours.
 	if (v_highlight > 0.5) {
@@ -434,4 +452,10 @@ void light() {
 	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 4.0);
 	float lit = clamp(ndl + 0.5, 0.0, 1.0);
 	SPECULAR_LIGHT += rim * lit * sheen * ATTENUATION * LIGHT_COLOR / PI * mix(ALBEDO, vec3(1.0), 0.35);
+	if (METALLIC > 0.5) {
+		// Metallic yarn throws a tinted highlight, broad because the threads are rough.
+		vec3 h = normalize(LIGHT + VIEW);
+		float glint = pow(max(dot(NORMAL, h), 0.0), 12.0) * max(ndl, 0.0);
+		SPECULAR_LIGHT += glint * metal_shine * ATTENUATION * LIGHT_COLOR * ALBEDO;
+	}
 }

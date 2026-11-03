@@ -33,6 +33,8 @@ var _fall_speed := 0.0
 ## feet lifts the player onto them, so loose socks and slopes walk smoothly.
 var _on_sock_ground := false
 var _probe := PhysicsShapeQueryParameters3D.new()
+## 0 normal view, 1 fully zoomed (silver socks unlock zoom).
+var _zoom := 0.0
 
 
 func _ready() -> void:
@@ -141,7 +143,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		_track_cheat_code(event.keycode)
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		var motion: Vector2 = event.relative * Settings.mouse_sensitivity
+		# Zoomed in, the view turns slower so aiming stays steady.
+		var motion: Vector2 = event.relative * Settings.mouse_sensitivity * (camera.fov / Settings.fov)
 		if Settings.invert_mouse:
 			motion.y = -motion.y
 		if _held and Input.is_action_pressed("inspect"):
@@ -168,7 +171,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	camera.fov = Settings.fov
+	_update_zoom(delta)
 	_move(delta)
 	if _held:
 		_steer_held(delta)
@@ -183,6 +186,8 @@ func _move(delta: float) -> void:
 		input = Vector2.ZERO
 	var direction := (Basis(Vector3.UP, _yaw) * Vector3(input.x, 0.0, input.y)).normalized()
 	var speed := float(_cfg.speed)
+	if GameState.has_ability("sprint") and Input.is_action_pressed("sprint"):
+		speed *= float(_cfg.get("sprint_multiplier", 1.8))
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
 	if _grounded():
@@ -201,6 +206,15 @@ func _move(delta: float) -> void:
 		_try_step(start, horizontal)
 	_stand_on_socks(start, was_on_floor, delta)
 	_footsteps(was_on_floor, start.origin)
+
+
+## Holding the zoom key narrows the view once silver socks unlocked it.
+func _update_zoom(delta: float) -> void:
+	var want := 1.0 if GameState.has_ability("zoom") and GameState.running \
+			and Input.is_action_pressed("zoom") else 0.0
+	_zoom = move_toward(_zoom, want, float(_cfg.get("zoom_speed", 6.0)) * delta)
+	var eased := _zoom * _zoom * (3.0 - 2.0 * _zoom)
+	camera.fov = lerpf(Settings.fov, minf(float(_cfg.get("zoom_fov", 22.0)), Settings.fov), eased)
 
 
 func _grounded() -> bool:

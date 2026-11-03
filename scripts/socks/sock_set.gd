@@ -318,21 +318,32 @@ func _add_specials(share: float) -> void:
 	# The knitted words come on top, once each, after the rolled designs so
 	# those stay as they were. Always the long sock, so the word fits the leg.
 	var lettering := SockCatalog.lettering_pattern()
-	if lettering < 0:
-		return
-	var shape := maxi(0, _shape_index(str(SockCatalog.data().get("lettering_shape", ""))))
-	for value: Variant in SockCatalog.pattern(lettering)["counts"]:
+	if lettering >= 0:
+		var shape := maxi(0, _shape_index(str(SockCatalog.data().get("lettering_shape", ""))))
+		for value: Variant in SockCatalog.pattern(lettering)["counts"]:
+			if next >= candidates.size():
+				break
+			var pair := candidates[next]
+			next += 1
+			var base := base_colors[pair]
+			var accent := accent_colors[pair]
+			if accent == base:
+				var allowed := SockCatalog.accents_for(base)
+				accent = allowed[rng.randi_range(0, allowed.size() - 1)]
+			_used.erase(_key(base, accent_colors[pair], patterns[pair], counts[pair], shapes[pair], heel_toes[pair]))
+			_store(pair, base, accent, lettering, int(value), shape, heel_toes[pair])
+			special_total += 1
+
+	# Golden and silver socks come last, one pair each. The whole sock is
+	# metallic yarn, so it has no accent and no contrast heel and toe.
+	for design in SockCatalog.unlock_patterns():
 		if next >= candidates.size():
 			break
 		var pair := candidates[next]
 		next += 1
 		var base := base_colors[pair]
-		var accent := accent_colors[pair]
-		if accent == base:
-			var allowed := SockCatalog.accents_for(base)
-			accent = allowed[rng.randi_range(0, allowed.size() - 1)]
 		_used.erase(_key(base, accent_colors[pair], patterns[pair], counts[pair], shapes[pair], heel_toes[pair]))
-		_store(pair, base, accent, lettering, int(value), shape, heel_toes[pair])
+		_store(pair, base, base, design, 0, shapes[pair], 0)
 		special_total += 1
 
 

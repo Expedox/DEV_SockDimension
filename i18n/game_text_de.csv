@@ -164,3 +164,9 @@ ACH_CAT_BURGLAR_DESC,"Erwische die Kellerkatze dabei, wie sie eine Socke wegträ
 TUT_CARRY_TITLE,Trag einen Stapel
 TUT_CARRY_TEXT,"Greif eine weitere Socke: Die erste wandert unter den Arm. Du kannst bis zu zehn tragen. Mausrad wechselt die Socke in der Hand, Q lässt alle fallen."
 TUT_SKIP_HINT,Tab: Tutorial überspringen
+UNLOCK_SPRINT_NAME,Goldene Socken
+UNLOCK_SPRINT_TEXT,Sprinten freigeschaltet für dieses Spiel. Shift halten zum Laufen.
+UNLOCK_ZOOM_NAME,Silberne Socken
+UNLOCK_ZOOM_TEXT,Zoom freigeschaltet für dieses Spiel. C halten zum Heranzoomen.
+HINT_SPRINT,Shift: sprinten
+HINT_ZOOM,C halten: zoomen

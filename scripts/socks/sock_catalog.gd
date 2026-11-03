@@ -8,7 +8,7 @@ const MAX_COUNT := 15 # pattern and count share one byte in the custom data
 ## sock.gdshader knows the patterns by position, so data/socks.json must keep this order.
 const PATTERN_ORDER := [
 	"plain", "stripes", "dots", "cuff_rings", "argyle",
-	"hearts", "stars", "zigzag", "snowflakes", "rainbow", "paws", "lettering",
+	"hearts", "stars", "zigzag", "snowflakes", "rainbow", "paws", "lettering", "gold", "silver",
 ]
 ## Knitted words, one pair each per game. The count of a "lettering" pair picks
 ## the text; LEFT_RIGHT puts LEFT on one sock and RIGHT on its twin.
@@ -60,6 +60,22 @@ static func regular_pattern_count() -> int:
 
 static func lettering_pattern() -> int:
 	return pattern_index("lettering")
+
+
+## Ability a pattern unlocks for the run once its pair is found ("sprint", "zoom"), or "".
+static func unlock_of(index: int) -> String:
+	if index < 0 or index >= pattern_count():
+		return ""
+	return str(pattern(index).get("unlocks", ""))
+
+
+## Patterns that unlock an ability. One pair each per game.
+static func unlock_patterns() -> PackedInt32Array:
+	var result := PackedInt32Array()
+	for i in pattern_count():
+		if not unlock_of(i).is_empty():
+			result.append(i)
+	return result
 
 
 static func special_patterns() -> PackedInt32Array:

@@ -20,6 +20,8 @@ var near_misses := 0
 var cat_steals := 0
 var cat_catches := 0
 var found_pair_ids := PackedInt32Array()
+## Abilities unlocked this run by golden and silver socks ("sprint", "zoom"). Saved, reset by New Game.
+var abilities := PackedStringArray()
 
 ## Sock and player state to restore; empty for a fresh pile.
 var pending_world: Dictionary = {}
@@ -61,6 +63,7 @@ func start_loaded(data: Dictionary, from_slot := 1) -> void:
 	cat_steals = data.get("cat_steals", 0)
 	cat_catches = data.get("cat_catches", 0)
 	found_pair_ids = data.found
+	abilities = PackedStringArray(data.get("abilities", PackedStringArray()))
 	pairs_found = found_pair_ids.size()
 	pending_world = data.world
 	Achievements.restore_run(data.get("achievements", {}))
@@ -81,6 +84,7 @@ func capture() -> Dictionary:
 		"cat_steals": cat_steals,
 		"cat_catches": cat_catches,
 		"found": found_pair_ids,
+		"abilities": abilities,
 		"world": world_provider.capture_world() if world_provider else {},
 		"achievements": Achievements.capture_run(),
 	}
@@ -95,8 +99,20 @@ func register_match(pair_id: int, base_color: int, pattern_type: int) -> void:
 	pairs_found += 1
 	streak += 1
 	Events.pair_matched.emit(pair_id, base_color, pattern_type)
+	unlock_ability(SockCatalog.unlock_of(pattern_type))
 	if pairs_found >= pairs_total:
 		finish()
+
+
+func has_ability(ability: String) -> bool:
+	return abilities.has(ability)
+
+
+func unlock_ability(ability: String) -> void:
+	if ability.is_empty() or abilities.has(ability):
+		return
+	abilities.append(ability)
+	Events.ability_unlocked.emit(ability)
 
 
 func register_mismatch(near_miss: bool) -> void:
@@ -140,6 +156,7 @@ func _reset(new_mode: String) -> void:
 	cat_steals = 0
 	cat_catches = 0
 	found_pair_ids = PackedInt32Array()
+	abilities = PackedStringArray()
 	running = false
 	cheat_mode = false
 

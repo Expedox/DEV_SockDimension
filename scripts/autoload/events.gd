@@ -13,6 +13,8 @@ signal socks_moving(count: int)
 signal summit_reached
 ## The cellar cat was seen carrying off a sock.
 signal cat_caught
+## A golden or silver pair was found and its ability ("sprint", "zoom") is on for this run.
+signal ability_unlocked(ability: String)
 
 # Run lifecycle
 signal pile_progress(done: int, total: int)

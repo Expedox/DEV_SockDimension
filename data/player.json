@@ -20,5 +20,8 @@
   "step_stride": 1.8,
   "land_sound_speed": 3.5,
   "sock_foot_radius": 0.18,
-  "sock_climb": 0.35
+  "sock_climb": 0.35,
+  "sprint_multiplier": 1.8,
+  "zoom_fov": 22.0,
+  "zoom_speed": 6.0
 }
