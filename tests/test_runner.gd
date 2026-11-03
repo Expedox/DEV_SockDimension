@@ -29,6 +29,8 @@ func _ready() -> void:
 	_test_drop_scatter()
 	await _test_lost_found()
 	await _test_firm_hand()
+	await _test_hitboxes()
+	await _test_unsnag()
 	await _test_pair_controller()
 
 	print("%d checks, %d failed" % [_checks, _failures])
@@ -488,6 +490,214 @@ func _test_firm_hand() -> void:
 	field.queue_free()
 	cellar.queue_free()
 	await get_tree().process_frame
+
+
+## Every solid prop collides exactly where it is drawn: the colliders of each
+## static body cover the same box as its meshes, nothing sticks out into the
+## room. The shelf once had its box turned 90 degrees, 1.3 m into the room.
+func _test_hitboxes() -> void:
+	for mode_id in ["laundry_day", "sock_dimension"]:
+		Config.use_mode_room(mode_id)
+		var cellar := Cellar.new()
+		add_child(cellar)
+		var cat := CellarCat.new()
+		add_child(cat)
+		var socks := SockSet.generate(3, 200, 0.2)
+		var field := SockField.new()
+		add_child(field)
+		field.prepare(socks, {0: Transform3D(Basis.IDENTITY, Vector3(0.0, 0.2, 0.0))})
+		var size := Cellar.vec3(Config.world.room_size)
+		var room := AABB(Vector3(-size.x * 0.5, 0.0, -size.z * 0.5), size)
+		var stand_in := Node3D.new()
+		add_child(stand_in)
+		cat.setup(field, cellar, stand_in, Config.world.cat)
+		var wall := SockWall.new()
+		add_child(wall)
+		var found := PackedInt32Array()
+		for pair in 60:
+			found.append(pair * 3)
+		wall.setup(socks, Config.world.pair_wall, found, room)
+		await get_tree().physics_frame
+
+		var bodies := 0
+		var bad: Array[String] = []
+		for body: StaticBody3D in _static_bodies(cellar):
+			if body.name == "BasketBody":
+				continue
+			var meshes := _mesh_box(body)
+			var shapes := _shape_box(body)
+			if not meshes.has_volume():
+				continue
+			bodies += 1
+			if not _same_box(meshes, shapes, 0.01):
+				bad.append("%s mesh %s vs shape %s" % [body.name, meshes, shapes])
+		check(bodies >= 14, "%s: all solid props found (%d)" % [mode_id, bodies])
+		check(bad.is_empty(), "%s: every prop collides where it is drawn %s" % [mode_id, str(bad)])
+
+		var space := get_viewport().world_3d.direct_space_state
+		var shelf := cellar.get_node("Shelf") as StaticBody3D
+		var shelf_box := _mesh_box(shelf)
+		var front := shelf_box.end.x
+		var free_front := true
+		for i in 40:
+			var z := shelf_box.position.z + shelf_box.size.z * i / 39.0
+			for y in [0.1, 0.5, 1.0, 1.5, 1.9]:
+				if _solid_at(space, Vector3(front + 0.02, y, z)):
+					free_front = false
+		check(free_front, "%s: nothing solid right in front of the shelf" % mode_id)
+		check(_solid_at(space, Vector3(front - 0.05, shelf_box.position.y + 0.135, shelf_box.get_center().z)),
+				"%s: the shelf boards are solid" % mode_id)
+
+		var basket := cellar.basket.get_node("BasketBody") as StaticBody3D
+		var basket_shapes := _shape_box(basket)
+		var basket_meshes := _mesh_box(cellar.basket)
+		# (The slanted wall boxes may dip a centimetre into the floor slab.)
+		basket_meshes = basket_meshes.grow(0.01).merge(AABB(basket_meshes.position - Vector3(0, 0.05, 0), Vector3(0.01, 0.01, 0.01)))
+		check(basket_meshes.encloses(basket_shapes), "%s: basket walls stay inside its outline (%s vs %s)" % [mode_id, basket_meshes, basket_shapes])
+		var r := float(Config.world.basket_radius)
+		var at := cellar.basket.global_position
+		check(not _solid_at(space, at + Vector3(r + 0.05, float(Config.world.basket_height) * 0.95, 0.0)),
+				"%s: nothing solid just outside the basket rim" % mode_id)
+
+		# Hanging pairs are solid; an empty board is only as thick as it looks.
+		check(wall.hung_collider_count() == found.size() * 2, "%s: two solid socks per hanging pair" % mode_id)
+		check(_solid_at(space, wall.pair_transform(found[5]).origin), "%s: a hanging sock is solid" % mode_id)
+		var empty := wall.pair_transform(1).origin # pair 1 is not found yet
+		check(not _solid_at(space, empty), "%s: an empty peg is not solid" % mode_id)
+
+		# A sock thrown along the front of the shelf flies as far as one thrown
+		# through open space: nothing invisible holds it back.
+		var sock := field.sock_by_id(0)
+		var reach := []
+		for gap in [0.3, 1.5]:
+			var start := Vector3(front + gap, 1.0, shelf_box.position.z - 0.3)
+			sock.freeze = false
+			sock.global_transform = Transform3D(Basis.IDENTITY, start)
+			sock.linear_velocity = Vector3(0.0, 0.0, 6.0)
+			sock.angular_velocity = Vector3.ZERO
+			sock.sleeping = false
+			for frame in 20:
+				await get_tree().physics_frame
+			reach.append(sock.global_position.z - start.z)
+		check(reach[0] > reach[1] * 0.95, "%s: a sock flies past the shelf unhindered (%.2f of %.2f m)" % [mode_id, reach[0], reach[1]])
+
+		# A sock that lands on the ceiling pipes is nudged down, never stuck out of reach.
+		var pipe := cellar.get_node("Pipes/Pipe1") as MeshInstance3D
+		sock.freeze = false
+		sock.global_transform = Transform3D(Basis(Vector3.UP, PI * 0.5), pipe.global_position + Vector3.UP * 0.2)
+		sock.linear_velocity = Vector3.ZERO
+		sock.sleeping = false
+		var landed_high := false
+		for frame in 360:
+			await get_tree().physics_frame
+			landed_high = landed_high or (sock.global_position.y > 5.0 and sock.linear_velocity.length() < 0.05)
+		check(sock.global_position.y < 1.0 and landed_high, "%s: no sock stays on the pipes (y %.2f, rested up there: %s)" % [mode_id, sock.global_position.y, landed_high])
+
+		wall.queue_free()
+		stand_in.queue_free()
+		cat.queue_free()
+		field.queue_free()
+		cellar.queue_free()
+		await get_tree().process_frame
+	Config.use_mode_room("laundry_day")
+
+
+## A sock in hand caught behind a wall slips through to the hand and becomes
+## solid again there.
+func _test_unsnag() -> void:
+	var cellar := Cellar.new()
+	add_child(cellar)
+	var field := SockField.new()
+	add_child(field)
+	var config: Dictionary = Config.world.lost_found
+	var crate := Cellar.vec3(config.position)
+	var inside := crate + Vector3(0.0, 0.25, 0.0)
+	var hand := crate + Vector3(Cellar.vec3(config.size).x * 0.5 + 0.6, 0.25, 0.0)
+	field.prepare(SockSet.generate(9, 2, 0.0), {0: Transform3D(Basis.IDENTITY, inside)})
+	var player := Player.new()
+	player.set_physics_process(false)
+	player.set_process_unhandled_input(false)
+	add_child(player)
+	player.global_position = Vector3(0, 0, 3)
+	var sock := field.sock_by_id(0)
+	field.begin_hold(sock)
+	var cfg := Config.player
+	var slipped := false
+	var waited := 0.0
+	while waited < 2.0 and sock.global_position.distance_to(hand) > 0.05:
+		var dt := get_physics_process_delta_time()
+		player._unsnag(sock, hand, dt)
+		slipped = slipped or sock.collision_mask == 0
+		sock.linear_velocity = ((hand - sock.global_position) * float(cfg.hold_spring)).limit_length(float(cfg.hold_max_speed))
+		sock.angular_velocity = Vector3.ZERO
+		await get_tree().physics_frame
+		waited += dt
+	for frame in 5:
+		player._unsnag(sock, hand, get_physics_process_delta_time())
+		await get_tree().physics_frame
+	check(slipped, "a sock stuck behind the crate wall slips through")
+	check(sock.global_position.distance_to(hand) < 0.1, "it reaches the hand (%.2f m off)" % sock.global_position.distance_to(hand))
+	check(sock.collision_mask == SockField.WORLD_LAYER, "and is solid again in the hand")
+	player.queue_free()
+	field.queue_free()
+	cellar.queue_free()
+	await get_tree().process_frame
+
+
+func _static_bodies(root: Node) -> Array[StaticBody3D]:
+	var out: Array[StaticBody3D] = []
+	for child in root.get_children():
+		if child is StaticBody3D:
+			out.append(child)
+		out.append_array(_static_bodies(child))
+	return out
+
+
+## World box of the meshes drawn by a node, not counting nested bodies.
+func _mesh_box(node: Node) -> AABB:
+	var box := AABB()
+	var first := true
+	for child in node.get_children():
+		if child is CollisionObject3D and child != node:
+			continue
+		var b := AABB()
+		if child is MeshInstance3D:
+			b = (child as MeshInstance3D).global_transform * (child as MeshInstance3D).get_aabb()
+		elif child is Node3D:
+			b = _mesh_box(child)
+			if not b.has_volume():
+				continue
+		else:
+			continue
+		box = b if first else box.merge(b)
+		first = false
+	return box
+
+
+func _shape_box(body: CollisionObject3D) -> AABB:
+	var box := AABB()
+	var first := true
+	for child in body.get_children():
+		if child is CollisionShape3D:
+			var collider := child as CollisionShape3D
+			var b := collider.global_transform * collider.shape.get_debug_mesh().get_aabb()
+			box = b if first else box.merge(b)
+			first = false
+	return box
+
+
+func _same_box(a: AABB, b: AABB, tolerance: float) -> bool:
+	return a.position.distance_to(b.position) <= tolerance * 1.8 and a.end.distance_to(b.end) <= tolerance * 1.8
+
+
+func _solid_at(space: PhysicsDirectSpaceState3D, at: Vector3) -> bool:
+	var query := PhysicsShapeQueryParameters3D.new()
+	var probe := SphereShape3D.new()
+	probe.radius = 0.01
+	query.shape = probe
+	query.transform = Transform3D(Basis.IDENTITY, at)
+	query.collision_mask = Cellar.WORLD_LAYER
+	return not space.intersect_shape(query, 1).is_empty()
 
 
 func _test_drop_scatter() -> void:

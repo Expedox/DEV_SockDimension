@@ -37,5 +37,7 @@
   "pour_cone_power": 1.3,
   "pour_lumpiness": 0.9,
   "pour_lump_frequency": 0.9,
-  "floor_sock_height": 0.06
+  "floor_sock_height": 0.06,
+  "ledge_height": 3.5,
+  "ledge_push": 2.5
 }

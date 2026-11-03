@@ -128,9 +128,14 @@ func _build_colliders(world_layer: int) -> void:
 	body.collision_mask = 0
 	add_child(body)
 
+	# The visible shell is a thin surface with a 3 cm rim; the wall reaches as
+	# far out as the rim and the rest of its thickness goes inwards, so thrown
+	# socks cannot tunnel through and nothing outside stops in mid-air.
+	var outside := 0.03
 	var slant := atan2(r_top - r_bottom, height)
-	var radius := (r_top + r_bottom) * 0.5 + thickness * 0.5
-	var width := TAU * (r_top + thickness) / segments * 1.05
+	var radius := (r_top + r_bottom) * 0.5 + outside - thickness * 0.5
+	# Chord boxes: wide enough to close the gaps between neighbours.
+	var width := 2.0 * (r_top + outside) * tan(PI / segments) * 1.02
 	for i in segments:
 		var angle := TAU * i / segments
 		var shape := BoxShape3D.new()
@@ -141,12 +146,13 @@ func _build_colliders(world_layer: int) -> void:
 		part.transform = Transform3D(basis, Basis(Vector3.UP, angle) * Vector3(0, height * 0.5, radius))
 		body.add_child(part)
 
+	# Same size as the visible base disc.
 	var bottom := CollisionShape3D.new()
 	var bottom_shape := CylinderShape3D.new()
-	bottom_shape.radius = r_bottom + thickness
-	bottom_shape.height = 0.06
+	bottom_shape.radius = r_bottom
+	bottom_shape.height = 0.03
 	bottom.shape = bottom_shape
-	bottom.position.y = 0.03
+	bottom.position.y = 0.015
 	body.add_child(bottom)
 
 

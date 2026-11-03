@@ -25,7 +25,7 @@
   "wall_band_height": 1.1,
   "basket_radius_bottom": 0.56,
   "basket_wall_thickness": 0.12,
-  "basket_wall_segments": 14,
+  "basket_wall_segments": 24,
   "basket_detect_inset": 0.1,
   "basket_pile_step": 0.0012,
   "basket_pile_max": 0.72,

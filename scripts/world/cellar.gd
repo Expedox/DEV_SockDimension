@@ -205,8 +205,7 @@ func _build_lamp(config: Dictionary) -> void:
 	var radius := float(config["shade_radius"])
 	var color := Color(config["color"])
 
-	var lamp := Node3D.new()
-	lamp.name = "Lamp"
+	var lamp := static_body("Lamp")
 	lamp.position = mount
 	add_child(lamp)
 
@@ -218,11 +217,7 @@ func _build_lamp(config: Dictionary) -> void:
 	cord_mesh.height = drop
 	cord_mesh.radial_segments = 6
 	cord_mesh.rings = 1
-	var cord := MeshInstance3D.new()
-	cord.mesh = cord_mesh
-	cord.material_override = cord_material
-	cord.position.y = -drop * 0.5
-	lamp.add_child(cord)
+	_add_solid_part(lamp, cord_mesh, cord_material, Vector3(0, -drop * 0.5, 0))
 
 	var shade_material := StandardMaterial3D.new()
 	shade_material.albedo_color = _color("lamp_shade")
@@ -237,12 +232,8 @@ func _build_lamp(config: Dictionary) -> void:
 	shade_mesh.rings = 1
 	shade_mesh.cap_top = true
 	shade_mesh.cap_bottom = false
-	var shade := MeshInstance3D.new()
-	shade.mesh = shade_mesh
-	shade.material_override = shade_material
-	shade.position.y = -drop - radius * 0.3
+	var shade := _add_solid_part(lamp, shade_mesh, shade_material, Vector3(0, -drop - radius * 0.3, 0))
 	shade.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	lamp.add_child(shade)
 
 	var bulb_material := StandardMaterial3D.new()
 	bulb_material.albedo_color = color
@@ -254,12 +245,8 @@ func _build_lamp(config: Dictionary) -> void:
 	bulb_mesh.height = radius * 0.44
 	bulb_mesh.radial_segments = 12
 	bulb_mesh.rings = 6
-	var bulb := MeshInstance3D.new()
-	bulb.mesh = bulb_mesh
-	bulb.material_override = bulb_material
-	bulb.position.y = -drop - radius * 0.5
+	var bulb := _add_solid_part(lamp, bulb_mesh, bulb_material, Vector3(0, -drop - radius * 0.5, 0))
 	bulb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	lamp.add_child(bulb)
 
 	var light_y := -drop - radius * 0.55
 	# The shade throws a warm cone downwards; a weak fill lights the rest of the room.
@@ -314,20 +301,20 @@ func _build_washing_machine() -> void:
 	var panel_height := size.y * 0.14
 	var panel_mesh := BoxMesh.new()
 	panel_mesh.size = Vector3(size.x * 0.96, panel_height, 0.03)
-	_add_part(body, panel_mesh, _plain(_color("machine_panel"), 0.5),
+	_add_solid_part(body, panel_mesh, _plain(_color("machine_panel"), 0.5),
 			Vector3(0, size.y * 0.5 - panel_height * 0.6, front + 0.012))
 
 	var drawer_mesh := BoxMesh.new()
 	drawer_mesh.size = Vector3(size.x * 0.3, panel_height * 0.65, 0.02)
-	_add_part(body, drawer_mesh, trim, Vector3(-size.x * 0.28, size.y * 0.5 - panel_height * 0.6, front + 0.032))
+	_add_solid_part(body, drawer_mesh, trim, Vector3(-size.x * 0.28, size.y * 0.5 - panel_height * 0.6, front + 0.032))
 
 	var knob_mesh := CylinderMesh.new()
 	knob_mesh.top_radius = panel_height * 0.32
 	knob_mesh.bottom_radius = panel_height * 0.36
 	knob_mesh.height = 0.04
 	knob_mesh.radial_segments = 20
-	var knob := _add_part(body, knob_mesh, trim, Vector3(size.x * 0.3, size.y * 0.5 - panel_height * 0.6, front + 0.04))
-	knob.rotation.x = PI * 0.5
+	_add_solid_part(body, knob_mesh, trim, Vector3(size.x * 0.3, size.y * 0.5 - panel_height * 0.6, front + 0.04),
+			Vector3(PI * 0.5, 0, 0))
 
 	var door_y := -size.y * 0.09
 	var door_radius := size.x * 0.33
@@ -336,8 +323,7 @@ func _build_washing_machine() -> void:
 	ring_mesh.outer_radius = door_radius
 	ring_mesh.rings = 32
 	ring_mesh.ring_segments = 12
-	var ring := _add_part(body, ring_mesh, trim, Vector3(0, door_y, front + 0.03))
-	ring.rotation.x = PI * 0.5
+	_add_solid_part(body, ring_mesh, trim, Vector3(0, door_y, front + 0.03), Vector3(PI * 0.5, 0, 0))
 
 	var glass_material := _plain(_color("machine_glass"), 0.08, 0.2)
 	var glass_mesh := CylinderMesh.new()
@@ -345,14 +331,15 @@ func _build_washing_machine() -> void:
 	glass_mesh.bottom_radius = door_radius * 0.84
 	glass_mesh.height = 0.03
 	glass_mesh.radial_segments = 32
-	var glass := _add_part(body, glass_mesh, glass_material, Vector3(0, door_y, front + 0.012))
-	glass.rotation.x = PI * 0.5
+	_add_solid_part(body, glass_mesh, glass_material, Vector3(0, door_y, front + 0.012), Vector3(PI * 0.5, 0, 0))
 
 
 func _build_pipes() -> void:
-	# A run of pipes under the ceiling, only for looks.
+	# A run of pipes under the ceiling; solid, so thrown socks bounce off them.
 	var size := _room_size
 	var material := _plain(_color("pipe"), 0.45, 0.7)
+	var body := static_body("Pipes")
+	add_child(body)
 	for i in 3:
 		var mesh := CylinderMesh.new()
 		mesh.top_radius = 0.06 + i * 0.02
@@ -360,14 +347,10 @@ func _build_pipes() -> void:
 		mesh.height = size.x
 		mesh.radial_segments = 10
 		mesh.rings = 1
-		var pipe := MeshInstance3D.new()
+		var pipe := _add_solid_part(body, mesh, material,
+				Vector3(0, size.y - 0.5 - i * 0.04, -size.z * 0.5 + 0.5 + i * 0.32), Vector3(0, 0, PI * 0.5))
 		pipe.name = "Pipe%d" % i
-		pipe.mesh = mesh
-		pipe.material_override = material
-		pipe.rotation.z = PI * 0.5
-		pipe.position = Vector3(0, size.y - 0.5 - i * 0.04, -size.z * 0.5 + 0.5 + i * 0.32)
 		pipe.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(pipe)
 
 
 func _build_window(config: Dictionary) -> void:
@@ -377,8 +360,7 @@ func _build_window(config: Dictionary) -> void:
 	var at := Vector3(float(config["x"]), float(config["y"]), -half.z)
 	var color := Color(config["color"])
 
-	var window := Node3D.new()
-	window.name = "Window"
+	var window := static_body("Window")
 	window.position = at
 	add_child(window)
 
@@ -397,16 +379,16 @@ func _build_window(config: Dictionary) -> void:
 	for side in [-1.0, 1.0]:
 		var post := BoxMesh.new()
 		post.size = Vector3(bar, size.y + bar * 2.0, depth)
-		_add_part(window, post, frame_material, Vector3(side * (size.x + bar) * 0.5, 0, depth * 0.5))
+		_add_solid_part(window, post, frame_material, Vector3(side * (size.x + bar) * 0.5, 0, depth * 0.5))
 		var rail := BoxMesh.new()
 		rail.size = Vector3(size.x + bar * 2.0, bar, depth)
-		_add_part(window, rail, frame_material, Vector3(0, side * (size.y + bar) * 0.5, depth * 0.5))
+		_add_solid_part(window, rail, frame_material, Vector3(0, side * (size.y + bar) * 0.5, depth * 0.5))
 	var mullion := BoxMesh.new()
 	mullion.size = Vector3(bar * 0.6, size.y, depth * 0.6)
-	_add_part(window, mullion, frame_material, Vector3(0, 0, depth * 0.3))
+	_add_solid_part(window, mullion, frame_material, Vector3(0, 0, depth * 0.3))
 	var sill := BoxMesh.new()
 	sill.size = Vector3(size.x + bar * 4.0, 0.05, 0.3)
-	_add_part(window, sill, frame_material, Vector3(0, -size.y * 0.5 - bar - 0.025, 0.15))
+	_add_solid_part(window, sill, frame_material, Vector3(0, -size.y * 0.5 - bar - 0.025, 0.15))
 
 	var light := SpotLight3D.new()
 	light.name = "Moonlight"
@@ -457,15 +439,13 @@ func _build_beams() -> void:
 	var material := _wood(0, 0.3, _color("beam"), _color("wood_dark"), false)
 	var z := -size.z * 0.5 + spacing
 	var index := 0
+	var body := static_body("Beams")
+	add_child(body)
 	while z < size.z * 0.5 - spacing * 0.5:
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(size.x, beam.y, beam.z)
-		var part := MeshInstance3D.new()
+		var part := _add_solid_part(body, mesh, material, Vector3(0, size.y - beam.y * 0.5, z))
 		part.name = "Beam%d" % index
-		part.mesh = mesh
-		part.material_override = material
-		part.position = Vector3(0, size.y - beam.y * 0.5, z)
-		add_child(part)
 		z += spacing
 		index += 1
 
@@ -544,23 +524,16 @@ func _build_shelf() -> void:
 	var boards := int(config["boards"])
 	var wood := _wood(1, 0.14, _color("shelf"), _color("wood_dark"), false)
 
-	var body := StaticBody3D.new()
-	body.name = "Shelf"
+	# Every post, board, box and jar is solid on its own. Width (size.x) runs
+	# along the wall (Z), depth (size.z) into the room (X).
+	var body := static_body("Shelf")
 	body.position = at
-	body.collision_layer = WORLD_LAYER
-	body.collision_mask = 0
 	add_child(body)
-	var shape := BoxShape3D.new()
-	shape.size = size
-	var collider := CollisionShape3D.new()
-	collider.shape = shape
-	collider.position.y = size.y * 0.5
-	body.add_child(collider)
 
 	for side in [-1.0, 1.0]:
 		var post := BoxMesh.new()
 		post.size = Vector3(size.z, size.y, 0.05)
-		_add_part(body, post, wood, Vector3(0, size.y * 0.5, side * (size.x * 0.5 - 0.025))).cast_shadow = \
+		_add_solid_part(body, post, wood, Vector3(0, size.y * 0.5, side * (size.x * 0.5 - 0.025))).cast_shadow = \
 				GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 
 	var rng := RandomNumberGenerator.new()
@@ -574,7 +547,7 @@ func _build_shelf() -> void:
 		var y := 0.12 + b * (size.y - 0.2) / (boards - 1)
 		var board := BoxMesh.new()
 		board.size = Vector3(size.z, 0.03, size.x)
-		_add_part(body, board, wood, Vector3(0, y, 0))
+		_add_solid_part(body, board, wood, Vector3(0, y, 0))
 		if b == boards - 1:
 			continue
 		# Fill the board from one end to the other with a random mix of boxes and jars.
@@ -584,9 +557,9 @@ func _build_shelf() -> void:
 				var box_size := Vector3(rng.randf_range(0.25, size.z * 0.9), rng.randf_range(0.18, 0.34), rng.randf_range(0.25, 0.45))
 				var box := BoxMesh.new()
 				box.size = box_size
-				var part := _add_part(body, box, _plain(box_colors[rng.randi() % box_colors.size()], 0.95),
-						Vector3(0, y + 0.015 + box_size.y * 0.5, cursor + box_size.z * 0.5))
-				part.rotation.y = rng.randf_range(-0.08, 0.08)
+				var color: Color = box_colors[rng.randi() % box_colors.size()]
+				var box_at := Vector3(0, y + 0.015 + box_size.y * 0.5, cursor + box_size.z * 0.5)
+				_add_solid_part(body, box, _plain(color, 0.95), box_at, Vector3(0, rng.randf_range(-0.08, 0.08), 0))
 				cursor += box_size.z + rng.randf_range(0.04, 0.15)
 			else:
 				for j in rng.randi_range(2, 4):
@@ -596,13 +569,13 @@ func _build_shelf() -> void:
 					jar.height = rng.randf_range(0.14, 0.2)
 					jar.radial_segments = 12
 					var jar_at := Vector3(rng.randf_range(-0.08, 0.08), y + 0.015 + jar.height * 0.5, cursor + 0.06)
-					_add_part(body, jar, jar_material, jar_at)
+					_add_solid_part(body, jar, jar_material, jar_at)
 					var lid := CylinderMesh.new()
 					lid.top_radius = 0.052
 					lid.bottom_radius = 0.052
 					lid.height = 0.02
 					lid.radial_segments = 12
-					_add_part(body, lid, lid_material, jar_at + Vector3.UP * (jar.height * 0.5 + 0.01))
+					_add_solid_part(body, lid, lid_material, jar_at + Vector3.UP * (jar.height * 0.5 + 0.01))
 					cursor += 0.13
 				cursor += 0.08
 
@@ -866,3 +839,52 @@ func _add_part(parent: Node3D, mesh: Mesh, material: Material, at: Vector3) -> M
 	part.position = at
 	parent.add_child(part)
 	return part
+
+
+## A visible part that is also solid: the collider is built from the same mesh
+## and sits exactly where the mesh sits, so nothing hits thin air.
+func _add_solid_part(body: CollisionObject3D, mesh: Mesh, material: Material, at: Vector3,
+		rot := Vector3.ZERO) -> MeshInstance3D:
+	var part := _add_part(body, mesh, material, at)
+	part.rotation = rot
+	add_collider(body, mesh, part.transform)
+	return part
+
+
+## Static body on the world layer, for props.
+static func static_body(node_name: String) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.collision_layer = WORLD_LAYER
+	body.collision_mask = 0
+	return body
+
+
+static func add_collider(body: CollisionObject3D, mesh: Mesh, xform: Transform3D) -> CollisionShape3D:
+	var collider := CollisionShape3D.new()
+	collider.shape = shape_for(mesh)
+	collider.transform = xform
+	body.add_child(collider)
+	return collider
+
+
+## Collision shape with exactly the outline of a primitive mesh. Boxes and
+## straight cylinders use the matching primitive, tapered cylinders their
+## convex hull, everything else (rings) the mesh triangles.
+static func shape_for(mesh: Mesh) -> Shape3D:
+	if mesh is BoxMesh:
+		var box := BoxShape3D.new()
+		box.size = (mesh as BoxMesh).size
+		return box
+	if mesh is CylinderMesh and is_equal_approx(mesh.top_radius, mesh.bottom_radius):
+		var cylinder := CylinderShape3D.new()
+		cylinder.radius = mesh.top_radius
+		cylinder.height = mesh.height
+		return cylinder
+	if mesh is CylinderMesh:
+		return mesh.create_convex_shape(true, false)
+	if mesh is SphereMesh and is_equal_approx(mesh.radius * 2.0, mesh.height):
+		var sphere := SphereShape3D.new()
+		sphere.radius = mesh.radius
+		return sphere
+	return mesh.create_trimesh_shape()

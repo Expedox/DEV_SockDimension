@@ -558,7 +558,8 @@ func _finish() -> void:
 			continue
 		sock.sleeping = true
 		sock.freeze = _freeze_settled
-		_lift_out_of_floor(sock)
+		if _lift_out_of_floor(sock):
+			held[sock.sock_id] = sock # pushed off a ledge, still moving
 		renderer.set_sock_transform(sock.sock_id, sock.global_transform)
 	_awake = held
 	_to_freeze.clear()
@@ -647,7 +648,11 @@ func _wake_chain() -> void:
 
 ## Under the weight of the pile the solver lets bottom socks sink a little into
 ## the floor. Once a sock rests, put it back on top of the floor.
-func _lift_out_of_floor(sock: Sock) -> void:
+## Returns true when the sock was pushed off a high ledge instead.
+func _lift_out_of_floor(sock: Sock) -> bool:
+	if _on_high_ledge(sock):
+		_push_off_ledge(sock)
+		return true
 	var shape := _shapes[socks.shape_of(sock.sock_id)]
 	var half := (shape as BoxShape3D).size * 0.5 if shape is BoxShape3D else Vector3.ONE * (shape as CapsuleShape3D).radius
 	var basis := (sock.global_transform * _shape_xform).basis
@@ -657,6 +662,7 @@ func _lift_out_of_floor(sock: Sock) -> void:
 		sock.global_position.y -= bottom
 		renderer.set_sock_transform(sock.sock_id, sock.global_transform)
 	_settle_layer(sock)
+	return false
 
 
 ## A lone sock on the floor should not trip the player up.
@@ -671,6 +677,30 @@ func _freeze_sleepers() -> void:
 			sock.freeze = true
 			_lift_out_of_floor(sock)
 	_to_freeze.clear()
+
+
+## Pipes, lamps and the tops of hanging pairs are solid, so a sock can come to
+## rest up there, out of reach. Only the pile itself may hold socks that high.
+func _on_high_ledge(sock: Sock) -> bool:
+	if sock.global_position.y < float(_tuning.get("ledge_height", 3.5)):
+		return false
+	# Its own box, a little lower: does it touch a prop (not just socks)?
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = _shapes[socks.shape_of(sock.sock_id)]
+	query.transform = Transform3D(Basis.IDENTITY, Vector3.DOWN * 0.05) * sock.global_transform * _shape_xform
+	query.collision_mask = WORLD_LAYER
+	return not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+
+## Nudges a sock off a high ledge towards the middle of the room.
+func _push_off_ledge(sock: Sock) -> void:
+	var inward := -sock.global_position * Vector3(1, 0, 1)
+	inward = inward.normalized() if inward.length() > 0.01 else Vector3.FORWARD
+	sock.freeze = false
+	sock.sleeping = false
+	sock.linear_velocity = inward * float(_tuning.get("ledge_push", 1.5)) + Vector3.UP * 0.5
+	_still[sock.sock_id] = 0.0
+	_awake[sock.sock_id] = sock
 
 
 ## Outside the room: past a wall, above the ceiling or below the floor.

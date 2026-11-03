@@ -28,6 +28,8 @@ var _pending_carried := PackedInt32Array()
 var _typed := "" # last letters, for the debug cheat code
 var _cheat_cache := Vector2i(-1, -1) # (sock, partner), avoids a scan every frame
 var _stride_left := 0.0 # metres until the next footstep
+## Per sock in hand: [seconds stuck behind something, position last frame].
+var _snags := {}
 var _fall_speed := 0.0
 ## Standing on socks. Socks never block the player sideways; a probe under the
 ## feet lifts the player onto them, so loose socks and slopes walk smoothly.
@@ -191,7 +193,7 @@ func _physics_process(delta: float) -> void:
 	_move(delta)
 	if _held:
 		_steer_held(delta)
-	_steer_carried()
+	_steer_carried(delta)
 	_check_summit(delta)
 	_update_highlight()
 
@@ -435,6 +437,7 @@ func _steer_held(delta: float) -> void:
 		target += cam.basis.x * sin(_wiggle_left * 60.0) * 0.06 * t
 
 	var max_speed := float(_cfg.hold_max_speed)
+	_unsnag(_held, target, delta)
 	_held.linear_velocity = ((target - _held.global_position) * float(_cfg.hold_spring)).limit_length(max_speed)
 
 	# Hold the sock flat across the view; while inspecting, mouse and time spin it.
@@ -452,7 +455,7 @@ func _steer_held(delta: float) -> void:
 
 
 ## The bundle hangs low on the left of the view, stacked like an armful.
-func _steer_carried() -> void:
+func _steer_carried(delta: float) -> void:
 	if _carried.is_empty():
 		return
 	var cam := camera.global_transform
@@ -467,6 +470,7 @@ func _steer_carried() -> void:
 			continue
 		var target := cam.origin - cam.basis.z * float(_cfg.get("carry_distance", 0.7)) \
 				- cam.basis.x * 0.38 - cam.basis.y * (0.42 - gap * i)
+		_unsnag(sock, target, delta)
 		sock.linear_velocity = ((target - sock.global_position) * spring).limit_length(max_speed)
 		var wanted := flat * Basis(Vector3.UP, 0.25 * sin(i * 1.7))
 		var diff := (wanted.get_rotation_quaternion() * sock.global_basis.get_rotation_quaternion().inverse()).normalized()
@@ -474,6 +478,49 @@ func _steer_carried() -> void:
 			diff = -diff
 		var angle := diff.get_angle()
 		sock.angular_velocity = diff.get_axis() * angle * float(_cfg.hold_turn_spring) if angle > 0.0001 else Vector3.ZERO
+
+
+## A sock in hand collides with walls and props like everything else. When it
+## catches behind a shelf post while the player walks on, it would stay
+## stuck there. So once it has made no headway for snag_seconds and the spot
+## it wants to reach is free, it slips through until it is back in place.
+func _unsnag(sock: Sock, target: Vector3, delta: float) -> void:
+	var world := 1 << (WORLD_LAYER - 1)
+	var gap := sock.global_position.distance_to(target)
+	var entry: Array = _snags.get(sock.sock_id, [0.0, sock.global_position])
+	if sock.collision_mask == 0:
+		var back := gap < float(_cfg.get("snag_release_distance", 0.1)) or not _free_point(target)
+		if back and not _overlaps_world(sock):
+			sock.collision_mask = world
+			_snags.erase(sock.sock_id)
+		return
+	var wanted := minf(gap * float(_cfg.hold_spring), float(_cfg.hold_max_speed)) * delta
+	var moved: float = sock.global_position.distance_to(entry[1])
+	var stuck := gap > float(_cfg.get("snag_distance", 0.2)) and moved < wanted * 0.25
+	entry[0] = float(entry[0]) + delta if stuck else 0.0
+	entry[1] = sock.global_position
+	_snags[sock.sock_id] = entry
+	if float(entry[0]) >= float(_cfg.get("snag_seconds", 0.25)) and _free_point(target):
+		sock.collision_mask = 0
+		entry[0] = 0.0
+
+
+func _free_point(at: Vector3) -> bool:
+	var query := PhysicsPointQueryParameters3D.new()
+	query.position = at
+	query.collision_mask = 1 << (WORLD_LAYER - 1)
+	return get_world_3d().direct_space_state.intersect_point(query, 1).is_empty()
+
+
+func _overlaps_world(sock: Sock) -> bool:
+	var owners := sock.get_shape_owners()
+	if owners.is_empty():
+		return false
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = sock.shape_owner_get_shape(owners[0], 0)
+	query.transform = sock.global_transform * sock.shape_owner_get_transform(owners[0])
+	query.collision_mask = 1 << (WORLD_LAYER - 1)
+	return not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 ## Only the sock under the crosshair glows, so it is clear which one a click takes.

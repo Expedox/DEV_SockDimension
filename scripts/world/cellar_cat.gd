@@ -561,8 +561,8 @@ func _build() -> void:
 ## A round, knitted-looking cushion in its corner.
 func _build_bed(cellar: Cellar) -> void:
 	var colors: Dictionary = _cfg.get("colors", {})
-	var bed := Node3D.new()
-	bed.name = "CatBed"
+	# Solid like the other props: socks dropped in it rest on the cushion.
+	var bed := Cellar.static_body("CatBed")
 	cellar.add_child(bed)
 	bed.position = _bed
 	var rim := TorusMesh.new()
@@ -570,10 +570,22 @@ func _build_bed(cellar: Cellar) -> void:
 	rim.outer_radius = 0.42
 	rim.rings = 24
 	rim.ring_segments = 10
+	var rim_scale := Vector3(1.0, 1.4, 1.0)
+	var rim_at := Vector3(0.0, 0.06, 0.0)
 	_part(bed, rim, _fur(colors.get("bed", "#7b4f6e"), colors.get("bed_stripes", "#5c3a52"), 260.0),
-			Vector3(0.0, 0.06, 0.0), Vector3.ZERO, Vector3(1.0, 1.4, 1.0))
+			rim_at, Vector3.ZERO, rim_scale)
+	# Collision shapes do not scale unevenly, so the squashed ring is baked in.
+	var faces := rim.get_faces()
+	for i in faces.size():
+		faces[i] = faces[i] * rim_scale + rim_at
+	var rim_shape := ConcavePolygonShape3D.new()
+	rim_shape.set_faces(faces)
+	var rim_collider := CollisionShape3D.new()
+	rim_collider.shape = rim_shape
+	bed.add_child(rim_collider)
 	var cushion := CylinderMesh.new()
 	cushion.top_radius = 0.3
 	cushion.bottom_radius = 0.32
 	cushion.height = 0.05
 	_part(bed, cushion, _fur(colors.get("cushion", "#e2cfa8")), Vector3(0.0, 0.03, 0.0))
+	Cellar.add_collider(bed, cushion, Transform3D(Basis.IDENTITY, Vector3(0.0, 0.03, 0.0)))

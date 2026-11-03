@@ -28,6 +28,10 @@ var _found_in_shape := PackedInt32Array()
 var _total_in_shape := PackedInt32Array()
 var _panels: Array[Transform3D] = []
 var _lights: Array[SpotLight3D] = []
+## Hanging pairs are solid too: one box per sock, the same box a sock has in the pile.
+var _hung_bodies: Array[RID] = []
+var _hung_shapes: Array[BoxShape3D] = [] # per shape, at wall scale
+var _hung_offset: Array[Vector3] = [] # per shape, box centre in mesh space at wall scale
 
 
 ## Builds the boards and shows the pairs found so far.
@@ -41,6 +45,7 @@ func setup(sock_set: SockSet, config: Dictionary, found: PackedInt32Array, bound
 	var plan := layout(sock_set, config)
 	sock_scale = plan.scale
 	_build_slots(plan, panels, bounds)
+	_build_hung_body()
 	for shape in SockCatalog.shape_count():
 		_update_label(shape)
 	for pair_id in found:
@@ -120,6 +125,7 @@ func show_pair(pair_id: int, animate: bool) -> void:
 	var shape := _socks.shapes[pair_id]
 	_found_in_shape[shape] += 1
 	_update_label(shape)
+	_add_hung_colliders(pair_id)
 	if not animate:
 		_set_pair(1.0, pair_id)
 		return
@@ -182,6 +188,44 @@ func _burst(at: Vector3, out: Vector3, pair_id: int) -> void:
 	puff.global_position = at
 	puff.finished.connect(puff.queue_free)
 	puff.emitting = true
+
+
+func _build_hung_body() -> void:
+	for shape in SockCatalog.shape_count():
+		var box := BoxShape3D.new()
+		box.size = SockMesh.collision_size(shape) * sock_scale
+		_hung_shapes.append(box)
+		_hung_offset.append(SockMesh.mesh_aabb(shape).get_center() * sock_scale)
+
+
+## One small static body per pair, made on the physics server: thousands of
+## shapes on a single body would be rebuilt on every new pair.
+func _add_hung_colliders(pair_id: int) -> void:
+	if _hung_shapes.is_empty() or not is_inside_tree():
+		return
+	var shape := _socks.shapes[pair_id]
+	var body := PhysicsServer3D.body_create()
+	PhysicsServer3D.body_set_mode(body, PhysicsServer3D.BODY_MODE_STATIC)
+	PhysicsServer3D.body_set_collision_layer(body, Cellar.WORLD_LAYER)
+	PhysicsServer3D.body_set_collision_mask(body, 0)
+	for xform: Transform3D in [_xform_a[pair_id], _xform_b[pair_id]]:
+		var basis := xform.basis.orthonormalized()
+		PhysicsServer3D.body_add_shape(body, _hung_shapes[shape].get_rid(),
+				Transform3D(basis, xform.origin + basis * _hung_offset[shape]))
+	PhysicsServer3D.body_set_space(body, get_world_3d().space)
+	_hung_bodies.append(body)
+
+
+## Number of solid socks hanging on the wall (two per shown pair).
+func hung_collider_count() -> int:
+	return _hung_bodies.size() * 2
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		for body in _hung_bodies:
+			PhysicsServer3D.free_rid(body)
+		_hung_bodies.clear()
 
 
 func _set_pair(grow: float, pair_id: int) -> void:
@@ -450,20 +494,12 @@ func _build_board(frame: Transform3D, panel: Dictionary) -> void:
 	wood.set_shader_parameter("grain_axis", 0)
 	wood.set_shader_parameter("seams", true)
 
-	var body := StaticBody3D.new()
-	body.name = "Board"
-	body.collision_layer = Cellar.WORLD_LAYER
-	body.collision_mask = 0
+	var body := Cellar.static_body("Board")
 	body.transform = frame * Transform3D(Basis.IDENTITY, Vector3(0, 0, -depth * 0.5))
 	add_child(body)
-	var box := BoxShape3D.new()
-	box.size = Vector3(size.x, size.y, depth + 0.08)
-	var collider := CollisionShape3D.new()
-	collider.shape = box
-	collider.position.z = 0.04
-	body.add_child(collider)
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(size.x, size.y, depth)
+	Cellar.add_collider(body, mesh, Transform3D.IDENTITY)
 	var board := MeshInstance3D.new()
 	board.mesh = mesh
 	board.material_override = wood

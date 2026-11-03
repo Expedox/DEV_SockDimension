@@ -30,5 +30,8 @@
   "sock_climb": 0.35,
   "sprint_multiplier": 1.8,
   "zoom_fov": 22.0,
-  "zoom_speed": 6.0
+  "zoom_speed": 6.0,
+  "snag_distance": 0.2,
+  "snag_seconds": 0.25,
+  "snag_release_distance": 0.1
 }
