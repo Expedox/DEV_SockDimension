@@ -14,6 +14,8 @@ var pairs_in_basket := 0
 var _config: Dictionary
 var _pile: MeshInstance3D
 var _pile_base_y := 0.0
+var _pile_shape: CylinderShape3D
+var _pile_collider: CollisionShape3D
 
 
 func setup(config: Dictionary, color: Color, world_layer: int, detect_mask: int) -> void:
@@ -49,6 +51,20 @@ func set_pair_count(count: int) -> void:
 	_pile.visible = count > 0
 	_pile.scale = Vector3(1.0, height, 1.0)
 	_pile.position.y = _pile_base_y + height * 0.5
+	# Loose socks land on the visible pile, not hidden inside it.
+	_pile_collider.disabled = count == 0
+	_pile_shape.height = height
+	_pile_collider.position.y = _pile_base_y + height * 0.5
+
+
+## Floor a loose sock in the basket rests on: the pile top or the base.
+func floor_height() -> float:
+	return global_position.y + (_pile_base_y + _pile_shape.height if pairs_in_basket > 0 else 0.03)
+
+
+## Inner radius of the basket at the bottom, for finding socks inside it.
+func inner_radius() -> float:
+	return float(_config["basket_radius_bottom"]) * 0.95
 
 
 func _build_visual(color: Color) -> void:
@@ -154,6 +170,16 @@ func _build_colliders(world_layer: int) -> void:
 	bottom.shape = bottom_shape
 	bottom.position.y = 0.015
 	body.add_child(bottom)
+
+	# The pile of finished pairs; resized in set_pair_count().
+	# Same radius as the pile mesh's top, so nothing sinks into it.
+	_pile_shape = CylinderShape3D.new()
+	_pile_shape.radius = r_bottom * 0.98
+	_pile_shape.height = 0.001
+	_pile_collider = CollisionShape3D.new()
+	_pile_collider.name = "Pile"
+	_pile_collider.shape = _pile_shape
+	body.add_child(_pile_collider)
 
 
 func _build_detector(detect_mask: int) -> void:

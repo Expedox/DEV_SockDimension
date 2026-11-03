@@ -33,6 +33,7 @@ func _ready() -> void:
 	await _test_firm_hand()
 	await _test_hitboxes()
 	await _test_unsnag()
+	await _test_basket_pile()
 	await _test_pair_controller()
 
 	print("%d checks, %d failed" % [_checks, _failures])
@@ -668,6 +669,44 @@ func _test_hitboxes() -> void:
 		cellar.queue_free()
 		await get_tree().process_frame
 	Config.use_mode_room("laundry_day")
+
+
+## A loose sock in the basket rests visibly on the pile of finished pairs,
+## also when the pile grows under it or an old save left it inside.
+func _test_basket_pile() -> void:
+	var cellar := Cellar.new()
+	add_child(cellar)
+	var basket := cellar.basket
+	basket.set_pair_count(300)
+	var field := SockField.new()
+	add_child(field)
+	var top := basket.global_position + Vector3.UP * 0.75
+	var buried := basket.global_position + Vector3.UP * 0.06
+	field.prepare(SockSet.generate(4, 2, 0.0), {0: Transform3D(Basis.IDENTITY, top), 1: Transform3D(Basis.IDENTITY, top + Vector3(0.1, 0.25, 0.0))})
+	await get_tree().physics_frame
+	var a := field.sock_by_id(0)
+	var b := field.sock_by_id(1)
+	for sock in [a, b]:
+		sock.freeze = false
+		sock.sleeping = false
+	for frame in 180:
+		await get_tree().physics_frame
+	var floor_y := basket.floor_height()
+	check(floor_y > basket.global_position.y + 0.2, "basket pile has height (%.2f)" % floor_y)
+	check(a.global_position.y > floor_y, "a dropped sock rests on the pile (%.2f over %.2f)" % [a.global_position.y, floor_y])
+	check(b.global_position.y > floor_y, "a second sock rests on the pile too (%.2f)" % b.global_position.y)
+
+	# Pile grows (or an old save): a sock inside gets lifted on top.
+	a.freeze = true
+	a.global_position = buried
+	basket.set_pair_count(400)
+	field.lift_onto(basket.global_position, basket.inner_radius(), basket.floor_height())
+	for frame in 120:
+		await get_tree().physics_frame
+	check(a.global_position.y > basket.floor_height(), "a buried sock is lifted onto the pile (%.2f over %.2f)" % [a.global_position.y, basket.floor_height()])
+	field.queue_free()
+	cellar.queue_free()
+	await get_tree().process_frame
 
 
 ## A sock in hand caught behind a wall slips through to the hand and becomes

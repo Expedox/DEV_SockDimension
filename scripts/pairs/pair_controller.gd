@@ -16,6 +16,7 @@ var _tuning: Dictionary
 var _next_attempt_msec := 0
 ## Socks thrown and not touched since; only these count as basket shots.
 var _thrown := {}
+var _lifted_after_load := false
 
 
 func _ready() -> void:
@@ -77,8 +78,22 @@ func _send_to_basket(held, aimed) -> void:
 func _on_flight_landed(a, b, info: Dictionary) -> void:
 	_field.remove_pair(a, b)
 	_basket.receive_pair()
+	_lift_basket_socks()
 	Sfx.play("plop")
 	GameState.register_match(info.pair_id, info.base_color, info.pattern)
+
+
+## The pile grows under loose socks lying in the basket; keep them on top.
+func _lift_basket_socks() -> void:
+	if _field.has_method("lift_onto"):
+		_field.lift_onto(_basket.global_position, _basket.inner_radius(), _basket.floor_height())
+
+
+func _process(_delta: float) -> void:
+	# Once after loading: socks from older saves may sit inside the pile.
+	if not _lifted_after_load and _field != null and _field.has_method("is_ready") and _field.is_ready():
+		_lifted_after_load = true
+		_lift_basket_socks()
 
 
 func _on_sock_thrown(sock_id: int) -> void:

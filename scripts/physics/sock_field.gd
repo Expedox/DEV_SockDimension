@@ -257,6 +257,31 @@ func remove_pair(a: Sock, b: Sock) -> void:
 		wake_around(at, float(_tuning.wake_radius))
 
 
+## Raises every sock whose bottom lies below floor_y inside a vertical
+## cylinder (the basket and its pile) onto that floor, then wakes it.
+func lift_onto(center: Vector3, radius: float, floor_y: float) -> void:
+	var cylinder := CylinderShape3D.new()
+	cylinder.radius = radius
+	cylinder.height = maxf(floor_y - center.y, 0.01) + 0.4
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = cylinder
+	query.transform = Transform3D(Basis.IDENTITY, center + Vector3.UP * cylinder.height * 0.5)
+	query.collision_mask = ANY_SOCK
+	var hits := get_world_3d().direct_space_state.intersect_shape(query, int(_tuning.wake_max_socks))
+	var lifted: Array[Sock] = []
+	for hit in hits:
+		var sock := sock_at(hit.collider)
+		if sock != null and not lifted.has(sock):
+			lifted.append(sock)
+	# Socks already above the floor keep their place; physics sorts out overlaps.
+	for sock in lifted:
+		var bottom := sock.global_position.y - _vertical_reach(sock)
+		if bottom < floor_y:
+			sock.global_position.y += floor_y - bottom
+			renderer.set_sock_transform(sock.sock_id, sock.global_transform)
+		_wake(sock)
+
+
 ## Highest resting sock of the pile, refreshed over a few frames.
 func surface_height() -> Vector3:
 	return _summit
@@ -653,16 +678,20 @@ func _lift_out_of_floor(sock: Sock) -> bool:
 	if _on_high_ledge(sock):
 		_push_off_ledge(sock)
 		return true
-	var shape := _shapes[socks.shape_of(sock.sock_id)]
-	var half := (shape as BoxShape3D).size * 0.5 if shape is BoxShape3D else Vector3.ONE * (shape as CapsuleShape3D).radius
-	var basis := (sock.global_transform * _shape_xform).basis
-	var reach := absf(basis.x.y) * half.x + absf(basis.y.y) * half.y + absf(basis.z.y) * half.z
-	var bottom := sock.global_position.y - reach
+	var bottom := sock.global_position.y - _vertical_reach(sock)
 	if bottom < 0.0:
 		sock.global_position.y -= bottom
 		renderer.set_sock_transform(sock.sock_id, sock.global_transform)
 	_settle_layer(sock)
 	return false
+
+
+## Half the vertical extent of a sock's collider in its current pose.
+func _vertical_reach(sock: Sock) -> float:
+	var shape := _shapes[socks.shape_of(sock.sock_id)]
+	var half := (shape as BoxShape3D).size * 0.5 if shape is BoxShape3D else Vector3.ONE * (shape as CapsuleShape3D).radius
+	var basis := (sock.global_transform * _shape_xform).basis
+	return absf(basis.x.y) * half.x + absf(basis.y.y) * half.y + absf(basis.z.y) * half.z
 
 
 ## A lone sock on the floor should not trip the player up.
