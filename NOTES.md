@@ -159,16 +159,22 @@ thrown sock (thrown and not grabbed since) lands in the basket.
 
 ### Sock wall
 
-`SockWall` (`scripts/world/sock_wall.gd`), built by `game.gd` as a child of the cellar,
-values in `data/world.json` → `pair_wall` (east wall, wooden board 12.6 × 4.8 m).
-Found pairs hang there instead of vanishing: one band per shape (sneaker, sport,
-knee-high, with a found/total label), one block per base colour in palette order,
-inside a block sorted by pattern, count, accent and heel/toe. Every pair of the set
-has a fixed slot from the start, so gaps show what is still missing. The layout
-picks one sock scale that fits the whole set (about 0.26 for 1,500 pairs, 0.19 for
-5,000). One MultiMesh per shape with the far sock mesh and shader, no shadows,
-plus one MultiMesh for the peg rails. `Events.pair_matched` adds a pair with a
-short pop. Nothing extra is saved: the wall is rebuilt from `found` on load.
+`SockWall` (`scripts/world/sock_wall.gd`), built by `game.gd` under the cellar,
+values in `data/world.json` → `pair_wall`. Found pairs hang on peg rails on
+wooden boards that cover all four walls up to the beams (six panels, about
+240 m², around the shelf, washer corner, clothesline and back windows). The rails
+read like a book, panel by panel from the east wall round to the back wall:
+shape first (new row plus a found/total label), then base colour (small gap
+between colours), then pattern, count, accent and heel/toe. Every pair of the
+set has a fixed slot from the start, so empty pegs show what is missing.
+Neighbouring pairs overlap like in a sock shop (`overlap`), every other column
+hangs a little further out. The layout picks the largest scale up to 1.0 (pile
+size) at which the whole set fits: 0.76 for 1,500 pairs, 0.43 for 5,000. As pile
+socks are 1.3x life size, Laundry Day wall socks are about life size.
+Real pile size would need about 1.75x the wall area for 1,500 pairs and 5x for
+5,000. One MultiMesh per shape (far mesh, sock shader, no shadows) plus one for
+the rails. `Events.pair_matched` adds a pair with a short pop; nothing extra is
+saved, the wall is rebuilt from `found`.
 Screenshots: `scenes/dev/wall_shot.tscn -- <pairs> <share> <png prefix>`.
 
 ### Game scene

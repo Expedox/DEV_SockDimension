@@ -59,7 +59,8 @@ static func leg_direction() -> Vector3:
 ## Centre of the cuff opening in mesh space, where a sock hangs from a peg.
 static func cuff_point(shape: int) -> Vector3:
 	_ensure_built()
-	return leg_direction() * float(SockCatalog.shape(shape)["leg_length"]) + _offsets[shape]
+	var scale := float(SockCatalog.mesh_values().get("scale", 1.0))
+	return (leg_direction() * float(SockCatalog.shape(shape)["leg_length"]) + _offsets[shape]) * scale
 
 
 static func _ensure_built() -> void:

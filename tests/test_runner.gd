@@ -222,27 +222,26 @@ func _test_socks() -> void:
 
 func _test_sock_wall() -> void:
 	var config: Dictionary = Config.world["pair_wall"]
-	var size := Vector2(config["size"][0], config["size"][1])
-	for pairs in [1000, 5000]:
+	var room := AABB(Vector3(-9, 0, -7), Vector3(18, 6, 14))
+	for pairs in [1500, 5000]:
 		var socks := SockSet.generate(5, pairs, 0.2)
 		var wall := SockWall.new()
 		add_child(wall)
 		var found := PackedInt32Array([0, 7, pairs - 1])
-		wall.setup(socks, config, found)
-		check(wall.sock_scale > 0.1, "wall socks readable for %d pairs (scale %.2f)" % [pairs, wall.sock_scale])
+		wall.setup(socks, config, found, room)
+		check(wall.sock_scale > 0.3, "wall socks readable for %d pairs (scale %.2f)" % [pairs, wall.sock_scale])
 		check(wall.is_shown(7) and not wall.is_shown(8), "wall shows exactly the found pairs")
 		wall.on_pair_matched(8, 0, 0)
 		check(wall.is_shown(8), "a new match goes on the wall")
-		# Every slot sits on the board and no two pairs share one.
+		# Every pair has its own slot inside the room.
 		var seen := {}
 		var inside := true
 		for pair in pairs:
-			var at: Vector3 = wall._xform_a[pair].origin
-			var key := Vector2i(roundi(at.x * 1000.0), roundi(at.y * 1000.0)) * 2 + Vector2i(socks.shapes[pair], 0)
-			seen[key] = true
-			if absf(at.x) > size.x * 0.5 or absf(at.y) > size.y * 0.5:
+			var at := wall.pair_transform(pair).origin
+			seen[Vector3i(at * 1000.0)] = true
+			if not room.grow(0.01).has_point(at):
 				inside = false
-		check(inside, "all %d slots on the board" % pairs)
+		check(inside, "all %d slots in the room" % pairs)
 		check(seen.size() == pairs, "one slot per pair (%d of %d)" % [seen.size(), pairs])
 		wall.free()
 

@@ -58,7 +58,7 @@ func _ready() -> void:
 	wall = SockWall.new()
 	wall.name = "SockWall"
 	cellar.add_child(wall)
-	wall.setup(socks, Config.world["pair_wall"], GameState.found_pair_ids)
+	wall.setup(socks, Config.world["pair_wall"], GameState.found_pair_ids, cellar.room_bounds())
 	Events.pair_matched.connect(wall.on_pair_matched)
 
 	for path: String in UI_SCENES:

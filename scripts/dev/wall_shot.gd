@@ -7,7 +7,8 @@ func _ready() -> void:
 	var pairs := int(args[0])
 	var share := float(args[1])
 	var prefix := args[2]
-	add_child(load("res://scenes/cellar.tscn").instantiate())
+	var cellar: Cellar = load("res://scenes/cellar.tscn").instantiate()
+	add_child(cellar)
 	var sock_set := SockSet.generate(42, pairs, 0.2)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 9
@@ -17,7 +18,7 @@ func _ready() -> void:
 			found.append(pair)
 	var wall := SockWall.new()
 	add_child(wall)
-	wall.setup(sock_set, Config.world["pair_wall"], found)
+	wall.setup(sock_set, Config.world["pair_wall"], found, cellar.room_bounds())
 	print("pairs %d, found %d, scale %.3f" % [pairs, found.size(), wall.sock_scale])
 
 	var camera := Camera3D.new()
@@ -25,8 +26,9 @@ func _ready() -> void:
 	add_child(camera)
 	camera.current = true
 	var shots := [
-		[Vector3(3.0, 1.7, 0.0), Vector3(9.0, 2.6, 0.0), "overview"],
-		[Vector3(7.4, 1.6, -1.5), Vector3(9.0, 1.2, -2.6), "close"],
+		[Vector3(-1.0, 2.2, -3.0), Vector3(9.0, 2.6, 2.0), "east"],
+		[Vector3(-2.0, 2.2, -4.0), Vector3(4.0, 2.4, 7.0), "south"],
+		[Vector3(7.0, 1.6, -3.0), Vector3(9.0, 1.3, -4.5), "close"],
 	]
 	for shot: Array in shots:
 		camera.position = shot[0]
