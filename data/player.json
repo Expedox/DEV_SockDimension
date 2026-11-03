@@ -7,6 +7,8 @@
   "step_height": 0.25,
   "floor_max_angle_deg": 55.0,
   "grab_reach": 3.2,
+  "aim_tolerance": 0.015,
+  "aim_max_checks": 6,
   "hold_distance": 1.1,
   "hold_inspect_distance": 0.55,
   "hold_spring": 14.0,

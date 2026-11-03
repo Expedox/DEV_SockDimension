@@ -98,11 +98,27 @@ func carry_count() -> int:
 func aimed_sock() -> Sock:
 	if _field == null:
 		return null
-	var hit := _ray(float(_cfg.grab_reach), SockField.ANY_SOCK)
-	if hit.is_empty():
-		return null
-	var sock := _field.sock_at(hit.collider)
-	return null if sock == _held or _carried.has(sock) else sock
+	# The physics box around a bent sock is much bigger than the sock, so each box hit
+	# is checked against the real leg and foot; a miss looks further along the ray.
+	var exclude: Array[RID] = []
+	for i in int(_cfg.get("aim_max_checks", 6)):
+		var hit := _ray(float(_cfg.grab_reach), SockField.ANY_SOCK, exclude)
+		if hit.is_empty():
+			return null
+		var sock := _field.sock_at(hit.collider)
+		if sock != null and sock != _held and not _carried.has(sock) and _on_sock(sock):
+			return sock
+		exclude.append(hit.rid)
+	return null
+
+
+## Whether the crosshair ray really touches the sock's leg or foot.
+func _on_sock(sock: Sock) -> bool:
+	var to_local := sock.global_transform.affine_inverse()
+	var from := to_local * camera.global_position
+	var dir := (to_local.basis * -camera.global_basis.z).normalized()
+	var shape := _field.socks.shape_of(sock.sock_id)
+	return SockMesh.ray_hit(shape, from, dir, float(_cfg.get("aim_tolerance", 0.015))) >= 0.0
 
 
 ## Forgets the held sock without touching its physics (it leaves for the basket).
@@ -301,11 +317,12 @@ func _apply_look() -> void:
 		camera.rotation = Vector3(_pitch, 0.0, 0.0)
 
 
-func _ray(length: float, mask: int) -> Dictionary:
+func _ray(length: float, mask: int, skip: Array[RID] = []) -> Dictionary:
 	var from := camera.global_position
 	var to := from - camera.global_basis.z * length
 	var query := PhysicsRayQueryParameters3D.create(from, to, mask)
 	var exclude: Array[RID] = [get_rid()]
+	exclude.append_array(skip)
 	if _held:
 		exclude.append(_held.get_rid())
 	query.exclude = exclude

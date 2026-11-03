@@ -63,6 +63,53 @@ static func cuff_point(shape: int) -> Vector3:
 	return (leg_direction() * float(SockCatalog.shape(shape)["leg_length"]) + _offsets[shape]) * scale
 
 
+## Center line of the sock in mesh space: [cuff end, heel, toe end] plus the half width
+## as radius. Leg and foot are two capsules around it, the real shape for aiming.
+static func spine(shape: int) -> Dictionary:
+	_ensure_built()
+	var scale := float(SockCatalog.mesh_values().get("scale", 1.0))
+	var values := SockCatalog.shape(shape)
+	var heel := _offsets[shape]
+	return {
+		"cuff": (leg_direction() * float(values["leg_length"]) + heel) * scale,
+		"heel": heel * scale,
+		"toe": (Vector3(float(values["foot_length"]), 0.0, 0.0) + heel) * scale,
+		"radius": float(values["width"]) * 0.5 * scale,
+	}
+
+
+## Distance along the ray (from, dir unit, in mesh space) where it first comes within
+## radius + tolerance of the sock's spine, or -1 when it misses the sock.
+static func ray_hit(shape: int, from: Vector3, dir: Vector3, tolerance: float) -> float:
+	var s := spine(shape)
+	var reach: float = s["radius"] + tolerance
+	var best := -1.0
+	for part in [[s["heel"], s["cuff"]], [s["heel"], s["toe"]]]:
+		var t := _ray_segment(from, dir, part[0], part[1], reach)
+		if t >= 0.0 and (best < 0.0 or t < best):
+			best = t
+	return best
+
+
+## Ray against a capsule a-b of radius r: the ray distance of the closest approach
+## when it lies within r, else -1. Good enough to pick, cheap to run.
+static func _ray_segment(from: Vector3, dir: Vector3, a: Vector3, b: Vector3, r: float) -> float:
+	var axis := b - a
+	var w := from - a
+	var aa := axis.dot(axis)
+	var ad := axis.dot(dir)
+	var aw := axis.dot(w)
+	var dw := dir.dot(w)
+	var denom := aa - ad * ad
+	var u := 0.0 if denom < 1e-9 else clampf((aw - ad * dw) / denom, 0.0, 1.0)
+	var t := maxf(0.0, (u * ad - dw))
+	# Re-project the segment point onto the clamped ray point.
+	u = clampf((w + dir * t).dot(axis) / aa, 0.0, 1.0) if aa > 1e-9 else 0.0
+	t = maxf(0.0, (a + axis * u - from).dot(dir))
+	var gap := (from + dir * t).distance_to(a + axis * u)
+	return t if gap <= r else -1.0
+
+
 static func _ensure_built() -> void:
 	if _meshes.is_empty():
 		for shape in SockCatalog.shape_count():

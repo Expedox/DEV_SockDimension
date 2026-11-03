@@ -340,6 +340,19 @@ func _test_socks() -> void:
 		check(far_mesh.surface_get_array_len(0) < near_mesh.surface_get_array_len(0), "far mesh is cheaper for " + SockCatalog.shape_id(shape))
 		var size := SockMesh.collision_size(shape)
 		check(size.x > 0.05 and size.y > 0.01 and size.z > 0.05, "box for " + SockCatalog.shape_id(shape))
+		# Aiming follows the real leg and foot, not the box around them.
+		var spine := SockMesh.spine(shape)
+		var name := SockCatalog.shape_id(shape)
+		var heel: Vector3 = spine["heel"]
+		var toe: Vector3 = spine["toe"]
+		var cuff: Vector3 = spine["cuff"]
+		check(SockMesh.ray_hit(shape, heel.lerp(toe, 0.5) + Vector3.UP, Vector3.DOWN, 0.0) > 0.0, "aim hits the foot of " + name)
+		check(SockMesh.ray_hit(shape, heel.lerp(cuff, 0.5) + Vector3.UP, Vector3.DOWN, 0.0) > 0.0, "aim hits the leg of " + name)
+		var corner := cuff.lerp(toe, 0.5)
+		var aabb := SockMesh.mesh_aabb(shape)
+		if name != "sneaker":
+			check(aabb.grow(0.001).has_point(Vector3(corner.x, 0.0, corner.z)) and SockMesh.ray_hit(shape, corner + Vector3.UP, Vector3.DOWN, 0.015) < 0.0, "aim misses the empty corner of " + name)
+		check(SockMesh.ray_hit(shape, toe + Vector3(0.3, 1.0, 0.0), Vector3.DOWN, 0.015) < 0.0, "aim misses beside " + name)
 
 
 func _test_sock_wall() -> void:
