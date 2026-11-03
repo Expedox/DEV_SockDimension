@@ -50,8 +50,7 @@ var _top := 0.0
 var _reported_done := -1
 var _reported_moving := 0
 var _restore_data: Dictionary
-var _ghosts := {} # sock_id -> held Sock that still passes through other socks
-var _carried := {} # sock_id -> true, held in the player's bundle: always a ghost
+var _ghosts := {} # sock_id -> held Sock; passes through other socks until let go
 var _skip := {} # sock_id -> true, left out of the current pour
 var _raining := false # pour_rest() on a field that is already in play
 var _burst := {} # pour_rest() burst settings, empty for a normal pour
@@ -182,14 +181,12 @@ func begin_hold(sock: Sock) -> void:
 	_flights.erase(sock.sock_id)
 	sock.gravity_scale = 0.0
 	sock.can_sleep = false
-	# Off every layer: nothing (above all the player) bumps into it, while its
-	# own mask still lets it push other socks around.
+	# Off every layer and blind to other socks for as long as it is held: the
+	# pile cannot wedge it, and a sock let go next to it cannot knock it out
+	# of the hand. Only walls and floor still stop it.
 	sock.collision_layer = 0
-	# Pass through other socks until it is out of the pile, or the pile
-	# wedges it in place.
 	sock.collision_mask = WORLD_LAYER
 	_ghosts[sock.sock_id] = sock
-	_carried.erase(sock.sock_id)
 	_wake(sock)
 	wake_around(sock.global_position, float(_tuning.wake_radius))
 
@@ -199,9 +196,6 @@ func begin_hold(sock: Sock) -> void:
 func carry(sock: Sock) -> void:
 	if not _ghosts.has(sock.sock_id):
 		begin_hold(sock)
-	sock.collision_mask = WORLD_LAYER
-	_ghosts[sock.sock_id] = sock
-	_carried[sock.sock_id] = true
 
 
 func end_hold(sock: Sock) -> void:
@@ -209,7 +203,6 @@ func end_hold(sock: Sock) -> void:
 	sock.collision_layer = SOCK_LAYER
 	sock.collision_mask = SOCK_MASK
 	_ghosts.erase(sock.sock_id)
-	_carried.erase(sock.sock_id)
 	sock.can_sleep = true
 
 
@@ -324,7 +317,6 @@ func _physics_process(delta: float) -> void:
 	if not _airborne.is_empty():
 		_land_airborne(delta)
 	_freeze_sleepers()
-	_solidify_ghosts()
 	# Also while pouring: landing socks must shake the top loose, or frozen
 	# socks build straight walls instead of a slope.
 	if state != State.RESTORING:
@@ -671,30 +663,6 @@ func _lift_out_of_floor(sock: Sock) -> void:
 func _settle_layer(sock: Sock) -> void:
 	if sock.collision_layer == SOCK_LAYER and sock.global_position.y < float(_tuning.floor_sock_height):
 		sock.collision_layer = FLOOR_SOCK_LAYER
-
-
-## A held sock gets its sock collisions back once nothing overlaps it.
-func _solidify_ghosts() -> void:
-	if _ghosts.is_empty():
-		return
-	var space := get_world_3d().direct_space_state
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.collision_mask = ANY_SOCK
-	query.margin = float(_tuning.ghost_margin)
-	for sock_id: int in _ghosts.keys():
-		var sock: Sock = _ghosts[sock_id]
-		if not is_instance_valid(sock) or not sock.is_inside_tree():
-			_ghosts.erase(sock_id)
-			_carried.erase(sock_id)
-			continue
-		if _carried.has(sock_id):
-			continue
-		query.shape = _shapes[socks.shape_of(sock_id)]
-		query.transform = sock.global_transform * _shape_xform
-		query.exclude = [sock.get_rid()]
-		if space.intersect_shape(query, 1).is_empty():
-			sock.collision_mask = SOCK_MASK
-			_ghosts.erase(sock_id)
 
 
 func _freeze_sleepers() -> void:

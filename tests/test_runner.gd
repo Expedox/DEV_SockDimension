@@ -28,6 +28,7 @@ func _ready() -> void:
 	_test_daylight()
 	_test_drop_scatter()
 	await _test_lost_found()
+	await _test_firm_hand()
 	await _test_pair_controller()
 
 	print("%d checks, %d failed" % [_checks, _failures])
@@ -442,6 +443,48 @@ func _test_lost_found() -> void:
 	check(lost.has(1) and lost.has(2) and not lost.has(0), "escaped socks reported, the one in the room not (%s)" % str(lost))
 	check(landed, "escaped socks come to rest in the lost and found crate")
 	check(field.sock_by_id(0).global_position.distance_to(Vector3(0.0, 0.2, 0.0)) < 0.5, "a sock in the room stays where it is")
+	field.queue_free()
+	cellar.queue_free()
+	await get_tree().process_frame
+
+
+## Letting go of one sock never knocks another out of the hand: a held sock
+## stays held and blind to other socks, even with a dropped one right on it.
+func _test_firm_hand() -> void:
+	var cellar := Cellar.new()
+	add_child(cellar)
+	var field := SockField.new()
+	add_child(field)
+	var hand := Vector3(0.0, 1.2, 0.0)
+	field.prepare(SockSet.generate(9, 3, 0.0), {
+		0: Transform3D(Basis.IDENTITY, hand),
+		1: Transform3D(Basis.IDENTITY, hand + Vector3(0.02, 0.03, 0.0)),
+		2: Transform3D(Basis.IDENTITY, hand + Vector3(0.0, 0.25, 0.0)),
+	})
+	var held := field.sock_by_id(0)
+	var dropped := field.sock_by_id(1)
+	var falling := field.sock_by_id(2)
+	field.begin_hold(held)
+	field.begin_hold(dropped)
+	await get_tree().physics_frame
+	field.end_hold(dropped) # let go right next to the held sock
+	falling.freeze = false
+	falling.linear_velocity = Vector3.DOWN * 4.0 # and one lands on top of it
+	var always_held := true
+	var worst := 0.0
+	var waited := 0.0
+	while waited < 2.0:
+		held.linear_velocity = (hand - held.global_position) * 14.0
+		held.angular_velocity = Vector3.ZERO
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
+		always_held = always_held and field.is_held(0)
+		worst = maxf(worst, held.global_position.distance_to(hand))
+	check(always_held, "a held sock stays held after another one is let go")
+	check(held.collision_mask == SockField.WORLD_LAYER and held.collision_layer == 0,
+			"a held sock never collides with other socks")
+	check(worst < 0.05, "a held sock is not pushed out of the hand (%.3f m)" % worst)
+	check(dropped.global_position.y < hand.y - 0.5, "the sock let go falls away")
 	field.queue_free()
 	cellar.queue_free()
 	await get_tree().process_frame
