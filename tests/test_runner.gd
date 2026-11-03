@@ -18,6 +18,7 @@ func _ready() -> void:
 	Achievements.load_state()
 
 	_test_scripts_parse()
+	_test_translations()
 	_test_safe_file()
 	_test_save_manager()
 	_test_game_state_counters()
@@ -42,6 +43,47 @@ func _test_scripts_parse() -> void:
 		for path in _scripts_under(dir_path):
 			var script := load(path) as GDScript
 			check(script != null and script.can_instantiate(), "script parses: " + path)
+
+
+## Every English text has a German one with the same placeholders.
+func _test_translations() -> void:
+	var en := _read_text_csv("res://i18n/game_text.csv")
+	var de := _read_text_csv("res://i18n/game_text_de.csv")
+	check(en.size() > 100, "english texts load")
+	for key: String in en:
+		check(de.has(key) and not String(de[key]).is_empty(), "german text for " + key)
+		if de.has(key):
+			check(_placeholders(en[key]) == _placeholders(de[key]), "same placeholders in " + key)
+	for key: String in de:
+		check(en.has(key), "german key also in english: " + key)
+	var before := TranslationServer.get_locale()
+	TranslationServer.set_locale("de")
+	check(tr("MENU_NEW_GAME") == "Neues Spiel", "german locale translates")
+	TranslationServer.set_locale("en")
+	check(tr("MENU_NEW_GAME") == "New Game", "english locale translates")
+	TranslationServer.set_locale(before)
+
+
+func _read_text_csv(path: String) -> Dictionary:
+	var out := {}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return out
+	file.get_csv_line()
+	while not file.eof_reached():
+		var row := file.get_csv_line()
+		if row.size() >= 2 and not row[0].is_empty():
+			out[row[0]] = row[1]
+	return out
+
+
+func _placeholders(text: String) -> Array:
+	var regex := RegEx.create_from_string("\\{[a-z_]+\\}")
+	var found := []
+	for m in regex.search_all(text):
+		found.append(m.get_string())
+	found.sort()
+	return found
 
 
 func _test_safe_file() -> void:

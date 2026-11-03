@@ -25,7 +25,7 @@ window/stretch/mode="canvas_items"
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://i18n/game_text.en.translation")
+locale/translations=PackedStringArray("res://i18n/game_text.en.translation", "res://i18n/game_text_de.de.translation")
 locale/fallback="en"
 
 [layer_names]

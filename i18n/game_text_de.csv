@@ -1,0 +1,159 @@
+keys,de
+GAME_TITLE,Sock Dimension
+MENU_CONTINUE,Weiterspielen
+MENU_NEW_GAME,Neues Spiel
+MENU_ACHIEVEMENTS,Erfolge
+MENU_SETTINGS,Einstellungen
+MENU_QUIT,Beenden
+MENU_BACK,Zurück
+MENU_RESUME,Fortsetzen
+MENU_SAVE,Speichern
+MENU_MAIN_MENU,Hauptmenü
+MENU_YES,Ja
+MENU_NO,Nein
+MENU_CANCEL,Abbrechen
+MENU_START,Start
+MENU_APPLY,Übernehmen
+MODE_SELECT_TITLE,Modus wählen
+MODE_LAUNDRY_DAY,Waschtag
+MODE_LAUNDRY_DAY_DESC,1.500 Paare (3.000 Socken)
+MODE_SOCK_DIMENSION,Sock Dimension
+MODE_SOCK_DIMENSION_DESC,5.000 Paare (10.000 Socken)
+MODE_SEED_LABEL,Seed
+MODE_SEED_PLACEHOLDER,Leer lassen für Zufall
+MODE_OVERWRITE_TITLE,Überschreiben?
+MODE_OVERWRITE_BODY,"In diesem Platz liegt schon ein Spielstand. Ein Neustart ersetzt ihn."
+LOADING_POURING,Der Sockenberg wird aufgeschüttet ...
+LOADING_RESTORING,Deine Wäsche wird zurückgeholt ...
+LOADING_PROGRESS,{done} / {total} Socken
+HUD_PAIRS,Paare: {found} / {total}
+HUD_TIME,Zeit: {time}
+HUD_SAVED,Gespeichert
+HUD_CHEAT,"Cheat an, MIKE tippen zum Ausschalten"
+HINT_GRAB,Linksklick: greifen
+HINT_THROW,Rechtsklick: werfen
+HINT_PAIR,E: Paar versuchen
+HINT_INSPECT,F halten: ansehen
+HINT_DROP,Linksklick ins Leere: fallen lassen
+HINT_CARRY,"Trägst {count}/{max}     Mausrad: Socke wechseln     Q: alle fallen lassen"
+END_TITLE,Alles gepaart!
+END_TIME,Zeit: {time}
+END_FAILED,Fehlversuche: {count}
+END_THROWS,Würfe: {count}
+END_MAIN_MENU,Zurück zum Hauptmenü
+SETTINGS_TITLE,Einstellungen
+SETTINGS_MOUSE_SENSITIVITY,Mausempfindlichkeit
+SETTINGS_INVERT_MOUSE,Maus invertieren
+SETTINGS_FOV,Sichtfeld
+SETTINGS_VOLUME_MASTER,Gesamtlautstärke
+SETTINGS_VOLUME_SFX,Effektlautstärke
+SETTINGS_VOLUME_AMBIENCE,Umgebungslautstärke
+SETTINGS_QUALITY,Grafikqualität
+SETTINGS_QUALITY_LOW,Niedrig
+SETTINGS_QUALITY_MEDIUM,Mittel
+SETTINGS_QUALITY_HIGH,Hoch
+SETTINGS_FULLSCREEN,Vollbild
+SETTINGS_WINDOWED,Fenster
+SETTINGS_DISPLAY_MODE,Anzeigemodus
+SETTINGS_VSYNC,VSync
+SETTINGS_LANGUAGE,Sprache
+SETTINGS_LANGUAGE_EN,English
+SETTINGS_LANGUAGE_DE,Deutsch
+ACHIEVEMENTS_TITLE,Erfolge
+ACHIEVEMENTS_TOTAL,{unlocked} von {total} freigeschaltet ({percent} %)
+ACHIEVEMENTS_UNLOCKED,Freigeschaltet
+ACHIEVEMENTS_LOCKED,Gesperrt
+ACHIEVEMENTS_PROGRESS,{current} / {target}
+ACHIEVEMENTS_HIDDEN,???
+ACHIEVEMENTS_TOAST_HEADER,Erfolg freigeschaltet
+ACH_FIRST_PAIR_NAME,Das erste Paar
+ACH_FIRST_PAIR_DESC,Finde dein erstes Paar.
+ACH_PAIRS_100_NAME,Kuppler
+ACH_PAIRS_100_DESC,Finde 100 Paare über alle Spiele.
+ACH_PAIRS_1000_NAME,Sockenflüsterer
+ACH_PAIRS_1000_DESC,Finde 1.000 Paare über alle Spiele.
+ACH_PAIRS_6000_NAME,Waschmaschinen-Überlebender
+ACH_PAIRS_6000_DESC,Finde 6.000 Paare über alle Spiele.
+ACH_HALFWAY_NAME,Halbzeit
+ACH_HALFWAY_DESC,Schaffe 50 % eines Modus.
+ACH_LAUNDRY_DAY_NAME,Waschtag
+ACH_LAUNDRY_DAY_DESC,Schließe den Modus Waschtag ab.
+ACH_SOCK_DIMENSION_NAME,Sock Dimension
+ACH_SOCK_DIMENSION_DESC,Schließe den Modus Sock Dimension ab.
+ACH_FLAWLESS_NAME,Fehlerfrei gefaltet
+ACH_FLAWLESS_DESC,Schließe einen Modus ohne einen einzigen Fehlversuch ab.
+ACH_EAGLE_EYE_NAME,Adlerauge
+ACH_EAGLE_EYE_DESC,Finde 50 Paare in Folge ohne Fehlversuch.
+ACH_NEAR_MISS_NAME,Knapp daneben
+ACH_NEAR_MISS_DESC,Scheitere 10-mal an einem fast gleichen Paar.
+ACH_FAST_LAUNDRY_NAME,Flinker Sortierer
+ACH_FAST_LAUNDRY_DESC,Schließe Waschtag in unter 3 Stunden Spielzeit ab.
+ACH_RAINBOW_NAME,Regenbogenschublade
+ACH_RAINBOW_DESC,Finde in einem Spiel ein Paar jeder Grundfarbe.
+ACH_PATTERNS_NAME,Mustermeister
+ACH_PATTERNS_DESC,Finde in einem Spiel ein Paar jedes Mustertyps.
+ACH_KING_OF_THE_HILL_NAME,König des Bergs
+ACH_KING_OF_THE_HILL_DESC,Stehe auf dem höchsten Punkt des Bergs.
+ACH_YEET_NAME,Yeet
+ACH_YEET_DESC,Wirf eine Socke 20 Meter weit.
+ACH_LUCKY_SOCK_NAME,Glückssocke
+ACH_LUCKY_SOCK_DESC,Finde ein Paar mit einem seltenen Spezialmuster.
+ACH_AVALANCHE_NAME,Lawine
+ACH_AVALANCHE_DESC,Bringe 100 Socken gleichzeitig in Bewegung.
+ACH_TRICK_SHOT_NAME,Kunstschuss
+ACH_TRICK_SHOT_DESC,Wirf eine einzelne Socke in den Wäschekorb.
+ACH_NIGHT_OWL_NAME,Nachteule
+ACH_NIGHT_OWL_DESC,Finde zwischen Mitternacht und 4 Uhr Ortszeit ein Paar.
+ACH_MARATHON_NAME,Marathon
+ACH_MARATHON_DESC,Spiele 2 Stunden am Stück.
+ACH_COMPLETIONIST_NAME,Bis zur letzten Socke
+ACH_COMPLETIONIST_DESC,Schalte alle anderen Erfolge frei.
+PAUSE_TITLE,Pause
+MODE_SAVE_COMPLETED,Geschafft in {time}
+MENU_CONTINUE_INFO,"Platz {slot}, {mode}: {found} / {total} Paare"
+SETTINGS_SECTION_CONTROLS,Steuerung
+SETTINGS_SECTION_SOUND,Ton
+SETTINGS_SECTION_DISPLAY,Anzeige
+SETTINGS_SHOW_INTRO,Geschichte und Tutorial beim nächsten neuen Spiel
+INTRO_1_LINE,Jede Waschmaschine hat ein Geheimnis.
+INTRO_1_BODY,"Irgendwo zwischen Schleudergang und Trockner geht immer eine Socke verloren. Du hast es selbst erlebt. Jeder hat das."
+INTRO_2_LINE,Die verlorenen Socken verschwinden nicht.
+INTRO_2_BODY,"Sie purzeln durch eine winzige Falte im Gewebe der Wäsche und landen in der Sock Dimension, einem Ort aus lauter einzelnen Socken."
+INTRO_3_LINE,Jahrelang haben sie sich angehäuft.
+INTRO_3_BODY,"Tausende. Gestreift, gepunktet, knöchelkurz und kniehoch. Jede allein, jede wartet auf ihren Zwilling."
+INTRO_4_LINE,Heute Nacht hat sich die Falte in deiner Waschmaschine geöffnet.
+INTRO_4_BODY,"Ein paar Socken sind schon auf den Deckel gerutscht. Etwas viel Größeres rumpelt noch in der Trommel."
+INTRO_5_LINE,Bring sie wieder zusammen.
+INTRO_5_BODY,"Finde für jede Socke ihren Zwilling, dann rollen sich die beiden zusammen und hüpfen in den Wäschekorb. Fang mit den Paaren auf der Waschmaschine an."
+INTRO_CONTINUE,Klick oder Leertaste: weiter  ·  Esc: überspringen
+INTRO_WAIT,Die letzten Socken landen noch ...
+INTRO_START,Klick oder Leertaste: los geht's
+TUT_MOVE_TITLE,Sieh dich um
+TUT_MOVE_TEXT,"WASD zum Gehen, Maus zum Schauen, Leertaste zum Springen."
+TUT_GRAB_TITLE,Heb eine Socke auf
+TUT_GRAB_TEXT,"Ziele auf eine Socke und greif sie mit Linksklick. Drei leichte Paare liegen auf der Waschmaschine in der Ecke."
+TUT_INSPECT_TITLE,Schau genau hin
+TUT_INSPECT_TEXT,"Halte F, um die Socke heranzuholen, und dreh sie mit der Maus. Zwillinge teilen Farbe, Muster, Streifen und Form."
+TUT_THROW_TITLE,Wirf sie
+TUT_THROW_TEXT,"Rechtsklick wirft die Socke. Linksklick ins Leere lässt sie nur fallen. Greif weitere Socken und trag bis zu zehn auf einmal."
+TUT_PAIR_TITLE,Bilde ein Paar
+TUT_PAIR_TEXT,"Halte eine Socke, ziele auf ihren Zwilling und drück E. Ein Treffer rollt sich zusammen und fliegt in den Korb."
+TUT_MISS_TITLE,Nicht ganz
+TUT_MISS_TEXT,"Die zwei sehen sich nur ähnlich. Prüf Farbe, Muster, Streifen und Länge und versuch es noch mal."
+TUT_DONE_TITLE,Gut gemacht
+TUT_DONE_TEXT,"Finde die restlichen Paare auf der Waschmaschine. Wackelt sie nicht ein bisschen?"
+WALL_SHAPE_SNEAKER,Sneakersocken
+WALL_SHAPE_SPORT,Sportsocken
+WALL_SHAPE_KNEE,Kniestrümpfe
+MENU_LOAD_GAME,Spiel laden
+SLOT_TITLE_NEW,Speicherplatz wählen
+SLOT_TITLE_LOAD,Spiel laden
+SLOT_NAME,Platz {n}
+SLOT_EMPTY,Leerer Platz
+SLOT_PROGRESS,"{found} / {total} Paare, {time}"
+SLOT_SAVED_AT,Gespeichert am {date}
+SLOT_DELETE,Löschen
+SLOT_DELETE_TITLE,Spielstand löschen?
+SLOT_DELETE_BODY,Der Spielstand in Platz {n} ist dann für immer weg.
+TUT_BLAST_TITLE,Oh-oh
+TUT_BLAST_TEXT,"Die Waschmaschine ist geplatzt und die Sock Dimension liegt im ganzen Keller verstreut. Finde jedes Paar. Esc pausiert und speichert."
