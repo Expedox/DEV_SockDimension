@@ -157,3 +157,5 @@ SLOT_DELETE_TITLE,Delete Save?
 SLOT_DELETE_BODY,The saved game in slot {n} will be gone for good.
 TUT_BLAST_TITLE,Uh-oh
 TUT_BLAST_TEXT,"The washing machine boiled over and the Sock Dimension is gushing out. Find every pair. Esc pauses and saves."
+ACH_CAT_BURGLAR_NAME,Caught Red-Pawed
+ACH_CAT_BURGLAR_DESC,Catch the cellar cat carrying off a sock.

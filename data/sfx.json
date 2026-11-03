@@ -555,6 +555,62 @@
           "gain": 0.16
         }
       ]
+    },
+    "meow": {
+      "volume_db": -8.0,
+      "pitch_jitter": 0.08,
+      "variants": 3,
+      "max_per_second": 0.5,
+      "layers": [
+        {
+          "type": "tone",
+          "duration": 0.22,
+          "freq_start": 420,
+          "freq_end": 740,
+          "harmonics": [
+            1.0,
+            0.65,
+            0.5,
+            0.35,
+            0.22,
+            0.12
+          ],
+          "attack": 0.04,
+          "curve": 1.0,
+          "gain": 0.5
+        },
+        {
+          "type": "tone",
+          "delay": 0.17,
+          "duration": 0.5,
+          "freq_start": 740,
+          "freq_end": 430,
+          "harmonics": [
+            1.0,
+            0.65,
+            0.5,
+            0.35,
+            0.22,
+            0.12
+          ],
+          "vibrato_hz": 6.0,
+          "vibrato_depth": 0.02,
+          "attack": 0.06,
+          "curve": 2.2,
+          "gain": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "bandpass",
+          "cutoff_start": 2400,
+          "cutoff_end": 1500,
+          "resonance": 1.2,
+          "duration": 0.6,
+          "attack": 0.05,
+          "curve": 2.5,
+          "gain": 0.06
+        }
+      ]
     }
   },
   "far_cutoff_hz": 6000.0,
@@ -702,6 +758,49 @@
           "freq_max": 1200,
           "decay": 0.012,
           "gain": 0.3
+        }
+      ]
+    },
+    "purr": {
+      "volume_db": -14.0,
+      "unit_size": 0.8,
+      "max_distance": 5.0,
+      "far_cutoff_hz": 2500.0,
+      "loop_seconds": 4.0,
+      "crossfade_seconds": 0.5,
+      "sample_rate": 16000,
+      "layers": [
+        {
+          "type": "tone",
+          "freq_start": 26.0,
+          "harmonics": [
+            1.0,
+            0.9,
+            0.8,
+            0.7,
+            0.6,
+            0.5,
+            0.42,
+            0.35,
+            0.28,
+            0.22,
+            0.17,
+            0.12
+          ],
+          "gain": 0.6,
+          "sustain": true,
+          "tremolo_hz": 0.5,
+          "tremolo_depth": 0.75
+        },
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "cutoff_start": 320,
+          "resonance": 0.7,
+          "gain": 0.35,
+          "sustain": true,
+          "drift_hz": 0.5,
+          "drift_depth": 0.8
         }
       ]
     }

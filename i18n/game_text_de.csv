@@ -157,3 +157,5 @@ SLOT_DELETE_TITLE,Spielstand löschen?
 SLOT_DELETE_BODY,Der Spielstand in Platz {n} ist dann für immer weg.
 TUT_BLAST_TITLE,Oh-oh
 TUT_BLAST_TEXT,"Die Waschmaschine ist übergekocht und die Sock Dimension quillt heraus. Finde jedes Paar. Esc pausiert und speichert."
+ACH_CAT_BURGLAR_NAME,Auf frischer Pfote ertappt
+ACH_CAT_BURGLAR_DESC,Erwische die Kellerkatze dabei, wie sie eine Socke wegträgt.

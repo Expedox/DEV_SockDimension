@@ -45,6 +45,7 @@ func _ready() -> void:
 	Events.sock_in_basket.connect(_on_sock_in_basket)
 	Events.socks_moving.connect(_on_socks_moving)
 	Events.summit_reached.connect(_on_summit_reached)
+	Events.cat_caught.connect(func() -> void: unlock("ACH_CAT_BURGLAR"))
 	Events.game_saved.connect(flush)
 
 

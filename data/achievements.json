@@ -31,6 +31,7 @@
     { "id": "ACH_LUCKY_SOCK", "name": "ACH_LUCKY_SOCK_NAME", "description": "ACH_LUCKY_SOCK_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_AVALANCHE", "name": "ACH_AVALANCHE_NAME", "description": "ACH_AVALANCHE_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_TRICK_SHOT", "name": "ACH_TRICK_SHOT_NAME", "description": "ACH_TRICK_SHOT_DESC", "hidden": true, "target": 1 },
+    { "id": "ACH_CAT_BURGLAR", "name": "ACH_CAT_BURGLAR_NAME", "description": "ACH_CAT_BURGLAR_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_NIGHT_OWL", "name": "ACH_NIGHT_OWL_NAME", "description": "ACH_NIGHT_OWL_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_MARATHON", "name": "ACH_MARATHON_NAME", "description": "ACH_MARATHON_DESC", "hidden": false, "target": 1 },
     { "id": "ACH_COMPLETIONIST", "name": "ACH_COMPLETIONIST_NAME", "description": "ACH_COMPLETIONIST_DESC", "hidden": false, "target": 1 }

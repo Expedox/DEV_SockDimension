@@ -11,6 +11,8 @@ signal sock_landed(sock_id: int, distance: float)
 signal sock_in_basket(sock_id: int)
 signal socks_moving(count: int)
 signal summit_reached
+## The cellar cat was seen carrying off a sock.
+signal cat_caught
 
 # Run lifecycle
 signal pile_progress(done: int, total: int)

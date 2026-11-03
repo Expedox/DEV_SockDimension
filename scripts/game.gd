@@ -29,6 +29,8 @@ var _blast_started := false
 ## Pairs that start on the washer lid; finding all of them sets off the burst.
 var _starter_pairs: Array[int] = []
 var wall: SockWall
+## Easter egg: the cellar cat, off when data/world.json -> cat.enabled is false.
+var cat: CellarCat
 
 
 func _ready() -> void:
@@ -61,6 +63,13 @@ func _ready() -> void:
 	cellar.add_child(wall)
 	wall.setup(socks, Config.world["pair_wall"], GameState.found_pair_ids, cellar.room_bounds())
 	Events.pair_matched.connect(wall.on_pair_matched)
+
+	var cat_cfg: Dictionary = Config.world.get("cat", {})
+	if bool(cat_cfg.get("enabled", false)):
+		cat = CellarCat.new()
+		cat.name = "CellarCat"
+		add_child(cat)
+		cat.setup(field, cellar, player, cat_cfg)
 
 	for path: String in UI_SCENES:
 		if ResourceLoader.exists(path):
@@ -96,6 +105,8 @@ func _ready() -> void:
 ## Mid-burst the field has no stable snapshot: socks stays empty and the run
 ## starts over from the starter pairs on load.
 func capture_world() -> Dictionary:
+	if cat:
+		cat.release() # no sock frozen in mid-air on load
 	return {"socks": field.capture(), "player": player.capture(), "rain_done": _rain_done}
 
 
@@ -166,6 +177,8 @@ func reset_burst_tuning() -> void:
 func retrigger_burst() -> void:
 	if not field.is_ready() or (_blast_started and not _rain_done):
 		return
+	if cat:
+		cat.set_active(false)
 	field.recall()
 	_rain_done = false
 	_blast_started = true
@@ -212,6 +225,8 @@ func _on_washer_burst() -> void:
 func _on_rain_finished() -> void:
 	_rain_done = true
 	blast.stop_foam()
+	if cat:
+		cat.set_active(true)
 	SaveManager.save_current.call_deferred()
 
 
@@ -251,6 +266,8 @@ func _on_pair_matched(_pair_id: int, _color: int, _pattern: int) -> void:
 func _on_run_finished(_mode_id: String) -> void:
 	blast.repair()
 	wall.light_up(true)
+	if cat:
+		cat.set_active(false)
 
 
 func _on_pile_ready() -> void:
@@ -258,6 +275,8 @@ func _on_pile_ready() -> void:
 	GameState.running = not GameState.completed
 	Events.run_started.emit(GameState.mode_id)
 	_check_starters()
+	if cat:
+		cat.set_active(_rain_done and not GameState.completed)
 	# Broken washer smokes from the burst until the last pair; a finished run
 	# shows the lit wall.
 	blast.set_smoking(_rain_done and not GameState.completed)

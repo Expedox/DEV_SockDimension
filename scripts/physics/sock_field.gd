@@ -275,6 +275,11 @@ func body_count() -> int:
 	return _bodies.size() - _bodies.count(null) - _aside.size()
 
 
+## In a hand (the player's or the cat's mouth), so nobody else may take it.
+func is_held(sock_id: int) -> bool:
+	return _ghosts.has(sock_id)
+
+
 func is_ready() -> bool:
 	return state == State.READY
 

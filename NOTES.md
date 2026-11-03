@@ -398,3 +398,15 @@ SUNDAY, MOM and DAD with a heart. Each exists once per game, always as a knee
 sock (`lettering_shape`), on top of the 10 % rolled designs. A 5x5 stitch font
 lives in sock.gdshader; letters stand upright, stacked down the leg on both
 faces. On the wall they hang in text order.
+
+## Cellar cat (easter egg)
+
+`scripts/world/cellar_cat.gd`, numbers in `data/world.json` -> `cat` (`enabled`
+switches it off). A procedural tabby naps in its bed in a corner, strolls now
+and then and every 7 to 14 minutes (first time after 3 to 6) carries a loose
+sock somewhere else, half the time into its bed. It only takes socks lying open
+on top, below 1.2 m, away from the basket, never held ones (`SockField.is_held`);
+found pairs are gone from the field, so the wall is safe. Before saving it puts
+the sock down. Purrs when you stand next to it asleep, meows when it grabs a
+sock. Walking up to it while it carries one unlocks the hidden `ACH_CAT_BURGLAR`.
+Dev check: `scenes/dev/cat_shot.tscn` (small pile, forces a theft, screenshots).
