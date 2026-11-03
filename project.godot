@@ -33,6 +33,7 @@ locale/fallback="en"
 3d_physics/layer_1="world"
 3d_physics/layer_2="socks"
 3d_physics/layer_3="player"
+3d_physics/layer_4="floor_socks"
 
 [physics]
 

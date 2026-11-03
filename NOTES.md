@@ -35,7 +35,7 @@ All text keys live in `i18n/game_text.csv` (`keys,en`, later `de`), owned by the
 texts work. Show text with `tr("KEY")`, placeholders are `{name}` with
 `String.format`.
 
-Physics layers: 1 world, 2 socks, 3 player. Socks collide with world and socks,
+Physics layers: 1 world, 2 socks, 3 player, 4 floor socks (lone socks resting flat on the floor; the player walks through them, rays for grabbing use `SockField.ANY_SOCK`). Socks collide with world and socks,
 not the player. The player collides with world and socks.
 
 ### Sock format

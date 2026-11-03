@@ -36,5 +36,6 @@
   "pour_cone_power": 1.3,
   "ghost_margin": 0.02,
   "pour_lumpiness": 0.9,
-  "pour_lump_frequency": 0.9
+  "pour_lump_frequency": 0.9,
+  "floor_sock_height": 0.06
 }

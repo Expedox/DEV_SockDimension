@@ -7,7 +7,11 @@ extends Node3D
 ## socks wake their neighbours instead. See NOTES.md, Interfaces and Measurement.
 
 const SOCK_LAYER := 2
-const SOCK_MASK := 1 | 2
+## Socks resting flat on the floor. The player walks through them; socks,
+## grabbing and the pile still treat them as socks.
+const FLOOR_SOCK_LAYER := 8
+const SOCK_MASK := 1 | 2 | 8
+const ANY_SOCK := SOCK_LAYER | FLOOR_SOCK_LAYER
 const WORLD_LAYER := 1
 
 enum State { IDLE, POURING, SETTLING, RESTORING, READY }
@@ -218,7 +222,7 @@ func wake_around(position: Vector3, radius: float) -> void:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = sphere
 	query.transform = Transform3D(Basis.IDENTITY, position)
-	query.collision_mask = SOCK_LAYER
+	query.collision_mask = ANY_SOCK
 	for hit in get_world_3d().direct_space_state.intersect_shape(query, int(_tuning.wake_max_socks)):
 		var sock := sock_at(hit.collider)
 		if sock != null:
@@ -488,6 +492,8 @@ func _spawn(sock_id: int, xform: Transform3D, velocity: Vector3, asleep: bool) -
 	sock.shape_owner_set_transform(owner_id, _shape_xform)
 	_bodies[sock_id] = sock
 	add_child(sock)
+	if sock.freeze:
+		_settle_layer(sock)
 	renderer.set_sock_transform(sock_id, xform)
 	if not asleep:
 		_awake[sock_id] = sock
@@ -519,6 +525,8 @@ func _finish() -> void:
 
 
 func _wake(sock: Sock) -> void:
+	if sock.collision_layer == FLOOR_SOCK_LAYER:
+		sock.collision_layer = SOCK_LAYER
 	sock.freeze = false
 	sock.sleeping = false
 	_awake[sock.sock_id] = sock
@@ -595,6 +603,13 @@ func _lift_out_of_floor(sock: Sock) -> void:
 	if bottom < 0.0:
 		sock.global_position.y -= bottom
 		renderer.set_sock_transform(sock.sock_id, sock.global_transform)
+	_settle_layer(sock)
+
+
+## A lone sock on the floor should not trip the player up.
+func _settle_layer(sock: Sock) -> void:
+	if sock.collision_layer == SOCK_LAYER and sock.global_position.y < float(_tuning.floor_sock_height):
+		sock.collision_layer = FLOOR_SOCK_LAYER
 
 
 ## A held sock gets its sock collisions back once nothing overlaps it.
@@ -603,7 +618,7 @@ func _solidify_ghosts() -> void:
 		return
 	var space := get_world_3d().direct_space_state
 	var query := PhysicsShapeQueryParameters3D.new()
-	query.collision_mask = SOCK_LAYER
+	query.collision_mask = ANY_SOCK
 	query.margin = float(_tuning.ghost_margin)
 	for sock_id: int in _ghosts.keys():
 		var sock: Sock = _ghosts[sock_id]

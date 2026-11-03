@@ -147,6 +147,11 @@ func _print_shape() -> void:
 		if child is Sock and child.global_position.y < 0.012:
 			low += 1
 	print("Socks with their centre less than 12 mm above the floor (sunk in): %d" % low)
+	var on_floor := 0
+	for child in _field.get_children():
+		if child is Sock and child.collision_layer == SockField.FLOOR_SOCK_LAYER:
+			on_floor += 1
+	print("Socks flat on the floor that the player walks through: %d" % on_floor)
 	print("Footprint: half the socks within %.2f m, 90 %% within %.2f m, outermost %.2f m" % [
 			radii[radii.size() / 2], radii[int(radii.size() * 0.9)], radii[-1]])
 	var keys := rings.keys()

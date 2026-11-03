@@ -86,7 +86,7 @@ func carry_count() -> int:
 func aimed_sock() -> Sock:
 	if _field == null:
 		return null
-	var hit := _ray(float(_cfg.grab_reach), 1 << (SOCK_LAYER - 1))
+	var hit := _ray(float(_cfg.grab_reach), SockField.ANY_SOCK)
 	if hit.is_empty():
 		return null
 	var sock := _field.sock_at(hit.collider)
