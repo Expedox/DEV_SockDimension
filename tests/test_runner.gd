@@ -281,6 +281,8 @@ func _test_achievements() -> void:
 		Achievements.unlock(definition.id)
 	GameState.mode_id = story_mode
 	check(Achievements.get_percent() == 100, "percent reaches 100")
+	# Speedrun unlocks last across games; forget them for the per-run checks below.
+	SpeedrunScores.clear()
 	_end_fake_run()
 
 	var keep: bool = Achievements.is_per_run()
