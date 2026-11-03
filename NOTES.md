@@ -165,7 +165,7 @@ Found pairs hang there instead of vanishing: one band per shape (sneaker, sport,
 knee-high, with a found/total label), one block per base colour in palette order,
 inside a block sorted by pattern, count, accent and heel/toe. Every pair of the set
 has a fixed slot from the start, so gaps show what is still missing. The layout
-picks one sock scale that fits the whole set (about 0.4 for 1,000 pairs, 0.19 for
+picks one sock scale that fits the whole set (about 0.26 for 1,500 pairs, 0.19 for
 5,000). One MultiMesh per shape with the far sock mesh and shader, no shadows,
 plus one MultiMesh for the peg rails. `Events.pair_matched` adds a pair with a
 short pop. Nothing extra is saved: the wall is rebuilt from `found` on load.
