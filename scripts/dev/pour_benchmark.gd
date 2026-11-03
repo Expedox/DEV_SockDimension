@@ -1,12 +1,12 @@
 extends Node3D
 ## Headless timing run: pours a mode, idles, wakes the summit, saves and
 ## restores. Run with a fixed frame rate so every frame is one physics step:
-##   godot --headless --fixed-fps 60 res://scenes/dev/pour_benchmark.tscn -- sock_dimension [nofreeze]
+##   godot --headless --fixed-fps 60 res://scenes/dev/pour_benchmark.tscn -- laundry_day [nofreeze]
 
 const IDLE_FRAMES := 300
 const WAKE_FRAMES := 300
 
-var _mode_id := "sock_dimension"
+var _mode_id := "laundry_day"
 var _field: SockField
 var _set: SockSet
 var _phase := "pour"

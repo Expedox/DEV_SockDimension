@@ -73,7 +73,8 @@ func _ready() -> void:
 	Events.pair_matched.connect(wall.on_pair_matched)
 
 	var cat_cfg: Dictionary = Config.world.get("cat", {})
-	if bool(cat_cfg.get("enabled", false)):
+	# No cat in a speedrun: a stolen sock would decide the race.
+	if bool(cat_cfg.get("enabled", false)) and not GameState.is_speedrun():
 		cat = CellarCat.new()
 		cat.name = "CellarCat"
 		add_child(cat)
@@ -92,7 +93,7 @@ func _ready() -> void:
 	blast.burst.connect(_on_washer_burst)
 
 	# Story and first steps on a fresh pile, once, until switched on again in Settings.
-	if not world.has("socks") and Settings.show_intro:
+	if not world.has("socks") and Settings.show_intro and not GameState.is_speedrun():
 		Settings.set_value("show_intro", false)
 		Settings.save()
 		var intro: Node = (load(INTRO_SCENE) as PackedScene).instantiate()
@@ -108,6 +109,8 @@ func _ready() -> void:
 	rival.setup(cellar)
 	add_child(NetHud.new())
 	Net.attach(field.renderer, player)
+	if GameState.is_speedrun():
+		add_child(SpeedrunHud.new())
 
 	Events.pile_ready.connect(_on_pile_ready)
 	Events.rain_finished.connect(_on_rain_finished)
@@ -129,6 +132,11 @@ func capture_world() -> Dictionary:
 func _build_pile(world: Dictionary) -> void:
 	_rain_done = bool(world.get("rain_done", true))
 	var saved: Dictionary = world.get("socks", {})
+	if GameState.is_speedrun():
+		# The whole small pile at once, in the middle of the room.
+		_rain_done = true
+		field.pour(socks, Config.mode(GameState.mode_id))
+		return
 	if world.has("socks") and (_rain_done or saved.has("ids")):
 		field.restore(socks, saved)
 	else:
@@ -191,7 +199,7 @@ func reset_burst_tuning() -> void:
 
 ## Tuning tool: takes the socks back into the washer and lets it boil over again.
 func retrigger_burst() -> void:
-	if not field.is_ready() or (_blast_started and not _rain_done):
+	if GameState.is_speedrun() or not field.is_ready() or (_blast_started and not _rain_done):
 		return
 	if cat:
 		cat.set_active(false)
@@ -288,14 +296,16 @@ func _on_run_finished(_mode_id: String) -> void:
 
 func _on_pile_ready() -> void:
 	GameState.pending_world = {}
-	GameState.running = not GameState.completed
-	Events.run_started.emit(GameState.mode_id)
+	# A speedrun's clock starts after the countdown (SpeedrunHud).
+	if not GameState.is_speedrun():
+		GameState.running = not GameState.completed
+		Events.run_started.emit(GameState.mode_id)
 	_check_starters()
 	if cat:
 		cat.set_active(_rain_done and not GameState.completed)
 	# Broken washer smokes from the burst until the last pair; a finished run
 	# shows the lit wall.
-	blast.set_smoking(_rain_done and not GameState.completed)
+	blast.set_smoking(_rain_done and not GameState.completed and not GameState.is_speedrun())
 	if GameState.completed:
 		wall.light_up(false)
 

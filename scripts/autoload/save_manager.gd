@@ -123,6 +123,8 @@ func migrate_legacy_saves() -> int:
 func save_current() -> bool:
 	if not GameState.in_run() or not (GameState.running or GameState.completed):
 		return false
+	if GameState.is_speedrun():
+		return false
 	var data := GameState.capture()
 	data.saved_at = int(Time.get_unix_time_from_system())
 	var saved := SafeFile.write(_path(GameState.slot), SAVE_VERSION, data)

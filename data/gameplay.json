@@ -23,5 +23,9 @@
   "intro": {
     "min_beat_seconds": 6.0
   },
-  "cheat_code": "MIKE"
+  "cheat_code": "MIKE",
+  "speedrun": {
+    "countdown_seconds": 3,
+    "highscore_entries": 10
+  }
 }

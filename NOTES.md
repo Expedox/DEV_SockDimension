@@ -347,7 +347,8 @@ throws), audio, and the real FPS.
   come only from Steam: every unlock still goes to `AchievementPlatform`, and
   Steam unlocks are not merged back into the run. `per_run: false` brings back
   the lifetime counters shared by all saves. The old 6,000 pair goal is now
-  `ACH_PAIRS_5000` (finish the big run); pair texts say "in one game".
+  `ACH_PAIRS_5000`; with the 5,000 pair mode gone it was removed (2026-11-03),
+  together with `ACH_SOCK_DIMENSION`. Old unlocks of them are dropped on load.
 
 - The project folder is on the Google Drive mount. Git works there, but Drive
   syncing a live `.git` folder can corrupt it. Push often, or move the checkout.
@@ -417,3 +418,12 @@ Main menu → LAN Game: one PC hosts, the other joins with the host's address (U
 - scripts/autoload/net.gd (autoload Net): ENet connection, survives menus. Sends the player pose (20 Hz, unreliable) and every sock whose transform changed (SockRenderer.track_changes, max 600 per send, reliable). The run (mode + seed) goes first, so the viewer builds the same SockSet and sock ids match.
 - scripts/net/remote_cellar.gd: the other cellar, one room height plus the glass up. scripts/net/net_hud.gd: count and join/leave notes.
 - Tested in the cloud with two headless instances on 127.0.0.1: 3000 burst socks arrive on the other side; clean leave turns the glass back into planks.
+
+## Speedrun (and the 5,000 pair mode is gone)
+
+Mike (2026-11-03): Sock Dimension (5,000 pairs) is too much and leaves; Laundry Day stays at 1,500. New Speedrun with 50, 100, 250 and 500 pairs.
+
+- Modes: `data/modes.json`. `sock_dimension` is marked `retired`: not offered any more, but old saves still open. Speedrun sizes are modes with `speedrun: true` (`speedrun_50` ... `speedrun_500`), each with its own small room and pile radius. `Config.story_modes()` / `Config.speedrun_modes()`.
+- Main menu → Speedrun (`scripts/ui/speedrun_select.gd`): pick a size, see the top 10 times for it, Start or Versus. A speedrun pours the whole pile in the middle at once (no intro, no washer burst, no cat), counts 3-2-1-Go (`scripts/ui/speedrun_hud.gd`), and the clock shows tenths. Never saved, no achievements. Best times: `scripts/speedrun/speedrun_scores.gd`, `user://speedrun.save`; count and countdown in `data/gameplay.json` → `speedrun`. Runs with the MIKE cheat on are not listed.
+- Versus: needs the LAN connection. Versus sends size and seed to the other player, both get the same pile, the countdown starts once both piles are poured. The clock keeps running in the pause menu. Each side sees the other's count (and their cellar above the glass), the end screen says who won; leaving the run counts as giving up. "Again" on the end screen starts a rematch once both have finished. A player who is in an unfinished game gets no invite (the inviter plays alone).
+- Check: `godot --headless --path . res://scenes/dev/speedrun_smoke.tscn -- solo`, for versus start `-- host` and `-- join` side by side. Tested in the cloud on 127.0.0.1 only; the real two PC test is still open.

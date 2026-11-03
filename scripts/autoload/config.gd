@@ -33,6 +33,26 @@ func mode(id: String) -> Dictionary:
 	return {}
 
 
+## Modes offered under New Game: no speedruns, nothing retired.
+func story_modes() -> Array:
+	return modes.filter(func(m: Dictionary) -> bool:
+		return not m.get("retired", false) and not m.get("speedrun", false))
+
+
+## Speedrun sizes, smallest first.
+func speedrun_modes() -> Array:
+	var out := modes.filter(func(m: Dictionary) -> bool: return m.get("speedrun", false))
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.pairs) < int(b.pairs))
+	return out
+
+
+func is_speedrun(id: String) -> bool:
+	for entry: Dictionary in modes:
+		if entry.id == id:
+			return bool(entry.get("speedrun", false))
+	return false
+
+
 ## Sets world for a mode. A mode with its own room_size gets the cellar of
 ## data/world.json stretched to it: things near a wall move with that wall,
 ## things near the middle stay, things in the upper half move with the

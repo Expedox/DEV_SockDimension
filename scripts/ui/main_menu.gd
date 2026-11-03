@@ -1,5 +1,5 @@
 extends Control
-## Title screen: Continue, New Game, Load Game, Achievements, Settings, Quit. Sub screens
+## Title screen: Continue, New Game, Load Game, Speedrun, Achievements, Settings, Quit. Sub screens
 ## open on top and hand control back when they close.
 
 var _menu: Control
@@ -67,6 +67,7 @@ func _build() -> void:
 	buttons.add_child(_continue_info)
 	_add(buttons, "MENU_NEW_GAME", _open_new_game)
 	_load_button = _add(buttons, "MENU_LOAD_GAME", _open_load)
+	_add(buttons, "MENU_SPEEDRUN", _open_speedrun)
 	_add(buttons, "MENU_LAN", _open_lan)
 	_add(buttons, "MENU_ACHIEVEMENTS", _open_achievements)
 	_add(buttons, "MENU_SETTINGS", _open_settings)
@@ -115,6 +116,10 @@ func _open_new_game() -> void:
 
 func _open_load() -> void:
 	_open(SlotSelect.create(SlotSelect.Purpose.LOAD))
+
+
+func _open_speedrun() -> void:
+	_open(SpeedrunSelect.new())
 
 
 func _open_lan() -> void:

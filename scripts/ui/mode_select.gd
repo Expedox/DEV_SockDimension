@@ -24,8 +24,9 @@ func _ready() -> void:
 	UiKit.fade_in(self)
 	var preferred := 0
 	var latest := SaveManager.slot_info(SaveManager.latest_slot())
-	for i in Config.modes.size():
-		if Config.modes[i].id == latest.get("mode", ""):
+	var modes := Config.story_modes()
+	for i in modes.size():
+		if modes[i].id == latest.get("mode", ""):
 			preferred = i
 	_cards[preferred].button_pressed = true
 	_cards[preferred].grab_focus.call_deferred()
@@ -51,7 +52,7 @@ func _build() -> void:
 	cards.alignment = BoxContainer.ALIGNMENT_CENTER
 	cards.add_theme_constant_override("separation", 22)
 	column.add_child(cards)
-	for mode: Dictionary in Config.modes:
+	for mode: Dictionary in Config.story_modes():
 		var card := _mode_card(mode)
 		cards.add_child(card)
 		_cards.append(card)

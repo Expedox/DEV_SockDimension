@@ -83,6 +83,8 @@ func _build() -> void:
 	_add("MENU_SETTINGS", _open_settings)
 	_add("MENU_MAIN_MENU", _to_main_menu)
 	_add("MENU_QUIT", SaveManager.save_and_quit, &"QuietButton")
+	# Speedruns are never saved.
+	_buttons.get_child(1).visible = not GameState.is_speedrun()
 
 
 func _add(key: String, action: Callable, variation := &"") -> void:

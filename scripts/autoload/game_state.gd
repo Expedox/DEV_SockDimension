@@ -31,10 +31,16 @@ var world_provider: Object = null
 var running := false
 ## Debug cheat (typed code from data/gameplay.json): the partner of the held or aimed sock glows. Never saved.
 var cheat_mode := false
+## The cheat was on at some point this run; such speedruns stay off the highscore list.
+var cheat_used := false
+## Speedrun against the LAN rival: same size and seed, the clock runs on in the pause menu.
+var versus := false
+## Place of the finished speedrun in its highscore list (0 = best), -1 when not listed.
+var speedrun_rank := -1
 
 
 func _process(delta: float) -> void:
-	if running and not get_tree().paused:
+	if running and (versus or not get_tree().paused):
 		play_time += delta
 		session_time += delta
 
@@ -47,6 +53,21 @@ func start_new(new_mode: String, seed_text := "", new_slot := 1) -> void:
 	seed_value = _seed_from_text(seed_text)
 	pending_world = {}
 	get_tree().change_scene_to_file(GAME_SCENE)
+
+
+## Speedrun: a small pile, never saved, no achievements. seed_value < 0 picks one.
+func start_speedrun(new_mode: String, new_seed := -1, against_rival := false) -> void:
+	_reset(new_mode)
+	slot = 0
+	versus = against_rival
+	seed_value = new_seed if new_seed >= 0 else randi()
+	pending_world = {}
+	get_tree().paused = false
+	get_tree().change_scene_to_file(GAME_SCENE)
+
+
+func is_speedrun() -> bool:
+	return Config.is_speedrun(mode_id)
 
 
 ## Restores a run from a dictionary built by capture() and opens the game.
@@ -131,6 +152,9 @@ func register_throw(sock_id: int) -> void:
 func finish() -> void:
 	completed = true
 	running = false
+	speedrun_rank = -1
+	if is_speedrun() and not cheat_used:
+		speedrun_rank = SpeedrunScores.record(pairs_total, play_time, mistakes, versus)
 	Events.run_finished.emit(mode_id)
 
 
@@ -159,6 +183,9 @@ func _reset(new_mode: String) -> void:
 	abilities = PackedStringArray()
 	running = false
 	cheat_mode = false
+	cheat_used = false
+	versus = false
+	speedrun_rank = -1
 
 
 func _seed_from_text(text: String) -> int:

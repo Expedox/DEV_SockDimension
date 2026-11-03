@@ -56,6 +56,15 @@ static func fade_out_and_free(node: CanvasItem) -> void:
 
 
 ## Clock text such as 0:42:07.
+## Race clock with tenths: 1:23.4, or 1:02:03.4 past an hour.
+static func format_race(seconds: float) -> String:
+	var tenths := int(floor(maxf(seconds, 0.0) * 10.0))
+	var total := tenths / 10
+	if total >= 3600:
+		return "%d:%02d:%02d.%d" % [total / 3600, total / 60 % 60, total % 60, tenths % 10]
+	return "%d:%02d.%d" % [total / 60, total % 60, tenths % 10]
+
+
 static func format_time(seconds: float) -> String:
 	var total := int(seconds)
 	return "%d:%02d:%02d" % [total / 3600, total / 60 % 60, total % 60]

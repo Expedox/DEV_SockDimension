@@ -24,7 +24,65 @@
         46.0,
         12.0,
         36.0
+      ],
+      "retired": true
+    },
+    {
+      "id": "speedrun_50",
+      "name_key": "MODE_SPEEDRUN",
+      "desc_key": "MODE_SPEEDRUN_DESC",
+      "speedrun": true,
+      "pairs": 50,
+      "near_pair_share": 0.2,
+      "pile_radius": 0.8,
+      "room_size": [
+        16.0,
+        6.0,
+        12.0
+      ]
+    },
+    {
+      "id": "speedrun_100",
+      "name_key": "MODE_SPEEDRUN",
+      "desc_key": "MODE_SPEEDRUN_DESC",
+      "speedrun": true,
+      "pairs": 100,
+      "near_pair_share": 0.2,
+      "pile_radius": 1.0,
+      "room_size": [
+        16.0,
+        6.0,
+        12.0
+      ]
+    },
+    {
+      "id": "speedrun_250",
+      "name_key": "MODE_SPEEDRUN",
+      "desc_key": "MODE_SPEEDRUN_DESC",
+      "speedrun": true,
+      "pairs": 250,
+      "near_pair_share": 0.2,
+      "pile_radius": 1.35,
+      "room_size": [
+        17.0,
+        6.0,
+        13.0
+      ]
+    },
+    {
+      "id": "speedrun_500",
+      "name_key": "MODE_SPEEDRUN",
+      "desc_key": "MODE_SPEEDRUN_DESC",
+      "speedrun": true,
+      "pairs": 500,
+      "near_pair_share": 0.2,
+      "pile_radius": 1.7,
+      "room_size": [
+        18.0,
+        6.0,
+        14.0
       ]
     }
-  ]
+  ],
+  "_note": "retired modes stay so old saves still open; they are not offered for new games. speedrun modes are listed on the Speedrun screen, never saved."
 }

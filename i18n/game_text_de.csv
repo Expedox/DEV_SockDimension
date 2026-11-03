@@ -74,14 +74,10 @@ ACH_PAIRS_100_NAME,Kuppler
 ACH_PAIRS_100_DESC,Finde 100 Paare in einem Spiel.
 ACH_PAIRS_1000_NAME,Sockenflüsterer
 ACH_PAIRS_1000_DESC,Finde 1.000 Paare in einem Spiel.
-ACH_PAIRS_5000_NAME,Waschmaschinen-Überlebender
-ACH_PAIRS_5000_DESC,Finde 5.000 Paare in einem Spiel.
 ACH_HALFWAY_NAME,Halbzeit
 ACH_HALFWAY_DESC,Schaffe 50 % eines Modus.
 ACH_LAUNDRY_DAY_NAME,Waschtag
 ACH_LAUNDRY_DAY_DESC,Schließe den Modus Waschtag ab.
-ACH_SOCK_DIMENSION_NAME,Sock Dimension
-ACH_SOCK_DIMENSION_DESC,Schließe den Modus Sock Dimension ab.
 ACH_FLAWLESS_NAME,Fehlerfrei gefaltet
 ACH_FLAWLESS_DESC,Schließe einen Modus ohne einen einzigen Fehlversuch ab.
 ACH_EAGLE_EYE_NAME,Adlerauge
@@ -190,3 +186,31 @@ LAN_VERSION_MISMATCH,Der andere Spieler hat eine andere Spielversion.
 HUD_RIVAL,Über dir: {found} / {total}
 NET_RIVAL_JOINED,Der andere Spieler ist verbunden
 NET_RIVAL_LEFT,Der andere Spieler ist gegangen
+MENU_SPEEDRUN,Speedrun
+MODE_SPEEDRUN,Speedrun
+MODE_SPEEDRUN_DESC,"Finde alle Paare, so schnell du kannst."
+SPEEDRUN_TITLE,Speedrun
+SPEEDRUN_INTRO,"Wähle eine Größe und schlag deine Bestzeit. Über LAN-Spiel verbunden? Dann tretet auf demselben Haufen gegeneinander an."
+SPEEDRUN_PAIRS,{pairs} Paare
+SPEEDRUN_BEST,Bestzeit: {time}
+SPEEDRUN_NO_TIME,Noch keine Zeit
+SPEEDRUN_SCORES_TITLE,Bestzeiten · {pairs} Paare
+SPEEDRUN_SCORE_LINE,"{rank}.   {time}   ·   {mistakes} Fehlversuche   ·   {date}"
+SPEEDRUN_VS_TAG,Versus
+SPEEDRUN_SOLO,Start
+SPEEDRUN_VERSUS,Versus
+SPEEDRUN_VERSUS_HINT,"Um gegen jemanden zu spielen, zuerst unter LAN-Spiel verbinden."
+SPEEDRUN_VERSUS_READY,"Der andere Spieler ist verbunden: Versus startet für euch beide denselben Haufen."
+SPEEDRUN_RIVAL_BUSY,Der andere Spieler ist noch in einem Spiel.
+SPEEDRUN_WAITING,Warte auf den anderen Spieler …
+SPEEDRUN_GO,Los!
+SPEEDRUN_RIVAL_FINISHED,Der andere ist fertig: {time}
+SPEEDRUN_RIVAL_GAVE_UP,Der andere hat aufgegeben
+SPEEDRUN_RIVAL_PROGRESS,Der andere: {found} / {total}
+SPEEDRUN_RESULT,{pairs} Paare in {time}
+SPEEDRUN_NEW_BEST,Neue Bestzeit!
+SPEEDRUN_RANK,Platz {rank} in deinen Bestzeiten
+SPEEDRUN_CHEAT_NOT_LISTED,Cheat war an: Diese Zeit kommt nicht in die Liste.
+SPEEDRUN_YOU_WIN,Gewonnen!
+SPEEDRUN_YOU_LOSE,Der andere war schneller
+SPEEDRUN_AGAIN,Nochmal

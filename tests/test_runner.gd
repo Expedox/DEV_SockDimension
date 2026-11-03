@@ -24,6 +24,7 @@ func _ready() -> void:
 	_test_game_state_counters()
 	_test_achievements()
 	_test_socks()
+	_test_speedrun()
 	_test_sock_wall()
 	_test_daylight()
 	_test_drop_scatter()
@@ -35,6 +36,14 @@ func _ready() -> void:
 
 	print("%d checks, %d failed" % [_checks, _failures])
 	get_tree().quit(1 if _failures > 0 else 0)
+
+
+## Every mode that can still be started, plus the retired big one for old saves.
+func _room_modes() -> Array:
+	var out := ["sock_dimension"]
+	for mode: Dictionary in Config.story_modes() + Config.speedrun_modes():
+		out.append(mode.id)
+	return out
 
 
 func check(condition: bool, label: String) -> void:
@@ -216,7 +225,7 @@ func _test_achievements() -> void:
 	Achievements.save_path = TEST_DIR + "achievements2.save"
 	Achievements.load_state()
 	check(Achievements.get_unlocked_count() == 0, "fresh achievement state")
-	check(Achievements.get_total_count() == 22, "twenty-two achievements defined")
+	check(Achievements.get_total_count() == 20, "twenty achievements defined")
 
 	_start_fake_run("sock_dimension", 10)
 	GameState.register_match(0, 0, 0)
@@ -358,8 +367,44 @@ func _test_socks() -> void:
 		check(SockMesh.ray_hit(shape, toe + Vector3(0.3, 1.0, 0.0), Vector3.DOWN, 0.015) < 0.0, "aim misses beside " + name)
 
 
+func _test_speedrun() -> void:
+	SpeedrunScores.save_path = TEST_DIR + "speedrun.save"
+	SpeedrunScores.clear()
+	var sizes := []
+	for mode: Dictionary in Config.speedrun_modes():
+		sizes.append(int(mode.pairs))
+	check(sizes == [50, 100, 250, 500], "speedrun sizes 50/100/250/500")
+	var story := Config.story_modes()
+	check(story.size() == 1 and story[0].id == "laundry_day", "New Game offers only Laundry Day")
+	check(int(Config.mode("laundry_day").pairs) == 1500, "Laundry Day keeps 1500 pairs")
+	check(Config.is_speedrun("speedrun_50") and not Config.is_speedrun("laundry_day"), "speedrun flag")
+	check(SpeedrunScores.best(50) < 0.0, "no best time yet")
+	check(SpeedrunScores.record(50, 90.0, 2) == 0, "first time is the best")
+	check(SpeedrunScores.record(50, 120.0, 0) == 1, "slower time ranks second")
+	check(SpeedrunScores.record(50, 60.5, 1, true) == 0, "faster time becomes the best")
+	check(is_equal_approx(SpeedrunScores.best(50), 60.5), "best time read back")
+	check(SpeedrunScores.entries(100).is_empty(), "sizes keep separate lists")
+	var keep := int(Config.gameplay.speedrun.highscore_entries)
+	for n in keep:
+		SpeedrunScores.record(50, 10.0 + n, 0)
+	check(SpeedrunScores.entries(50).size() == keep, "list keeps %d entries" % keep)
+	check(SpeedrunScores.record(50, 9999.0, 0) == -1, "too slow is not listed")
+	check(UiKit.format_race(83.45) == "1:23.4", "race clock " + UiKit.format_race(83.45))
+	# A speedrun never touches the save slots and unlocks nothing.
+	Achievements.reset_all()
+	_start_fake_run("speedrun_50", 0)
+	check(not SaveManager.save_current(), "speedrun is not saved")
+	Achievements.unlock("ACH_YEET")
+	check(not Achievements.is_unlocked("ACH_YEET"), "no achievements in a speedrun")
+	_end_fake_run()
+	GameState._reset("laundry_day")
+	check(not Achievements.get_definitions().any(func(d: Dictionary) -> bool:
+		return d.id in ["ACH_SOCK_DIMENSION", "ACH_PAIRS_5000"]), "5000 pair achievements are gone")
+	SpeedrunScores.clear()
+
+
 func _test_sock_wall() -> void:
-	for mode_id in ["laundry_day", "sock_dimension"]:
+	for mode_id in _room_modes():
 		Config.use_mode_room(mode_id)
 		var config: Dictionary = Config.world["pair_wall"]
 		var size := Cellar.vec3(Config.world.room_size)
@@ -391,7 +436,7 @@ func _test_sock_wall() -> void:
 func _test_lost_found() -> void:
 	var margin := float(Config.physics.lost_margin)
 	var floor_limit := float(Config.physics.fall_limit_y)
-	for mode_id in ["laundry_day", "sock_dimension"]:
+	for mode_id in _room_modes():
 		Config.use_mode_room(mode_id)
 		var size := Cellar.vec3(Config.world.room_size)
 		var room := AABB(Vector3(-size.x * 0.5, 0.0, -size.z * 0.5), size)
@@ -496,7 +541,7 @@ func _test_firm_hand() -> void:
 ## static body cover the same box as its meshes, nothing sticks out into the
 ## room. The shelf once had its box turned 90 degrees, 1.3 m into the room.
 func _test_hitboxes() -> void:
-	for mode_id in ["laundry_day", "sock_dimension"]:
+	for mode_id in _room_modes():
 		Config.use_mode_room(mode_id)
 		var cellar := Cellar.new()
 		add_child(cellar)

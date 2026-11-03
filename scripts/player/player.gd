@@ -548,6 +548,7 @@ func _track_cheat_code(keycode: Key) -> void:
 	if _typed == code:
 		_typed = ""
 		GameState.cheat_mode = not GameState.cheat_mode
+		GameState.cheat_used = GameState.cheat_used or GameState.cheat_mode
 
 
 func _check_summit(delta: float) -> void:

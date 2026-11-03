@@ -74,14 +74,10 @@ ACH_PAIRS_100_NAME,Matchmaker
 ACH_PAIRS_100_DESC,"Find 100 pairs in one game."
 ACH_PAIRS_1000_NAME,Sock Whisperer
 ACH_PAIRS_1000_DESC,"Find 1,000 pairs in one game."
-ACH_PAIRS_5000_NAME,Washing Machine Survivor
-ACH_PAIRS_5000_DESC,"Find 5,000 pairs in one game."
 ACH_HALFWAY_NAME,Halfway There
 ACH_HALFWAY_DESC,Reach 50% of any mode.
 ACH_LAUNDRY_DAY_NAME,Laundry Day
 ACH_LAUNDRY_DAY_DESC,Complete the Laundry Day mode.
-ACH_SOCK_DIMENSION_NAME,Sock Dimension
-ACH_SOCK_DIMENSION_DESC,Complete the Sock Dimension mode.
 ACH_FLAWLESS_NAME,Flawless Folding
 ACH_FLAWLESS_DESC,Complete a mode without a single failed attempt.
 ACH_EAGLE_EYE_NAME,Eagle Eye
@@ -190,3 +186,31 @@ LAN_VERSION_MISMATCH,The other player runs a different version of the game.
 HUD_RIVAL,Above you: {found} / {total}
 NET_RIVAL_JOINED,The other player is connected
 NET_RIVAL_LEFT,The other player left
+MENU_SPEEDRUN,Speedrun
+MODE_SPEEDRUN,Speedrun
+MODE_SPEEDRUN_DESC,"Find every pair as fast as you can."
+SPEEDRUN_TITLE,Speedrun
+SPEEDRUN_INTRO,"Pick a size and beat your best time. Connected over LAN Game? Race the other player on the same pile."
+SPEEDRUN_PAIRS,{pairs} pairs
+SPEEDRUN_BEST,Best: {time}
+SPEEDRUN_NO_TIME,No time yet
+SPEEDRUN_SCORES_TITLE,Best times · {pairs} pairs
+SPEEDRUN_SCORE_LINE,"{rank}.   {time}   ·   {mistakes} misses   ·   {date}"
+SPEEDRUN_VS_TAG,versus
+SPEEDRUN_SOLO,Start
+SPEEDRUN_VERSUS,Versus
+SPEEDRUN_VERSUS_HINT,"To race someone, connect first under LAN Game."
+SPEEDRUN_VERSUS_READY,"The other player is connected: Versus starts the same pile for both of you."
+SPEEDRUN_RIVAL_BUSY,The other player is still in a game.
+SPEEDRUN_WAITING,Waiting for the other player…
+SPEEDRUN_GO,Go!
+SPEEDRUN_RIVAL_FINISHED,Other player finished: {time}
+SPEEDRUN_RIVAL_GAVE_UP,The other player gave up
+SPEEDRUN_RIVAL_PROGRESS,Other player: {found} / {total}
+SPEEDRUN_RESULT,{pairs} pairs in {time}
+SPEEDRUN_NEW_BEST,New best time!
+SPEEDRUN_RANK,Place {rank} in your best times
+SPEEDRUN_CHEAT_NOT_LISTED,Cheat was on: this time is not listed.
+SPEEDRUN_YOU_WIN,You win!
+SPEEDRUN_YOU_LOSE,The other player was faster
+SPEEDRUN_AGAIN,Again

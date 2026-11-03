@@ -110,6 +110,8 @@ func get_stat(key: String) -> int:
 # --- Game events ---
 
 func _on_pair_matched(_pair_id: int, base_color: int, pattern_type: int) -> void:
+	if GameState.is_speedrun():
+		return
 	_thrown_sock = -1
 	_stats.pairs_total = get_stat("pairs_total") + 1
 	_stats.best_streak = maxi(get_stat("best_streak"), GameState.streak)
@@ -140,6 +142,8 @@ func _on_pair_matched(_pair_id: int, base_color: int, pattern_type: int) -> void
 
 
 func _on_pair_mismatched(near_miss: bool) -> void:
+	if GameState.is_speedrun():
+		return
 	if near_miss:
 		_stats.near_misses = get_stat("near_misses") + 1
 		_mark_dirty()
@@ -198,7 +202,7 @@ func notify(name_key: String, description_key: String) -> void:
 
 
 func unlock(id: String) -> void:
-	if _unlocked.has(id) or not _by_id.has(id):
+	if _unlocked.has(id) or not _by_id.has(id) or GameState.is_speedrun():
 		return
 	_unlocked[id] = int(Time.get_unix_time_from_system())
 	var target := int(_by_id[id].target)
@@ -251,6 +255,7 @@ func load_state() -> void:
 	_unlocked = result.data.get("unlocked", {})
 	_stats = result.data.get("stats", {})
 	_run = result.data.get("run", _run)
+	_drop_unknown()
 
 
 ## In-game achievements belong to one run (params.per_run). A new game starts
@@ -280,6 +285,7 @@ func restore_run(data: Dictionary) -> void:
 	_unlocked = data.get("unlocked", {})
 	_stats = data.get("stats", {})
 	_run = data.get("run", {"colors": {}, "patterns": {}})
+	_drop_unknown()
 	_thrown_sock = -1
 	_mark_dirty()
 	flush()
@@ -305,6 +311,14 @@ func flush() -> void:
 		return
 	_dirty = false
 	_dirty_seconds = 0.0
+
+
+## Unlocks of achievements that no longer exist (such as the retired
+## Sock Dimension ones) would push the total past 100 %.
+func _drop_unknown() -> void:
+	for id: String in _unlocked.keys():
+		if not _by_id.has(id):
+			_unlocked.erase(id)
 
 
 func _mark_dirty() -> void:

@@ -9,6 +9,12 @@ signal lobby_changed
 signal rival_run_changed
 signal rival_joined
 signal rival_left
+## Versus speedrun: both piles are ready, start the countdown.
+signal versus_go
+## Versus speedrun: the rival finished (versus_rival_time) or gave up.
+signal versus_rival_done
+## The rival is busy in their own run and could not take a versus invite.
+signal versus_declined
 
 const HIDDEN_BIT := 0x8000
 const BYTES_PER_SOCK := 22 # u16 id, 3 x f32 origin, 4 x f16 rotation
@@ -26,6 +32,12 @@ var rival_yaw := 0.0
 var rival_pitch := 0.0
 var rival_found := 0
 var rival_seen := false
+## Versus speedrun state, reset by start_versus() and an incoming invite.
+var versus_self_ready := false
+var versus_rival_ready := false
+## Rival's finishing time in seconds, -1 while they are still running.
+var versus_rival_time := -1.0
+var versus_rival_gave_up := false
 
 var _cfg: Dictionary
 ## sock_id -> Transform3D, or null for hidden; drained by RemoteCellar.
@@ -131,6 +143,87 @@ func detach(renderer: SockRenderer) -> void:
 		_run.rpc_id(rival_id, "", 0)
 
 
+## Starts a versus speedrun on both sides: same size, same seed.
+func start_versus(mode_id: String) -> bool:
+	if not has_rival():
+		return false
+	var seed_value := randi() & 0x7fffffff
+	reset_versus()
+	_versus_start.rpc_id(rival_id, mode_id, seed_value)
+	GameState.start_speedrun(mode_id, seed_value, true)
+	return true
+
+
+func reset_versus() -> void:
+	versus_self_ready = false
+	versus_rival_ready = false
+	versus_rival_time = -1.0
+	versus_rival_gave_up = false
+
+
+## Our pile is poured; the countdown starts once the rival's is too.
+func versus_ready() -> void:
+	versus_self_ready = true
+	if has_rival():
+		_versus_ready.rpc_id(rival_id)
+	_check_go()
+
+
+func versus_finished(time: float) -> void:
+	if has_rival():
+		_versus_finished.rpc_id(rival_id, time)
+
+
+func _check_go() -> void:
+	if versus_self_ready and (versus_rival_ready or not has_rival()):
+		versus_self_ready = false
+		versus_rival_ready = false
+		versus_go.emit()
+
+
+@rpc("any_peer", "call_remote", "reliable", 2)
+func _versus_start(mode_id: String, seed_value: int) -> void:
+	if multiplayer.get_remote_sender_id() != rival_id or not Config.is_speedrun(mode_id):
+		return
+	# A finished run may be left; one still being played is not thrown away.
+	if GameState.in_run() and not GameState.completed:
+		_versus_busy.rpc_id(rival_id)
+		return
+	reset_versus()
+	GameState.start_speedrun(mode_id, seed_value, true)
+
+
+@rpc("any_peer", "call_remote", "reliable", 2)
+func _versus_busy() -> void:
+	if multiplayer.get_remote_sender_id() == rival_id:
+		versus_declined.emit()
+
+
+@rpc("any_peer", "call_remote", "reliable", 2)
+func _versus_ready() -> void:
+	if multiplayer.get_remote_sender_id() != rival_id:
+		return
+	versus_rival_ready = true
+	_check_go()
+
+
+@rpc("any_peer", "call_remote", "reliable", 2)
+func _versus_finished(time: float) -> void:
+	if multiplayer.get_remote_sender_id() != rival_id:
+		return
+	versus_rival_time = time
+	versus_rival_done.emit()
+
+
+## The rival left the versus run before finishing it.
+func _rival_quit_versus() -> void:
+	if GameState.versus and versus_rival_time < 0.0 and not versus_rival_gave_up:
+		versus_rival_gave_up = true
+		versus_rival_done.emit()
+		# Nobody left to wait for.
+		_check_go()
+
+
 ## Hands the changed rival socks to the caller and forgets them.
 func take_incoming() -> Dictionary:
 	var out := _incoming
@@ -165,7 +258,11 @@ func _announce_run() -> void:
 func _run(mode_id: String, seed_value: int) -> void:
 	if multiplayer.get_remote_sender_id() != rival_id:
 		return
+	# Leaving the versus run itself counts as giving up; leaving an older run does not.
+	var left_versus := mode_id.is_empty() and rival_mode == GameState.mode_id and rival_seed == GameState.seed_value
 	_forget_rival_run()
+	if left_versus:
+		_rival_quit_versus()
 	if mode_id.is_empty() or Config.mode(mode_id).is_empty():
 		rival_mode = ""
 	else:
@@ -253,6 +350,7 @@ func _on_peer_disconnected(id: int) -> void:
 		return
 	rival_id = 0
 	_forget_rival_run()
+	_rival_quit_versus()
 	rival_left.emit()
 	if hosting:
 		_set_status("LAN_WAITING")

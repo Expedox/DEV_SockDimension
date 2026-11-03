@@ -38,7 +38,9 @@ func _process(_delta: float) -> void:
 	if _shown_pairs != GameState.pairs_found:
 		_shown_pairs = GameState.pairs_found
 		_refresh_pairs()
-	if _shown_seconds != int(GameState.play_time):
+	if GameState.is_speedrun():
+		_time_label.text = tr("HUD_TIME").format({"time": UiKit.format_race(GameState.play_time)})
+	elif _shown_seconds != int(GameState.play_time):
 		_shown_seconds = int(GameState.play_time)
 		_time_label.text = tr("HUD_TIME").format({"time": UiKit.format_time(GameState.play_time)})
 	if live:
