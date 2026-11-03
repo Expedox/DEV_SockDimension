@@ -14,6 +14,9 @@ var _frames := 0
 var _last_usec := 0
 var _samples := PackedFloat32Array()
 var _log_at := 0.0
+var _pulled: Sock
+var _pull_from := Vector3.ZERO
+var _pull_target := Vector3.ZERO
 
 
 func _ready() -> void:
@@ -60,6 +63,13 @@ func _process(_delta: float) -> void:
 		"wake":
 			if _frames >= WAKE_FRAMES:
 				_report("After waking the summit")
+				_start_pull()
+		"pull":
+			_steer_pull()
+			if _frames >= 90:
+				var moved := _pulled.global_position.distance_to(_pull_from)
+				print("Pulled a buried sock: moved %.2f m of %.2f m in 1.5 s" % [moved, _pull_target.distance_to(_pull_from)])
+				_field.end_hold(_pulled)
 				_save_and_restore()
 
 
@@ -140,3 +150,28 @@ func _print_shape() -> void:
 	for ring: int in keys:
 		line += " %.1f-%.1f m: %.2f |" % [ring * 0.5, ring * 0.5 + 0.5, rings[ring]]
 	print(line)
+
+
+## Grabs a sock buried halfway down near the centre and pulls it up and out
+## the way the player's hold spring does.
+func _start_pull() -> void:
+	var top := _field.surface_height()
+	var best: Sock = null
+	var best_score := INF
+	for child in _field.get_children():
+		if child is Sock:
+			var p: Vector3 = child.global_position
+			var score := Vector2(p.x, p.z).length() + absf(p.y - top.y * 0.5)
+			if score < best_score:
+				best_score = score
+				best = child
+	_pulled = best
+	_pull_from = best.global_position
+	_pull_target = Vector3(_pull_from.x, top.y + 1.2, _pull_from.z)
+	_field.begin_hold(best)
+	_next("pull")
+
+
+func _steer_pull() -> void:
+	var cfg := Config.player
+	_pulled.linear_velocity = ((_pull_target - _pulled.global_position) * float(cfg.hold_spring)).limit_length(float(cfg.hold_max_speed))
