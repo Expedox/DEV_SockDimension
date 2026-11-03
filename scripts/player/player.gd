@@ -244,12 +244,12 @@ func _footsteps(was_on_floor: bool, from: Vector3) -> void:
 	if not was_on_floor:
 		if _fall_speed >= float(_cfg.get("land_sound_speed", 3.5)):
 			Sfx.play("land_player")
-		_stride_left = float(_cfg.get("step_stride", 0.75)) * 0.5
+		_stride_left = float(_cfg.get("step_stride", 1.8)) * 0.5
 		return
 	_stride_left -= ((global_position - from) * Vector3(1, 0, 1)).length()
 	if _stride_left > 0.0:
 		return
-	_stride_left = float(_cfg.get("step_stride", 0.75))
+	_stride_left = float(_cfg.get("step_stride", 1.8))
 	Sfx.play("step_socks" if _on_sock_ground or _on_socks() else "step_floor")
 
 

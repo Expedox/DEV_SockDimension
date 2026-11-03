@@ -401,31 +401,41 @@
       ]
     },
     "step_floor": {
-      "volume_db": -21.0,
-      "pitch_jitter": 0.12,
-      "variants": 4,
-      "max_per_second": 8,
+      "volume_db": -24.0,
+      "pitch_jitter": 0.08,
+      "variants": 6,
+      "max_per_second": 5,
       "layers": [
         {
           "type": "noise",
           "filter": "lowpass",
-          "cutoff_start": 900,
-          "cutoff_end": 250,
-          "resonance": 0.6,
-          "duration": 0.08,
-          "attack": 0.003,
+          "cutoff_start": 320,
+          "cutoff_end": 110,
+          "resonance": 0.5,
+          "duration": 0.16,
+          "attack": 0.012,
+          "curve": 4.5,
+          "gain": 0.8
+        },
+        {
+          "type": "tone",
+          "freq_start": 85,
+          "freq_end": 55,
+          "duration": 0.09,
+          "attack": 0.01,
           "curve": 5.0,
-          "gain": 0.6
+          "gain": 0.25
         },
         {
           "type": "noise",
-          "filter": "bandpass",
-          "cutoff_start": 2600,
-          "cutoff_end": 2000,
-          "resonance": 0.8,
-          "duration": 0.035,
-          "attack": 0.002,
-          "curve": 6.0,
+          "filter": "lowpass",
+          "cutoff_start": 1100,
+          "cutoff_end": 500,
+          "resonance": 0.4,
+          "delay": 0.05,
+          "duration": 0.14,
+          "attack": 0.03,
+          "curve": 3.5,
           "gain": 0.12
         }
       ]
@@ -434,7 +444,7 @@
       "volume_db": -17.0,
       "pitch_jitter": 0.15,
       "variants": 5,
-      "max_per_second": 8,
+      "max_per_second": 5,
       "layers": [
         {
           "type": "noise",
