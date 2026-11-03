@@ -7,7 +7,8 @@
 		"volume_sfx": 1.0,
 		"fullscreen": false,
 		"vsync": true,
-		"language": "en"
+		"language": "en",
+		"show_intro": true
 	},
 	"ranges": {
 		"mouse_sensitivity": { "min": 0.0005, "max": 0.008, "step": 0.0001 },

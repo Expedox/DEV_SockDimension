@@ -302,3 +302,10 @@ throws), audio, and the real FPS.
   `far_sides` to 6, `detail_capacity`, or switch sock shadows off in `SockRenderer.setup`.
 - Socks: a knee sock is a long L, so its box shape is mostly empty. If the pile looks
   too airy, try a smaller `collision_fit` for that shape.
+
+## Intro, tutorial and starter pairs
+
+- First new game shows five story beats (`scenes/ui/intro.tscn`) over the pour. Click/Space/Enter goes on, Esc skips. If the pile is ready first, the game stays paused until the story ends; the last beat fades to show the cellar.
+- Then a tutorial card (`scenes/ui/tutorial.tscn`) walks through look, grab, inspect, throw and pair; each step waits for the action. Timings in `data/gameplay.json` → `tutorial`.
+- Setting `show_intro` ("Story and tutorial on next new game") turns itself off after one showing; switch it on again in Settings to replay.
+- Every fresh pile leaves `starter_pairs` (data/gameplay.json, 3) whole pairs out of the pour and lays them side by side on the washing machine lid (`SockField.reserve`, `Cellar.washer_top`).

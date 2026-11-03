@@ -105,3 +105,31 @@ MENU_CONTINUE_INFO,"{mode}: {found} / {total} pairs"
 SETTINGS_SECTION_CONTROLS,Controls
 SETTINGS_SECTION_SOUND,Sound
 SETTINGS_SECTION_DISPLAY,Display
+SETTINGS_SHOW_INTRO,Story and tutorial on next new game
+INTRO_1_LINE,Every washing machine has a secret.
+INTRO_1_BODY,"Somewhere between the spin cycle and the dryer, one sock always slips away. You have seen it happen. Everyone has."
+INTRO_2_LINE,The lost socks don't vanish.
+INTRO_2_BODY,"They tumble through a tiny fold in the fabric of laundry and land in the Sock Dimension, a place made of nothing but odd socks."
+INTRO_3_LINE,"For years, they piled up."
+INTRO_3_BODY,"Thousands of them. Striped, dotted, ankle-short and knee-high. Each one alone, each one waiting for its twin."
+INTRO_4_LINE,"Tonight, the fold opened. Right above your cellar."
+INTRO_4_BODY,And it is pouring.
+INTRO_5_LINE,Bring them back together.
+INTRO_5_BODY,"Find every pair, match each sock with its twin and the two roll up and hop into the laundry basket. A few pairs are already waiting on the washing machine."
+INTRO_CONTINUE,Click or Space to continue  ·  Esc to skip
+INTRO_WAIT,The last socks are still landing...
+INTRO_START,Click or Space to start
+TUT_MOVE_TITLE,Look around
+TUT_MOVE_TEXT,"WASD to walk, mouse to look, Space to jump. You can climb the pile."
+TUT_GRAB_TITLE,Pick up a sock
+TUT_GRAB_TEXT,"Aim at a sock and left-click to grab it. Three easy pairs lie on the washing machine in the corner."
+TUT_INSPECT_TITLE,Take a close look
+TUT_INSPECT_TEXT,"Hold F to bring the sock close and turn it with the mouse. Twins share colour, pattern, stripes and shape."
+TUT_THROW_TITLE,Throw it
+TUT_THROW_TEXT,"Right-click to throw the sock. Left-click just drops it."
+TUT_PAIR_TITLE,Make a pair
+TUT_PAIR_TEXT,"Hold one sock, aim at its twin and press E. A match rolls up and flies into the basket."
+TUT_MISS_TITLE,Not quite
+TUT_MISS_TEXT,"Those two only look alike. Check colour, pattern, stripes and length, then try again."
+TUT_DONE_TITLE,That's the trick
+TUT_DONE_TEXT,"Now find all the rest. Esc pauses and saves, and your game also saves on its own."

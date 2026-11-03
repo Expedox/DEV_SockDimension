@@ -50,6 +50,20 @@ func player_spawn() -> Transform3D:
 	return Transform3D.IDENTITY.translated(from).looking_at(target, Vector3.UP)
 
 
+## Centre of the washing machine's lid, turned like the machine. Local X runs
+## along its width, Z along its depth.
+func washer_top() -> Transform3D:
+	var size := vec3(_data["washer_size"])
+	var basis := Basis(Vector3.UP, deg_to_rad(float(_data["washer_yaw_degrees"])))
+	return Transform3D(basis, vec3(_data["washer_position"]) + Vector3.UP * size.y)
+
+
+## Lid size of the washing machine (x width, z depth).
+func washer_lid() -> Vector2:
+	var size := vec3(_data["washer_size"])
+	return Vector2(size.x, size.z)
+
+
 ## World point a rolled-up pair should fly to.
 func basket_mouth() -> Vector3:
 	return basket.mouth()

@@ -70,6 +70,7 @@ func _build() -> void:
 	_slider(rows, "SETTINGS_MOUSE_SENSITIVITY", "mouse_sensitivity", "mouse_sensitivity")
 	_toggle(rows, "SETTINGS_INVERT_MOUSE", "invert_mouse")
 	_slider(rows, "SETTINGS_FOV", "fov", "fov")
+	_toggle(rows, "SETTINGS_SHOW_INTRO", "show_intro")
 	_section(rows, "SETTINGS_SECTION_SOUND")
 	_slider(rows, "SETTINGS_VOLUME_MASTER", "volume_master", "volume")
 	_slider(rows, "SETTINGS_VOLUME_SFX", "volume_sfx", "volume")

@@ -43,6 +43,7 @@ var _top := 0.0
 var _reported_done := -1
 var _reported_moving := 0
 var _restore_data: Dictionary
+var _reserved := {} # sock_id -> Transform3D, left out of the pour and laid down at the end
 
 var _summit := Vector3.ZERO
 var _scan_best := Vector3(0.0, -INF, 0.0)
@@ -76,6 +77,12 @@ func pour(sock_set: SockSet, mode: Dictionary) -> void:
 	_rng.seed = sock_set.seed_value
 	state = State.POURING
 	Events.pile_progress.emit(0, socks.sock_count())
+
+
+## Keeps these socks out of the next pour and lays them down at their
+## transforms once the rest of the pile is in. Call before pour().
+func reserve(placements: Dictionary) -> void:
+	_reserved = placements.duplicate()
 
 
 ## Saved pile: every sock comes back asleep where it was. state comes from capture().
@@ -276,7 +283,8 @@ func _pour_wave() -> void:
 	var taken := {}
 	var placed := 0
 	for attempt in count * 8:
-		if placed >= count:
+		_skip_reserved()
+		if placed >= count or _next >= socks.sock_count():
 			break
 		# Uniform radius piles the centre higher: a hill, not a flat layer.
 		var angle := _rng.randf() * TAU
@@ -294,6 +302,12 @@ func _pour_wave() -> void:
 		_spawn(_next, Transform3D(basis, origin), Vector3.DOWN * float(_tuning.pour_speed), false)
 		_next += 1
 		placed += 1
+	_skip_reserved()
+
+
+func _skip_reserved() -> void:
+	while _next < socks.sock_count() and _reserved.has(_next):
+		_next += 1
 
 
 func _restore_batch() -> void:
@@ -345,6 +359,9 @@ func _finish() -> void:
 	_awake.clear()
 	_to_freeze.clear()
 	state = State.READY
+	for sock_id: int in _reserved:
+		_spawn(sock_id, _reserved[sock_id], Vector3.ZERO, false)
+	_reserved = {}
 	pour_seconds = (Time.get_ticks_msec() - _started_msec) / 1000.0
 	_reported_moving = 0
 	Events.pile_ready.emit()

@@ -15,6 +15,7 @@ var volume_sfx := 1.0
 var fullscreen := false
 var vsync := true
 var language := "en"
+var show_intro := true
 
 var data: Dictionary = {}
 
