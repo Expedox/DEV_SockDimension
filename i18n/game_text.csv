@@ -69,11 +69,11 @@ ACHIEVEMENTS_TOAST_HEADER,Achievement unlocked
 ACH_FIRST_PAIR_NAME,First Pair
 ACH_FIRST_PAIR_DESC,Find your first pair.
 ACH_PAIRS_100_NAME,Matchmaker
-ACH_PAIRS_100_DESC,"Find 100 pairs across all games."
+ACH_PAIRS_100_DESC,"Find 100 pairs in one game."
 ACH_PAIRS_1000_NAME,Sock Whisperer
-ACH_PAIRS_1000_DESC,"Find 1,000 pairs across all games."
-ACH_PAIRS_6000_NAME,Washing Machine Survivor
-ACH_PAIRS_6000_DESC,"Find 6,000 pairs across all games."
+ACH_PAIRS_1000_DESC,"Find 1,000 pairs in one game."
+ACH_PAIRS_5000_NAME,Washing Machine Survivor
+ACH_PAIRS_5000_DESC,"Find 5,000 pairs in one game."
 ACH_HALFWAY_NAME,Halfway There
 ACH_HALFWAY_DESC,Reach 50% of any mode.
 ACH_LAUNDRY_DAY_NAME,Laundry Day

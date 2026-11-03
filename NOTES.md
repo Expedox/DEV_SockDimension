@@ -346,9 +346,8 @@ throws), audio, and the real FPS.
   (`achievements` key in the save) and loading restores them. Lasting unlocks
   come only from Steam: every unlock still goes to `AchievementPlatform`, and
   Steam unlocks are not merged back into the run. `per_run: false` brings back
-  the lifetime counters shared by all saves. Note: `ACH_PAIRS_6000` cannot be
-  reached in one run (largest mode has 5,000 pairs); target or text needs a
-  change.
+  the lifetime counters shared by all saves. The old 6,000 pair goal is now
+  `ACH_PAIRS_5000` (finish the big run); pair texts say "in one game".
 
 - The project folder is on the Google Drive mount. Git works there, but Drive
   syncing a live `.git` folder can corrupt it. Push often, or move the checkout.

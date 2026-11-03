@@ -16,7 +16,7 @@
     { "id": "ACH_FIRST_PAIR", "name": "ACH_FIRST_PAIR_NAME", "description": "ACH_FIRST_PAIR_DESC", "hidden": false, "target": 1, "stat": "pairs_total" },
     { "id": "ACH_PAIRS_100", "name": "ACH_PAIRS_100_NAME", "description": "ACH_PAIRS_100_DESC", "hidden": false, "target": 100, "stat": "pairs_total" },
     { "id": "ACH_PAIRS_1000", "name": "ACH_PAIRS_1000_NAME", "description": "ACH_PAIRS_1000_DESC", "hidden": false, "target": 1000, "stat": "pairs_total" },
-    { "id": "ACH_PAIRS_6000", "name": "ACH_PAIRS_6000_NAME", "description": "ACH_PAIRS_6000_DESC", "hidden": false, "target": 6000, "stat": "pairs_total" },
+    { "id": "ACH_PAIRS_5000", "name": "ACH_PAIRS_5000_NAME", "description": "ACH_PAIRS_5000_DESC", "hidden": false, "target": 5000, "stat": "pairs_total" },
     { "id": "ACH_HALFWAY", "name": "ACH_HALFWAY_NAME", "description": "ACH_HALFWAY_DESC", "hidden": false, "target": 1 },
     { "id": "ACH_LAUNDRY_DAY", "name": "ACH_LAUNDRY_DAY_NAME", "description": "ACH_LAUNDRY_DAY_DESC", "hidden": false, "target": 1 },
     { "id": "ACH_SOCK_DIMENSION", "name": "ACH_SOCK_DIMENSION_NAME", "description": "ACH_SOCK_DIMENSION_DESC", "hidden": false, "target": 1 },

@@ -69,11 +69,11 @@ ACHIEVEMENTS_TOAST_HEADER,Erfolg freigeschaltet
 ACH_FIRST_PAIR_NAME,Das erste Paar
 ACH_FIRST_PAIR_DESC,Finde dein erstes Paar.
 ACH_PAIRS_100_NAME,Kuppler
-ACH_PAIRS_100_DESC,Finde 100 Paare über alle Spiele.
+ACH_PAIRS_100_DESC,Finde 100 Paare in einem Spiel.
 ACH_PAIRS_1000_NAME,Sockenflüsterer
-ACH_PAIRS_1000_DESC,Finde 1.000 Paare über alle Spiele.
-ACH_PAIRS_6000_NAME,Waschmaschinen-Überlebender
-ACH_PAIRS_6000_DESC,Finde 6.000 Paare über alle Spiele.
+ACH_PAIRS_1000_DESC,Finde 1.000 Paare in einem Spiel.
+ACH_PAIRS_5000_NAME,Waschmaschinen-Überlebender
+ACH_PAIRS_5000_DESC,Finde 5.000 Paare in einem Spiel.
 ACH_HALFWAY_NAME,Halbzeit
 ACH_HALFWAY_DESC,Schaffe 50 % eines Modus.
 ACH_LAUNDRY_DAY_NAME,Waschtag
