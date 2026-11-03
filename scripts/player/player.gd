@@ -1,6 +1,8 @@
 class_name Player
 extends CharacterBody3D
 ## First-person walker that can climb the pile, grab, throw and inspect socks.
+## It carries a bundle of up to carry_max socks: one active sock in hand (the
+## one that throws, pairs and inspects) and the rest tucked under the arm.
 ## Tuning lives in data/player.json.
 
 const WORLD_LAYER := 1
@@ -13,7 +15,8 @@ var camera: Camera3D
 
 var _cfg: Dictionary
 var _field: SockField
-var _held: Sock
+var _held: Sock # the active sock in hand
+var _carried: Array[Sock] = [] # the rest of the bundle, next active first
 var _yaw := 0.0
 var _pitch := 0.0
 var _inspect_spin := Vector2.ZERO
@@ -21,6 +24,7 @@ var _wiggle_left := 0.0
 var _summit_timer := 0.0
 var _summit_done := false
 var _pending_held := -1
+var _pending_carried := PackedInt32Array()
 var _typed := "" # last letters, for the debug cheat code
 var _cheat_cache := Vector2i(-1, -1) # (sock, partner), avoids a scan every frame
 
@@ -68,6 +72,16 @@ func held_sock() -> Sock:
 	return _held
 
 
+## The socks under the arm, not counting the active one in hand.
+func carried_socks() -> Array[Sock]:
+	return _carried
+
+
+## Active sock plus bundle.
+func carry_count() -> int:
+	return _carried.size() + (1 if _held else 0)
+
+
 ## The sock under the crosshair within reach, never the held one.
 func aimed_sock() -> Sock:
 	if _field == null:
@@ -76,14 +90,16 @@ func aimed_sock() -> Sock:
 	if hit.is_empty():
 		return null
 	var sock := _field.sock_at(hit.collider)
-	return null if sock == _held else sock
+	return null if sock == _held or _carried.has(sock) else sock
 
 
 ## Forgets the held sock without touching its physics (it leaves for the basket).
+## The next sock from the bundle moves into the hand.
 func release_held() -> void:
 	if _held:
 		Events.sock_released.emit(_held.sock_id)
 	_held = null
+	_promote_next()
 
 
 func wiggle_held() -> void:
@@ -96,6 +112,7 @@ func capture() -> Dictionary:
 		"yaw": _yaw,
 		"pitch": _pitch,
 		"held": _held.sock_id if _held else -1,
+		"carried": PackedInt32Array(_carried.map(func(sock: Sock) -> int: return sock.sock_id)),
 	}
 
 
@@ -104,6 +121,7 @@ func apply(state: Dictionary) -> void:
 	_yaw = float(state.get("yaw", _yaw))
 	_pitch = float(state.get("pitch", 0.0))
 	_pending_held = int(state.get("held", -1))
+	_pending_carried = PackedInt32Array(state.get("carried", PackedInt32Array()))
 	_apply_look()
 
 
@@ -125,12 +143,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("grab"):
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		elif aimed_sock():
+			_grab()
 		elif _held:
 			_drop()
-		else:
-			_grab()
 	elif event.is_action_pressed("throw") and _held:
 		_throw()
+	elif event.is_action_pressed("drop_all") and _held:
+		_drop_all()
+	elif event.is_action_pressed("switch_next"):
+		_cycle(1)
+	elif event.is_action_pressed("switch_prev"):
+		_cycle(-1)
 
 
 func _physics_process(delta: float) -> void:
@@ -138,6 +162,7 @@ func _physics_process(delta: float) -> void:
 	_move(delta)
 	if _held:
 		_steer_held(delta)
+	_steer_carried()
 	_check_summit(delta)
 	_update_highlight()
 
@@ -194,17 +219,28 @@ func _ray(length: float, mask: int) -> Dictionary:
 	var from := camera.global_position
 	var to := from - camera.global_basis.z * length
 	var query := PhysicsRayQueryParameters3D.create(from, to, mask)
-	query.exclude = [get_rid()] if _held == null else [get_rid(), _held.get_rid()]
+	var exclude: Array[RID] = [get_rid()]
+	if _held:
+		exclude.append(_held.get_rid())
+	query.exclude = exclude
 	return get_world_3d().direct_space_state.intersect_ray(query)
 
 
 func _grab() -> void:
 	var sock := aimed_sock()
-	if sock:
-		_take(sock)
+	if sock == null:
+		return
+	if carry_count() >= int(_cfg.get("carry_max", 1)):
+		wiggle_held() # arms full
+		return
+	_take(sock)
 
 
+## The new sock goes into the hand; the one held before joins the bundle.
 func _take(sock: Sock) -> void:
+	if _held:
+		_carried.push_front(_held)
+		_field.carry(_held)
 	_held = sock
 	_inspect_spin = Vector2.ZERO
 	_field.begin_hold(sock)
@@ -217,12 +253,44 @@ func _drop() -> void:
 	_field.end_hold(sock)
 
 
+func _drop_all() -> void:
+	while _held:
+		_drop()
+
+
 func _throw() -> void:
 	var sock := _held
 	var throw_velocity := -camera.global_basis.z * float(_cfg.throw_speed) + velocity
 	_held = null
 	_field.throw_sock(sock, throw_velocity)
 	GameState.register_throw(sock.sock_id)
+	_promote_next()
+
+
+func _promote_next() -> void:
+	while not _carried.is_empty() and _held == null:
+		var next: Sock = _carried.pop_front()
+		if is_instance_valid(next) and next.is_inside_tree():
+			_held = next
+			_inspect_spin = Vector2.ZERO
+			_field.begin_hold(next)
+
+
+## Mouse wheel: the active sock goes to the bundle and the next one comes up.
+func _cycle(step: int) -> void:
+	if _held == null or _carried.is_empty():
+		return
+	var old := _held
+	if step > 0:
+		_carried.push_back(old)
+		_held = _carried.pop_front()
+	else:
+		_carried.push_front(old)
+		_held = _carried.pop_back()
+	_field.carry(old)
+	_field.begin_hold(_held)
+	_inspect_spin = Vector2.ZERO
+	Sfx.play("grab")
 
 
 ## Soft spring towards the hold point; never teleports.
@@ -255,6 +323,31 @@ func _steer_held(delta: float) -> void:
 	if angle > 0.0001:
 		turn = diff.get_axis() * angle * float(_cfg.hold_turn_spring)
 	_held.angular_velocity = turn.limit_length(max_speed * 2.0)
+
+
+## The bundle hangs low on the left of the view, stacked like an armful.
+func _steer_carried() -> void:
+	if _carried.is_empty():
+		return
+	var cam := camera.global_transform
+	var spring := float(_cfg.hold_spring)
+	var max_speed := float(_cfg.hold_max_speed)
+	var gap := float(_cfg.get("carry_spacing", 0.045))
+	var flat := cam.basis * Basis.from_euler(Vector3(0.0, PI * 0.5, 0.0))
+	for i in range(_carried.size() - 1, -1, -1):
+		var sock: Sock = _carried[i]
+		if not is_instance_valid(sock) or not sock.is_inside_tree():
+			_carried.remove_at(i)
+			continue
+		var target := cam.origin - cam.basis.z * float(_cfg.get("carry_distance", 0.7)) \
+				- cam.basis.x * 0.38 - cam.basis.y * (0.42 - gap * i)
+		sock.linear_velocity = ((target - sock.global_position) * spring).limit_length(max_speed)
+		var wanted := flat * Basis(Vector3.UP, 0.25 * sin(i * 1.7))
+		var diff := (wanted.get_rotation_quaternion() * sock.global_basis.get_rotation_quaternion().inverse()).normalized()
+		if diff.w < 0.0:
+			diff = -diff
+		var angle := diff.get_angle()
+		sock.angular_velocity = diff.get_axis() * angle * float(_cfg.hold_turn_spring) if angle > 0.0001 else Vector3.ZERO
 
 
 ## Only the sock under the crosshair glows, so it is clear which one a click takes.
@@ -299,10 +392,16 @@ func _check_summit(delta: float) -> void:
 
 
 func _on_pile_ready() -> void:
-	if _pending_held >= 0 and _field and _field.has_method("sock_by_id"):
-		var sock: Sock = _field.call("sock_by_id", _pending_held)
-		if sock:
-			sock.global_position = camera.global_position - camera.global_basis.z * float(_cfg.hold_distance)
-			_take(sock)
+	if _field and _field.has_method("sock_by_id"):
+		# Bundle first (last to first, each pushed under the arm), then the hand.
+		var ids := Array(_pending_carried)
+		ids.reverse()
+		ids.append(_pending_held)
+		for sock_id: int in ids:
+			var sock: Sock = _field.call("sock_by_id", sock_id) if sock_id >= 0 else null
+			if sock:
+				sock.global_position = camera.global_position - camera.global_basis.z * float(_cfg.hold_distance)
+				_take(sock)
 	_pending_held = -1
+	_pending_carried = PackedInt32Array()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

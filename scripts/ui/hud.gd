@@ -62,11 +62,14 @@ func _update_aim() -> void:
 		holding = _player.has_method("held_sock") and _player.held_sock() != null
 		aiming = _player.has_method("aimed_sock") and _player.aimed_sock() != null
 	_crosshair.hot = aiming
-	var key := "HINT_HELD" if holding else "HINT_GRAB"
+	var count: int = _player.call("carry_count") if holding and _player.has_method("carry_count") else 0
+	var key := ("HINT_HELD%d" % count) if holding else "HINT_GRAB"
 	if key != _hint_key:
 		_hint_key = key
 		if holding:
-			_hint.text = "%s     %s     %s     %s" % [tr("HINT_GRAB"), tr("HINT_THROW"), tr("HINT_PAIR"), tr("HINT_INSPECT")]
+			_hint.text = "%s     %s     %s     %s     %s" % [tr("HINT_GRAB"), tr("HINT_DROP"), tr("HINT_THROW"), tr("HINT_PAIR"), tr("HINT_INSPECT")]
+			if count > 1:
+				_hint.text += "\n" + tr("HINT_CARRY").format({"count": count, "max": int(Config.player.get("carry_max", 1))})
 		else:
 			_hint.text = tr("HINT_GRAB")
 

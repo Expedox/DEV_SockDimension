@@ -47,6 +47,7 @@ var _reported_done := -1
 var _reported_moving := 0
 var _restore_data: Dictionary
 var _ghosts := {} # sock_id -> held Sock that still passes through other socks
+var _carried := {} # sock_id -> true, held in the player's bundle: always a ghost
 var _skip := {} # sock_id -> true, left out of the current pour
 var _raining := false # pour_rest() on a field that is already in play
 
@@ -176,8 +177,19 @@ func begin_hold(sock: Sock) -> void:
 	# wedges it in place.
 	sock.collision_mask = WORLD_LAYER
 	_ghosts[sock.sock_id] = sock
+	_carried.erase(sock.sock_id)
 	_wake(sock)
 	wake_around(sock.global_position, float(_tuning.wake_radius))
+
+
+## A held sock tucked into the player's bundle. It stays a ghost, so an armful
+## of socks never ploughs through the pile while walking over it.
+func carry(sock: Sock) -> void:
+	if not _ghosts.has(sock.sock_id):
+		begin_hold(sock)
+	sock.collision_mask = WORLD_LAYER
+	_ghosts[sock.sock_id] = sock
+	_carried[sock.sock_id] = true
 
 
 func end_hold(sock: Sock) -> void:
@@ -185,6 +197,7 @@ func end_hold(sock: Sock) -> void:
 	sock.collision_layer = SOCK_LAYER
 	sock.collision_mask = SOCK_MASK
 	_ghosts.erase(sock.sock_id)
+	_carried.erase(sock.sock_id)
 	sock.can_sleep = true
 
 
@@ -540,6 +553,9 @@ func _solidify_ghosts() -> void:
 		var sock: Sock = _ghosts[sock_id]
 		if not is_instance_valid(sock) or not sock.is_inside_tree():
 			_ghosts.erase(sock_id)
+			_carried.erase(sock_id)
+			continue
+		if _carried.has(sock_id):
 			continue
 		query.shape = _shapes[socks.shape_of(sock_id)]
 		query.transform = sock.global_transform * _shape_xform

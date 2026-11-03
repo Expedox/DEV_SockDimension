@@ -7,11 +7,14 @@
     "jump": ["Space"],
     "pair": ["E"],
     "inspect": ["F"],
+    "drop_all": ["Q"],
     "pause": ["Escape"],
     "debug": ["F1"]
   },
   "mouse": {
     "grab": 1,
-    "throw": 2
+    "throw": 2,
+    "switch_prev": 4,
+    "switch_next": 5
   }
 }

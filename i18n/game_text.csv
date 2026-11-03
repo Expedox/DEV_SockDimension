@@ -30,10 +30,12 @@ HUD_PAIRS,Pairs: {found} / {total}
 HUD_TIME,Time: {time}
 HUD_SAVED,Saved
 HUD_CHEAT,"Cheat on, type MIKE to turn off"
-HINT_GRAB,Left click: grab / release
+HINT_GRAB,Left click: grab
 HINT_THROW,Right click: throw
 HINT_PAIR,E: try to pair
 HINT_INSPECT,Hold F: inspect
+HINT_DROP,Left click on empty space: drop
+HINT_CARRY,"Carrying {count}/{max}     Wheel: switch sock     Q: drop all"
 END_TITLE,All Paired Up!
 END_TIME,Time: {time}
 END_FAILED,Failed attempts: {count}
@@ -133,7 +135,7 @@ TUT_GRAB_TEXT,"Aim at a sock and left-click to grab it. Three easy pairs lie on 
 TUT_INSPECT_TITLE,Take a close look
 TUT_INSPECT_TEXT,"Hold F to bring the sock close and turn it with the mouse. Twins share colour, pattern, stripes and shape."
 TUT_THROW_TITLE,Throw it
-TUT_THROW_TEXT,"Right-click to throw the sock. Left-click just drops it."
+TUT_THROW_TEXT,"Right-click to throw the sock. Left-click on empty space just drops it. Grab more socks to carry up to ten at once."
 TUT_PAIR_TITLE,Make a pair
 TUT_PAIR_TEXT,"Hold one sock, aim at its twin and press E. A match rolls up and flies into the basket."
 TUT_MISS_TITLE,Not quite

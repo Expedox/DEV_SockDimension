@@ -131,11 +131,17 @@ Bus `SFX` is created on start if missing, sending to `Master`. World sounds and 
 `scenes/player.tscn`, root `class_name Player extends CharacterBody3D`:
 
 - `setup(field: SockField)`
-- `held_sock() -> Sock`, null if nothing is held
+- `held_sock() -> Sock`, null if nothing is held: the active sock of the bundle
+- Bundle: up to `carry_max` socks (data/player.json). `carried_socks()` and
+  `carry_count()`. LMB on a sock grabs it into the hand (the old one goes under
+  the arm), LMB on empty space drops the active sock, Q drops all, mouse wheel
+  switches the active sock. Throw, pair, inspect and the cheat glow use the
+  active sock; after a throw, drop or match the next one moves up. Carried socks
+  stay ghosts (`SockField.carry`), so they never plough through the pile.
 - `aimed_sock() -> Sock`: what the crosshair is on, excluding the held sock
 - `release_held()`: drops the hold without physics changes, for a matched sock
 - `wiggle_held()`: short shake for a wrong pair
-- `capture() -> Dictionary` and `apply(state: Dictionary)`: `position, yaw, pitch, held` (sock_id or -1)
+- `capture() -> Dictionary` and `apply(state: Dictionary)`: `position, yaw, pitch, held` (sock_id or -1), `carried` (sock ids, may be missing in old saves)
 - `place(spawn: Transform3D)`: feet position and facing
 - To give back the held sock after loading it needs `SockField.sock_by_id(id) -> Sock` (physics, please add)
 - Emits `Events.sock_grabbed(sock_id)` / `Events.sock_released(sock_id)`, and
