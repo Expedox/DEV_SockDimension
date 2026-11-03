@@ -188,14 +188,17 @@ Each UI scene does its work from signals and `GameState`. The pause menu handles
 ### Starting and leaving a run
 
 - `GameState.start_new(mode_id, seed_text)`
-- `SaveManager.continue_run(mode_id)` reads the file, then calls `GameState.start_loaded(data)`
+- Save slots: `Config.gameplay.save_slots` (3) files `user://saves/slot_<n>.save`; the live run writes to `GameState.slot`
+- `SaveManager.continue_run(slot)` reads the file, then calls `GameState.start_loaded(data, slot)`
+- `GameState.start_new(mode, seed_text, slot)`; New Game picks a slot (`SlotSelect`), then a mode; with no save at all it goes straight to slot 1
 - `GameState.to_main_menu()`: does not save; callers save first
 - `SaveManager.save_current() -> bool`: no-op until the pile is ready; emits `Events.game_saved`
 - `SaveManager.save_and_quit()`: use for every Quit button instead of `get_tree().quit()`
-- `SaveManager.has_save(mode_id) -> bool`: any save, finished or not (for "Overwrite?")
-- `SaveManager.latest_save() -> String`: newest unfinished save's mode, or "" (Continue shows only if not "")
-- `SaveManager.save_info(mode_id) -> Dictionary`: `mode, completed, pairs_found,
+- `SaveManager.has_save(slot)`, `has_any_save()`, `free_slot()`, `delete_slot(slot)`
+- `SaveManager.latest_slot() -> int`: newest unfinished slot, or 0 (Continue shows only if > 0)
+- `SaveManager.slot_info(slot) -> Dictionary`: `mode, completed, pairs_found,
   play_time, saved_at` (unix seconds), or `{}`. Reads the whole file, so cache it in menus.
+- Old per-mode saves (`<mode>.save`) move into free slots on start, newest first, and are renamed to `.migrated`
 - Autosave every `Config.gameplay.autosave_seconds`, once right after a fresh
   pour, when a run finishes, and on window close.
 - `GameState.capture() -> Dictionary`: the full save payload, keys `mode, seed,

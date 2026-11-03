@@ -1,5 +1,6 @@
 {
   "autosave_seconds": 300,
+  "save_slots": 3,
   "fast_laundry_seconds": 10800,
   "marathon_seconds": 7200,
   "eagle_eye_streak": 50,

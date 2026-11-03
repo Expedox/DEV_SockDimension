@@ -72,7 +72,9 @@ func _test_safe_file() -> void:
 
 func _test_save_manager() -> void:
 	_start_fake_run("laundry_day", 3)
-	check(not SaveManager.has_save("laundry_day"), "no save before saving")
+	GameState.slot = 2
+	check(SaveManager.slot_count() == 3, "three save slots")
+	check(not SaveManager.has_any_save(), "no save before saving")
 	GameState.running = false
 	check(not SaveManager.save_current(), "no save while the pile is pouring")
 	GameState.running = true
@@ -82,16 +84,18 @@ func _test_save_manager() -> void:
 	GameState.found_pair_ids = PackedInt32Array([7])
 	GameState.pairs_found = 1
 	check(SaveManager.save_current(), "save_current writes")
-	check(SaveManager.has_save("laundry_day"), "has_save after saving")
-	check(SaveManager.latest_save() == "laundry_day", "latest_save finds the run")
+	check(SaveManager.has_save(2) and not SaveManager.has_save(1), "save lands in the run's slot")
+	check(SaveManager.latest_slot() == 2, "latest_slot finds the run")
+	check(SaveManager.free_slot() == 1, "free_slot skips taken slots")
 
-	var info := SaveManager.save_info("laundry_day")
-	check(info.get("pairs_found") == 1, "save_info pairs")
-	check(is_equal_approx(float(info.get("play_time", 0.0)), 42.5), "save_info time")
-	check(info.get("completed") == false, "save_info not completed")
-	check(int(info.get("saved_at", 0)) > 0, "save_info saved_at")
+	var info := SaveManager.slot_info(2)
+	check(info.get("mode") == "laundry_day", "slot_info mode")
+	check(info.get("pairs_found") == 1, "slot_info pairs")
+	check(is_equal_approx(float(info.get("play_time", 0.0)), 42.5), "slot_info time")
+	check(info.get("completed") == false, "slot_info not completed")
+	check(int(info.get("saved_at", 0)) > 0, "slot_info saved_at")
 
-	var data := SaveManager._load("laundry_day")
+	var data := SaveManager._load(2)
 	check(data.get("mistakes") == 2, "mistakes round trip")
 	check(data.get("found") == PackedInt32Array([7]), "found ids round trip")
 	check(data.get("world", {}).get("socks", {}).get("ids") == PackedInt32Array([1, 2]), "world round trip")
@@ -99,9 +103,27 @@ func _test_save_manager() -> void:
 	GameState.completed = true
 	GameState.running = false
 	check(SaveManager.save_current(), "a finished run still saves")
-	check(SaveManager.latest_save() == "", "finished runs are not continued")
-	check(not SaveManager.continue_run("laundry_day"), "continue refuses a finished run")
+	check(SaveManager.latest_slot() == 0, "finished runs are not continued")
+	check(not SaveManager.continue_run(2), "continue refuses a finished run")
+	SaveManager.delete_slot(2)
+	check(not SaveManager.has_any_save(), "delete_slot empties the slot")
 	_end_fake_run()
+
+	# Saves of older builds were named after their mode; newest goes to slot 1.
+	var old := {"mode": "laundry_day", "seed": 1, "play_time": 1.0, "mistakes": 0, "throws": 0,
+		"completed": false, "found": PackedInt32Array(), "world": {}, "saved_at": 100}
+	SafeFile.write(SaveManager.save_dir + "laundry_day.save", 1, old)
+	var newer := old.duplicate()
+	newer.mode = "sock_dimension"
+	newer.saved_at = 200
+	SafeFile.write(SaveManager.save_dir + "sock_dimension.save", 1, newer)
+	check(SaveManager.migrate_legacy_saves() == 2, "both old saves migrate")
+	check(SaveManager.slot_info(1).get("mode") == "sock_dimension", "newest old save is slot 1")
+	check(SaveManager.slot_info(2).get("mode") == "laundry_day", "older old save is slot 2")
+	check(not FileAccess.file_exists(SaveManager.save_dir + "laundry_day.save"), "old file is moved aside")
+	check(SaveManager.migrate_legacy_saves() == 0, "migration runs once")
+	SaveManager.delete_slot(1)
+	SaveManager.delete_slot(2)
 
 
 func _test_game_state_counters() -> void:

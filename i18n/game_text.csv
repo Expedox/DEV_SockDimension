@@ -22,7 +22,7 @@ MODE_SOCK_DIMENSION_DESC,"5,000 pairs (10,000 socks)"
 MODE_SEED_LABEL,Seed
 MODE_SEED_PLACEHOLDER,Leave empty for random
 MODE_OVERWRITE_TITLE,Overwrite?
-MODE_OVERWRITE_BODY,A saved game for this mode already exists. Starting over will replace it.
+MODE_OVERWRITE_BODY,This slot already holds a saved game. Starting over will replace it.
 LOADING_POURING,Pouring the sock mountain...
 LOADING_RESTORING,Restoring your laundry...
 LOADING_PROGRESS,{done} / {total} socks
@@ -104,9 +104,8 @@ ACH_MARATHON_DESC,Play for 2 hours in one sitting.
 ACH_COMPLETIONIST_NAME,Every Last Sock
 ACH_COMPLETIONIST_DESC,Unlock every other achievement.
 PAUSE_TITLE,Paused
-MODE_SAVE_PROGRESS,"Saved game: {found} / {total} pairs, {time}"
 MODE_SAVE_COMPLETED,"Finished in {time}"
-MENU_CONTINUE_INFO,"{mode}: {found} / {total} pairs"
+MENU_CONTINUE_INFO,"Slot {slot}, {mode}: {found} / {total} pairs"
 SETTINGS_SECTION_CONTROLS,Controls
 SETTINGS_SECTION_SOUND,Sound
 SETTINGS_SECTION_DISPLAY,Display
@@ -141,3 +140,13 @@ TUT_DONE_TEXT,"The rift is open and the rest of the socks are coming. Climb the 
 WALL_SHAPE_SNEAKER,Sneaker socks
 WALL_SHAPE_SPORT,Sport socks
 WALL_SHAPE_KNEE,Knee-highs
+MENU_LOAD_GAME,Load Game
+SLOT_TITLE_NEW,Choose a Save Slot
+SLOT_TITLE_LOAD,Load Game
+SLOT_NAME,Slot {n}
+SLOT_EMPTY,Empty slot
+SLOT_PROGRESS,"{found} / {total} pairs, {time}"
+SLOT_SAVED_AT,Saved {date}
+SLOT_DELETE,Delete
+SLOT_DELETE_TITLE,Delete Save?
+SLOT_DELETE_BODY,The saved game in slot {n} will be gone for good.

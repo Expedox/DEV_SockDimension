@@ -1,8 +1,12 @@
 class_name ModeSelect
 extends Control
-## New game: pick a mode, optionally type a seed, confirm before replacing a save.
+## New game: pick a mode, optionally type a seed, confirm before replacing the
+## save in the chosen slot.
 
 signal closed
+
+## Save slot the new run goes into.
+var slot := 1
 
 const CARD_SIZE := Vector2(380, 190)
 
@@ -19,9 +23,9 @@ func _ready() -> void:
 	_build()
 	UiKit.fade_in(self)
 	var preferred := 0
-	var latest := SaveManager.latest_save()
+	var latest := SaveManager.slot_info(SaveManager.latest_slot())
 	for i in Config.modes.size():
-		if Config.modes[i].id == latest:
+		if Config.modes[i].id == latest.get("mode", ""):
 			preferred = i
 	_cards[preferred].button_pressed = true
 	_cards[preferred].grab_focus.call_deferred()
@@ -80,7 +84,7 @@ func _build() -> void:
 	buttons.add_child(_start_button)
 
 
-## A toggle button laid out as a card: name, size and the state of its save.
+## A toggle button laid out as a card: name and size.
 func _mode_card(mode: Dictionary) -> Button:
 	var card := Button.new()
 	card.toggle_mode = true
@@ -116,15 +120,6 @@ func _mode_card(mode: Dictionary) -> Button:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(spacer)
-	var info := SaveManager.save_info(mode.id)
-	if not info.is_empty():
-		var save_label := UiKit.label("", &"MutedLabel")
-		if info.completed:
-			save_label.text = tr("MODE_SAVE_COMPLETED").format({"time": UiKit.format_time(info.play_time)})
-		else:
-			save_label.text = tr("MODE_SAVE_PROGRESS").format({
-				"found": info.pairs_found, "total": int(mode.pairs), "time": UiKit.format_time(info.play_time)})
-		column.add_child(save_label)
 	for label: Control in column.get_children():
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return card
@@ -139,7 +134,7 @@ func _on_start() -> void:
 	var mode_id := _selected_mode()
 	if mode_id.is_empty():
 		return
-	if not SaveManager.has_save(mode_id):
+	if not SaveManager.has_save(slot):
 		_begin(mode_id)
 		return
 	var dialog := ConfirmDialog.ask(self, "MODE_OVERWRITE_TITLE", "MODE_OVERWRITE_BODY")
@@ -152,4 +147,4 @@ func _on_start() -> void:
 
 func _begin(mode_id: String) -> void:
 	set_process_unhandled_input(false)
-	GameState.start_new(mode_id, _seed_edit.text)
+	GameState.start_new(mode_id, _seed_edit.text, slot)

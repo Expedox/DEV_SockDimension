@@ -5,6 +5,8 @@ const GAME_SCENE := "res://scenes/game.tscn"
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 
 var mode_id := ""
+## Save slot this run writes to, from 1.
+var slot := 1
 var seed_value := 0
 var pairs_total := 0
 var pairs_found := 0
@@ -31,17 +33,19 @@ func _process(delta: float) -> void:
 		session_time += delta
 
 
-## Starts a fresh pile. An empty seed text picks a random seed.
-func start_new(new_mode: String, seed_text := "") -> void:
+## Starts a fresh pile in a save slot. An empty seed text picks a random seed.
+func start_new(new_mode: String, seed_text := "", new_slot := 1) -> void:
 	_reset(new_mode)
+	slot = new_slot
 	seed_value = _seed_from_text(seed_text)
 	pending_world = {}
 	get_tree().change_scene_to_file(GAME_SCENE)
 
 
 ## Restores a run from a dictionary built by capture() and opens the game.
-func start_loaded(data: Dictionary) -> void:
+func start_loaded(data: Dictionary, from_slot := 1) -> void:
 	_reset(data.mode)
+	slot = from_slot
 	seed_value = data.seed
 	play_time = data.play_time
 	mistakes = data.mistakes

@@ -1,12 +1,13 @@
 extends Control
-## Title screen: Continue, New Game, Achievements, Settings, Quit. Sub screens
+## Title screen: Continue, New Game, Load Game, Achievements, Settings, Quit. Sub screens
 ## open on top and hand control back when they close.
 
 var _menu: Control
 var _title: Label
 var _continue_button: Button
 var _continue_info: Label
-var _continue_mode := ""
+var _continue_slot := 0
+var _load_button: Button
 var _overlay: Control
 var _time := 0.0
 
@@ -64,27 +65,30 @@ func _build() -> void:
 	buttons.add_child(_continue_button)
 	_continue_info = UiKit.label("", &"MutedLabel", HORIZONTAL_ALIGNMENT_CENTER)
 	buttons.add_child(_continue_info)
-	_add(buttons, "MENU_NEW_GAME", _open_mode_select)
+	_add(buttons, "MENU_NEW_GAME", _open_new_game)
+	_load_button = _add(buttons, "MENU_LOAD_GAME", _open_load)
 	_add(buttons, "MENU_ACHIEVEMENTS", _open_achievements)
 	_add(buttons, "MENU_SETTINGS", _open_settings)
 	_add(buttons, "MENU_QUIT", SaveManager.save_and_quit, &"QuietButton")
 
 
-func _add(parent: Control, key: String, action: Callable, variation := &"") -> void:
+func _add(parent: Control, key: String, action: Callable, variation := &"") -> Button:
 	var b := UiKit.button(key, variation)
 	b.pressed.connect(action)
 	parent.add_child(b)
+	return b
 
 
 func _refresh_continue() -> void:
-	_continue_mode = SaveManager.latest_save()
-	var has_run := not _continue_mode.is_empty()
+	_continue_slot = SaveManager.latest_slot()
+	var has_run := _continue_slot > 0
 	_continue_button.visible = has_run
 	_continue_info.visible = has_run
+	_load_button.visible = SaveManager.has_any_save()
 	if has_run:
-		var info := SaveManager.save_info(_continue_mode)
-		var mode := Config.mode(_continue_mode)
-		_continue_info.text = tr("MENU_CONTINUE_INFO").format({
+		var info := SaveManager.slot_info(_continue_slot)
+		var mode := Config.mode(info.mode)
+		_continue_info.text = tr("MENU_CONTINUE_INFO").format({"slot": _continue_slot,
 			"mode": tr(mode.name_key), "found": info.pairs_found, "total": int(mode.pairs)})
 
 
@@ -96,12 +100,20 @@ func _first_button() -> Button:
 
 
 func _on_continue() -> void:
-	if not SaveManager.continue_run(_continue_mode):
+	if not SaveManager.continue_run(_continue_slot):
 		_refresh_continue()
 
 
-func _open_mode_select() -> void:
-	_open(ModeSelect.new())
+## With no save at all there is nothing to choose, so slot 1 is used directly.
+func _open_new_game() -> void:
+	if SaveManager.has_any_save():
+		_open(SlotSelect.create(SlotSelect.Purpose.NEW_GAME))
+	else:
+		_open(ModeSelect.new())
+
+
+func _open_load() -> void:
+	_open(SlotSelect.create(SlotSelect.Purpose.LOAD))
 
 
 func _open_achievements() -> void:
