@@ -262,7 +262,34 @@ neighbours, so a slide spreads on its own. Pour waves wait while more than
 Open: these are CPU numbers only. The GPU side (one MultiMesh, 10,000
 instances, shadows from the main lamp) is unmeasured until it runs on the PC.
 
+## Final check (cloud, headless, Godot 4.7.2)
+
+Run on 2026-11-03 against main, scripted through the real menus, game scene and
+save files (no stubs):
+
+| Step | Laundry Day | Sock Dimension |
+|---|---|---|
+| New game from the menu, pile ready | 2.8 s | 10.1 s |
+| Grab, throw (throws counter) | ok | ok |
+| Pair into basket (counter, basket pile) | ok | ok |
+| Save while holding a sock, back to menu | ok | ok |
+| Continue: counters, 2 socks gone, held sock back in hand, basket pile | ok | ok |
+
+`tests/test_runner.tscn`: 102 checks, 0 failed. Fixed on the way: `remove_pair`
+read the transform of a sock that was already out of the tree.
+
+Not checked headless: how it looks and feels (mouse look, climbing, hold spring,
+throws), audio, and the real FPS.
+
 ## Open points
+
+- **FPS check on Mike's PC**: Sock Dimension mode, F1 open, idle, while
+  pouring, and digging at the summit. Target 60 FPS. Write the numbers into
+  Measurement above. If it misses, first lower `pour_max_awake`/shadows.
+- Play both modes by hand once: tune `data/player.json` (speed, hold spring,
+  throw speed) and climbing feel on the pile.
+- German texts (`de` column in `i18n/game_text.csv`) are still to come.
+- Steam: only `scripts/achievements/achievement_platform.gd` needs swapping.
 
 - The project folder is on the Google Drive mount. Git works there, but Drive
   syncing a live `.git` folder can corrupt it. Push often, or move the checkout.

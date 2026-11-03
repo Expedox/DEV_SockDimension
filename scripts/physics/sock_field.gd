@@ -173,7 +173,8 @@ func remove_pair(a: Sock, b: Sock) -> void:
 	for sock in [a, b]:
 		if sock == null or _bodies[sock.sock_id] != sock:
 			continue
-		var at: Vector3 = _aside.get(sock.sock_id, sock.global_transform).origin
+		# Aside socks are out of the tree, so do not touch their global transform.
+		var at: Vector3 = _aside[sock.sock_id].origin if _aside.has(sock.sock_id) else sock.global_position
 		_bodies[sock.sock_id] = null
 		_aside.erase(sock.sock_id)
 		_awake.erase(sock.sock_id)
