@@ -60,5 +60,9 @@ func _process(delta: float) -> void:
 		OS.get_static_memory_usage() / 1048576.0,
 		Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0,
 		Performance.get_monitor(Performance.OBJECT_COUNT)])
+	var daylight := get_tree().get_first_node_in_group("daylight") as Daylight
+	if daylight != null:
+		var h := daylight.hour()
+		lines.append("time of day %02d:%02d" % [int(h), int(fmod(h, 1.0) * 60.0)])
 	lines.append("draw calls %d" % Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 	_label.text = "\n".join(lines)

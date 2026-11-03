@@ -25,6 +25,7 @@ func _ready() -> void:
 	_test_achievements()
 	_test_socks()
 	_test_sock_wall()
+	_test_daylight()
 	await _test_pair_controller()
 
 	print("%d checks, %d failed" % [_checks, _failures])
@@ -344,6 +345,31 @@ func _test_sock_wall() -> void:
 		check(seen.size() == pairs, "one slot per pair (%d of %d)" % [seen.size(), pairs])
 		wall.free()
 	Config.use_mode_room("laundry_day")
+
+
+func _test_daylight() -> void:
+	var config: Dictionary = Config.world["daylight"]
+	var keys: Array = config["keys"]
+	var start := Daylight.start_hour(config, 1234)
+	check(start == Daylight.start_hour(config, 1234), "daylight: same seed, same start hour")
+	check(start >= float(config.start_hour_min) and start <= float(config.start_hour_max), "daylight: start hour in range")
+	var rate := float(config.game_minutes_per_real_minute)
+	var later := Daylight.clock_hour(config, 1234, 3600.0)
+	check(is_equal_approx(fposmod(later - start, 24.0), rate), "daylight: one real hour moves the clock by the rate")
+	check(Daylight.clock_hour(config, 1234, 3600.0 * 24.0 * 60.0 / rate) < 24.0, "daylight: clock wraps at midnight")
+	var prev := -1.0
+	for key: Dictionary in keys:
+		check(float(key.hour) > prev and float(key.hour) < 24.0, "daylight: keys sorted by hour")
+		prev = float(key.hour)
+	var noon: Dictionary = keys[keys.size() / 2]
+	var at_key := Daylight.sample(keys, float(noon.hour))
+	check(is_equal_approx(at_key.energy, float(noon.energy)), "daylight: sample at a key gives that key")
+	var late := Daylight.sample(keys, 23.5)
+	var first: Dictionary = keys[0]
+	var last: Dictionary = keys[keys.size() - 1]
+	check(late.energy >= minf(first.energy, last.energy) - 0.001 and late.energy <= maxf(first.energy, last.energy) + 0.001,
+		"daylight: blends across midnight")
+	check(Daylight.sample(keys, 13.0).energy > Daylight.sample(keys, 2.0).energy, "daylight: brighter at noon than at night")
 
 
 func _test_pair_controller() -> void:

@@ -31,6 +31,7 @@ var _starter_pairs: Array[int] = []
 var wall: SockWall
 ## Easter egg: the cellar cat, off when data/world.json -> cat.enabled is false.
 var cat: CellarCat
+var daylight: Daylight
 
 
 func _ready() -> void:
@@ -39,6 +40,13 @@ func _ready() -> void:
 
 	cellar = (load(CELLAR_SCENE) as PackedScene).instantiate()
 	add_child(cellar)
+
+	var daylight_cfg: Dictionary = Config.world.get("daylight", {})
+	if bool(daylight_cfg.get("enabled", false)):
+		daylight = Daylight.new()
+		daylight.name = "Daylight"
+		add_child(daylight)
+		daylight.setup(cellar, daylight_cfg)
 
 	field = (load(FIELD_SCRIPT) as GDScript).new()
 	field.name = "SockField"

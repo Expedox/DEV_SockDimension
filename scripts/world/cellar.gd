@@ -23,6 +23,8 @@ var _env: Environment
 var _dust: Array[GPUParticles3D] = []
 var _dust_material: ShaderMaterial
 var _quality := ""
+## Per window: glass material, light and its config, for the time of day.
+var _windows: Array[Dictionary] = []
 
 
 static func vec3(values: Array) -> Vector3:
@@ -368,7 +370,7 @@ func _build_pipes() -> void:
 
 
 func _build_window(config: Dictionary) -> void:
-	# A small high cellar window with cool night light, as a contrast to the warm lamps.
+	# A small high cellar window; its light follows the time of day (Daylight).
 	var half := _room_size * 0.5
 	var size := Vector2(config["size"][0], config["size"][1])
 	var at := Vector3(float(config["x"]), float(config["y"]), -half.z)
@@ -419,11 +421,31 @@ func _build_window(config: Dictionary) -> void:
 	light.light_specular = 0.3
 	light.shadow_enabled = false
 	window.add_child(light)
+	_windows.append({"glass": glass_material, "light": light, "config": config})
 
 	# Dust along the moonbeam, so the cone shows up as a slanted shaft.
 	var beam_length := float(_data.get("dust", {}).get("window_reach", 5.0))
 	_add_dust(window, light.transform * Transform3D(Basis(), Vector3(0, 0, -beam_length * 0.5)),
 		Vector3(size.x * 0.6, size.y * 0.8, beam_length * 0.5), int(config.get("dust", 0)))
+
+
+## Time of day from Daylight.sample(): sky in the glass, colour and strength of
+## the shaft, a little more ambient light by day. Window values are night scale.
+func apply_daylight(state: Dictionary) -> void:
+	if state.is_empty():
+		return
+	var energy := float(state.energy)
+	for entry: Dictionary in _windows:
+		var config: Dictionary = entry.config
+		var glass: ShaderMaterial = entry.glass
+		var light: SpotLight3D = entry.light
+		glass.set_shader_parameter("sky", state.sky)
+		glass.set_shader_parameter("glow", float(config.get("glow", 1.5)) * float(state.glow))
+		light.light_color = state.light
+		light.light_energy = float(config["energy"]) * energy
+		light.light_volumetric_fog_energy = float(config.get("fog_energy", 2.0)) * sqrt(energy)
+	if _env:
+		_env.ambient_light_energy = float(_data["environment"]["ambient_energy"]) * float(state.ambient)
 
 
 func _build_beams() -> void:
