@@ -17,9 +17,9 @@
   "wave_interval_frames": 3,
   "pour_max_awake": 1500,
   "pour_spacing": 0.36,
-  "pour_gap": 1.0,
+  "pour_gap": 0.6,
   "pour_speed": 3.0,
-  "pour_tilt_deg": 12.0,
+  "pour_tilt_deg": 20.0,
   "pour_max_height": 5.0,
   "settle_timeout_seconds": 20.0,
   "restore_batch": 2000,
@@ -27,5 +27,11 @@
   "land_speed": 0.4,
   "land_min_seconds": 0.2,
   "moving_report_step": 10,
-  "summit_scan_per_frame": 500
+  "summit_scan_per_frame": 500,
+  "sock_shape": "box",
+  "capsule_thickness_scale": 1.0,
+  "pour_spout_share": 1.0,
+  "pour_layers": 3,
+  "pour_layer_height": 0.2,
+  "pour_cone_power": 1.0
 }

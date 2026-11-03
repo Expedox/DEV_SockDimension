@@ -26,7 +26,8 @@ var _bodies: Array[Sock] = []
 var _awake := {} # sock_id -> Sock
 var _aside := {} # sock_id -> Transform3D at the moment it left the pile
 var _flights := {} # sock_id -> [start: Vector3, seconds: float]
-var _shapes: Array[BoxShape3D] = []
+var _shapes: Array[Shape3D] = []
+var _shape_xform := Transform3D.IDENTITY
 var _material: PhysicsMaterial
 var _rng := RandomNumberGenerator.new()
 var _freeze_settled := true
@@ -225,10 +226,21 @@ func _begin(sock_set: SockSet) -> void:
 	_still.resize(count)
 	_still.fill(0.0)
 	_shapes.clear()
+	var capsule := String(_tuning.sock_shape) == "capsule"
+	_shape_xform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), Vector3.ZERO) if capsule else Transform3D.IDENTITY
 	for shape in SockCatalog.shape_count():
-		var box := BoxShape3D.new()
-		box.size = SockMesh.collision_size(shape)
-		_shapes.append(box)
+		var size := SockMesh.collision_size(shape)
+		if capsule:
+			# Rounded socks slide off each other and settle into a cone; flat
+			# boxes stack like bricks into a drum with straight walls.
+			var round := CapsuleShape3D.new()
+			round.radius = size.y * 0.5 * float(_tuning.capsule_thickness_scale)
+			round.height = maxf(size.z, round.radius * 2.0)
+			_shapes.append(round)
+		else:
+			var box := BoxShape3D.new()
+			box.size = size
+			_shapes.append(box)
 	_next = 0
 	_frame = 0
 	_top = 0.0
@@ -239,7 +251,9 @@ func _begin(sock_set: SockSet) -> void:
 
 func _physics_process(delta: float) -> void:
 	_freeze_sleepers()
-	if state == State.READY:
+	# Also while pouring: landing socks must shake the top loose, or frozen
+	# socks build straight walls instead of a slope.
+	if state != State.RESTORING:
 		_wake_chain()
 	match state:
 		State.POURING:
@@ -279,30 +293,40 @@ func _process(delta: float) -> void:
 				Events.socks_moving.emit(moving)
 
 
+## Drops a wave just above the current top, more of it near the centre, so the
+## socks heap up into a cone instead of spreading into a flat layer.
 func _pour_wave() -> void:
 	var count := mini(int(_tuning.wave_size), socks.sock_count() - _next)
 	var spacing := float(_tuning.pour_spacing)
+	var layer_height := float(_tuning.pour_layer_height)
+	var layers := int(_tuning.pour_layers)
+	var spout := _radius * float(_tuning.pour_spout_share)
 	var height := minf(_top + float(_tuning.pour_gap), float(_tuning.pour_max_height))
 	var tilt := deg_to_rad(float(_tuning.pour_tilt_deg))
+	var cone_power := float(_tuning.pour_cone_power)
 	var taken := {}
 	var placed := 0
 	for attempt in count * 8:
 		_skip_reserved()
 		if placed >= count or _next >= socks.sock_count():
 			break
-		# Uniform radius piles the centre higher: a hill, not a flat layer.
+		# Even spread over the disc, thinned out towards the rim: the column at
+		# each spot grows in proportion to the cone height there.
 		var angle := _rng.randf() * TAU
-		var distance := _rng.randf() * _radius
-		var spot := Vector2(cos(angle), sin(angle)) * distance
-		var cell := Vector2i((spot / spacing).floor())
+		var spot := Vector2(cos(angle), sin(angle)) * spout * sqrt(_rng.randf())
+		if _rng.randf() > pow(1.0 - spot.length() / spout, cone_power):
+			continue
+		var layer := _rng.randi_range(0, layers - 1)
+		var cell := Vector3i(floori(spot.x / spacing), layer, floori(spot.y / spacing))
 		if taken.has(cell):
 			continue
 		taken[cell] = true
 		var basis := Basis(Vector3.UP, _rng.randf() * TAU)
 		basis = basis * Basis(Vector3.RIGHT, _rng.randf_range(-tilt, tilt))
+		basis = basis * Basis(Vector3.FORWARD, _rng.randf_range(-tilt, tilt))
 		if _rng.randf() < 0.5:
 			basis = basis * Basis(Vector3.FORWARD, PI)
-		var origin := Vector3(spot.x, height + _rng.randf() * spacing * 0.5, spot.y)
+		var origin := Vector3(spot.x, height + layer * layer_height, spot.y)
 		_spawn(_next, Transform3D(basis, origin), Vector3.DOWN * float(_tuning.pour_speed), false)
 		_next += 1
 		placed += 1
@@ -348,6 +372,7 @@ func _spawn(sock_id: int, xform: Transform3D, velocity: Vector3, asleep: bool) -
 	sock.freeze = asleep and _freeze_settled
 	var owner_id := sock.create_shape_owner(sock)
 	sock.shape_owner_add_shape(owner_id, _shapes[socks.shape_of(sock_id)])
+	sock.shape_owner_set_transform(owner_id, _shape_xform)
 	_bodies[sock_id] = sock
 	add_child(sock)
 	renderer.set_sock_transform(sock_id, xform)
