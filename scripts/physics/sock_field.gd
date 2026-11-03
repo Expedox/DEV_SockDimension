@@ -8,6 +8,7 @@ extends Node3D
 
 const SOCK_LAYER := 2
 const SOCK_MASK := 1 | 2
+const WORLD_LAYER := 1
 
 enum State { IDLE, POURING, SETTLING, RESTORING, READY }
 
@@ -44,6 +45,7 @@ var _top := 0.0
 var _reported_done := -1
 var _reported_moving := 0
 var _restore_data: Dictionary
+var _ghosts := {} # sock_id -> held Sock that still passes through other socks
 var _reserved := {} # sock_id -> Transform3D, left out of the pour and laid down at the end
 
 var _summit := Vector3.ZERO
@@ -138,6 +140,10 @@ func begin_hold(sock: Sock) -> void:
 	# Off every layer: nothing (above all the player) bumps into it, while its
 	# own mask still lets it push other socks around.
 	sock.collision_layer = 0
+	# Pass through other socks until it is out of the pile, or the pile
+	# wedges it in place.
+	sock.collision_mask = WORLD_LAYER
+	_ghosts[sock.sock_id] = sock
 	_wake(sock)
 	wake_around(sock.global_position, float(_tuning.wake_radius))
 
@@ -145,6 +151,8 @@ func begin_hold(sock: Sock) -> void:
 func end_hold(sock: Sock) -> void:
 	sock.gravity_scale = 1.0
 	sock.collision_layer = SOCK_LAYER
+	sock.collision_mask = SOCK_MASK
+	_ghosts.erase(sock.sock_id)
 	sock.can_sleep = true
 
 
@@ -251,6 +259,7 @@ func _begin(sock_set: SockSet) -> void:
 
 func _physics_process(delta: float) -> void:
 	_freeze_sleepers()
+	_solidify_ghosts()
 	# Also while pouring: landing socks must shake the top loose, or frozen
 	# socks build straight walls instead of a slope.
 	if state != State.RESTORING:
@@ -459,6 +468,27 @@ func _wake_chain() -> void:
 	for spot in _chain:
 		wake_around(spot, radius)
 	_chain.clear()
+
+
+## A held sock gets its sock collisions back once nothing overlaps it.
+func _solidify_ghosts() -> void:
+	if _ghosts.is_empty():
+		return
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.collision_mask = SOCK_LAYER
+	query.margin = float(_tuning.ghost_margin)
+	for sock_id: int in _ghosts.keys():
+		var sock: Sock = _ghosts[sock_id]
+		if not is_instance_valid(sock) or not sock.is_inside_tree():
+			_ghosts.erase(sock_id)
+			continue
+		query.shape = _shapes[socks.shape_of(sock_id)]
+		query.transform = sock.global_transform * _shape_xform
+		query.exclude = [sock.get_rid()]
+		if space.intersect_shape(query, 1).is_empty():
+			sock.collision_mask = SOCK_MASK
+			_ghosts.erase(sock_id)
 
 
 func _freeze_sleepers() -> void:

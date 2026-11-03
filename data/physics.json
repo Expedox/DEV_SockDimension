@@ -33,5 +33,6 @@
   "pour_spout_share": 1.0,
   "pour_layers": 3,
   "pour_layer_height": 0.2,
-  "pour_cone_power": 1.0
+  "pour_cone_power": 1.0,
+  "ghost_margin": 0.02
 }
