@@ -60,16 +60,20 @@ void vertex() {
 	float b1 = VERTEX.z * k1.y + p * 2.0;
 	float a2 = VERTEX.x * k2.x + VERTEX.z * k2.y + p * 5.0;
 	float f = sin(a1) * cos(b1) + 0.5 * sin(a2);
+	// Folds and drape only ever lift the cloth in world space. The body is a flat
+	// box, so anything pushed downward would sink into the floor or other socks.
+	// Smooth sign, so a tumbling sock does not pop when it turns over.
+	float up = clamp(MODEL_MATRIX[1].y / max(length(MODEL_MATRIX[1].xyz), 0.0001) * 4.0, -1.0, 1.0);
 	vec2 grad = vec2(
 		k1.x * cos(a1) * cos(b1) + 0.5 * k2.x * cos(a2),
 		-k1.y * sin(a1) * sin(b1) + 0.5 * k2.y * cos(a2)
-	) * crumple;
+	) * crumple * up * 0.5;
 	// Each sock sags or arches a little over what it lies on, so it is not a flat strip.
-	float bow = (fract(p * 7.31) < 0.5 ? -1.0 : 1.0) * drape * (0.6 + 0.4 * fract(p * 2.17));
+	float bow = up * drape * (0.6 + 0.4 * fract(p * 2.17));
 	float r2 = dot(VERTEX.xz, VERTEX.xz);
 	float sag = 1.0 - exp(-r2 / 0.03);
 	grad += VERTEX.xz * (bow * exp(-r2 / 0.03) * 2.0 / 0.03);
-	VERTEX.y += f * crumple + bow * sag;
+	VERTEX.y += up * (f + 1.5) * 0.5 * crumple + bow * sag;
 	NORMAL = normalize(NORMAL + vec3(-grad.x, 0.0, -grad.y) * NORMAL.y);
 	// Fold valleys on the face we look at are darker; +1 ridge, -1 valley.
 	v_fold = clamp(f * sign(NORMAL.y) / 1.2, -1.0, 1.0) * abs(NORMAL.y);
