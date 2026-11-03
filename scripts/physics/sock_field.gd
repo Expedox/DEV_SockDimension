@@ -393,6 +393,7 @@ func _finish() -> void:
 	for sock: Sock in _awake.values():
 		sock.sleeping = true
 		sock.freeze = _freeze_settled
+		_lift_out_of_floor(sock)
 		renderer.set_sock_transform(sock.sock_id, sock.global_transform)
 	_awake.clear()
 	_to_freeze.clear()
@@ -460,6 +461,7 @@ func _push_awake(delta: float) -> void:
 		_awake.erase(sock.sock_id)
 		sock.sleeping = true
 		sock.freeze = true
+		_lift_out_of_floor(sock)
 
 
 ## Frozen socks do not feel a push, so fast socks wake what lies around them.
@@ -468,6 +470,19 @@ func _wake_chain() -> void:
 	for spot in _chain:
 		wake_around(spot, radius)
 	_chain.clear()
+
+
+## Under the weight of the pile the solver lets bottom socks sink a little into
+## the floor. Once a sock rests, put it back on top of the floor.
+func _lift_out_of_floor(sock: Sock) -> void:
+	var shape := _shapes[socks.shape_of(sock.sock_id)]
+	var half := (shape as BoxShape3D).size * 0.5 if shape is BoxShape3D else Vector3.ONE * (shape as CapsuleShape3D).radius
+	var basis := (sock.global_transform * _shape_xform).basis
+	var reach := absf(basis.x.y) * half.x + absf(basis.y.y) * half.y + absf(basis.z.y) * half.z
+	var bottom := sock.global_position.y - reach
+	if bottom < 0.0:
+		sock.global_position.y -= bottom
+		renderer.set_sock_transform(sock.sock_id, sock.global_transform)
 
 
 ## A held sock gets its sock collisions back once nothing overlaps it.
@@ -495,6 +510,7 @@ func _freeze_sleepers() -> void:
 	for sock in _to_freeze:
 		if is_instance_valid(sock) and sock.is_inside_tree() and sock.sleeping and sock.can_sleep:
 			sock.freeze = true
+			_lift_out_of_floor(sock)
 	_to_freeze.clear()
 
 
