@@ -26,6 +26,8 @@ var _shown := PackedByteArray() # per pair
 var _labels: Array[Label3D] = [] # per shape
 var _found_in_shape := PackedInt32Array()
 var _total_in_shape := PackedInt32Array()
+var _panels: Array[Transform3D] = []
+var _lights: Array[SpotLight3D] = []
 
 
 ## Builds the boards and shows the pairs found so far.
@@ -33,6 +35,7 @@ func setup(sock_set: SockSet, config: Dictionary, found: PackedInt32Array, bound
 	_socks = sock_set
 	_config = config
 	var panels := panel_frames(config)
+	_panels = panels
 	for i in panels.size():
 		_build_board(panels[i], config["panels"][i])
 	var plan := layout(sock_set, config)
@@ -42,6 +45,58 @@ func setup(sock_set: SockSet, config: Dictionary, found: PackedInt32Array, bound
 		_update_label(shape)
 	for pair_id in found:
 		show_pair(pair_id, false)
+
+
+## Reward for a finished run: warm picture lights along the top of every
+## panel swell on, one after the other. animate false switches them straight
+## on, for a loaded finished run.
+func light_up(animate: bool) -> void:
+	if not _lights.is_empty():
+		return
+	var cfg: Dictionary = _config.get("finale", {})
+	var energy := float(cfg.get("light_energy", 8.0))
+	var spacing := float(cfg.get("light_spacing", 3.0))
+	var reach := float(cfg.get("light_reach", 1.4))
+	var bulb_mesh := SphereMesh.new()
+	bulb_mesh.radius = float(cfg.get("bulb_radius", 0.08))
+	bulb_mesh.height = bulb_mesh.radius * 2.0
+	var bulb_material := StandardMaterial3D.new()
+	bulb_material.albedo_color = Color(cfg.get("light_color", "#ffd9a0"))
+	bulb_material.emission_enabled = true
+	bulb_material.emission = bulb_material.albedo_color
+	bulb_material.emission_energy_multiplier = 3.0
+	bulb_mesh.material = bulb_material
+	var index := 0
+	for i in _panels.size():
+		var size := Vector2(_config["panels"][i]["size"][0], _config["panels"][i]["size"][1])
+		var frame := _panels[i]
+		var count := maxi(1, roundi(size.x / spacing))
+		for n in count:
+			var x := (float(n) + 0.5) / count * size.x - size.x * 0.5
+			var light := SpotLight3D.new()
+			light.light_color = Color(cfg.get("light_color", "#ffd9a0"))
+			light.spot_range = size.y * 1.8 + reach
+			light.spot_angle = float(cfg.get("light_angle", 55.0))
+			light.spot_attenuation = 0.5
+			light.shadow_enabled = false
+			light.light_energy = energy if not animate else 0.0
+			add_child(light)
+			var at := frame * Vector3(x, size.y * 0.5 + 0.15, reach)
+			light.look_at_from_position(at, frame * Vector3(x, -size.y * 0.15, 0.0), Vector3.UP)
+			_lights.append(light)
+			# A glowing bulb, so the lights read even where the renderer caps lights per mesh.
+			var bulb := MeshInstance3D.new()
+			bulb.mesh = bulb_mesh
+			bulb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			bulb.position = at
+			bulb.visible = not animate
+			add_child(bulb)
+			if animate:
+				var tween := light.create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+				tween.tween_interval(float(cfg.get("light_stagger", 0.08)) * index)
+				tween.tween_callback(bulb.show)
+				tween.tween_property(light, "light_energy", energy, float(cfg.get("light_seconds", 0.8)))
+			index += 1
 
 
 ## Hook for Events.pair_matched.

@@ -375,6 +375,16 @@
         0.03
       ],
       "gravity": 2.5
+    },
+    "finale": {
+      "light_color": "#ffd9a0",
+      "light_energy": 12.0,
+      "light_spacing": 3.0,
+      "light_reach": 1.4,
+      "light_angle": 55.0,
+      "light_seconds": 0.8,
+      "light_stagger": 0.08,
+      "bulb_radius": 0.08
     }
   },
   "shelf": {
@@ -550,6 +560,10 @@
     "flight_min": 0.7,
     "flight_max": 1.5,
     "spawn_spread": 0.4,
-    "wall_margin": 0.8
+    "wall_margin": 0.8,
+    "smoke_count": 44,
+    "smoke_lifetime": 4.5,
+    "smoke_size": 1.3,
+    "smoke_color": "#3d3a42"
   }
 }

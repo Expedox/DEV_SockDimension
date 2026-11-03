@@ -13,6 +13,7 @@ var _machine: Node3D
 var _rest: Vector3
 var _flash: OmniLight3D
 var _foam: GPUParticles3D
+var _smoke: GPUParticles3D
 var _shake := 0.0
 var _rng := RandomNumberGenerator.new()
 
@@ -24,6 +25,25 @@ func setup(machine: Node3D) -> void:
 	_cfg = Config.world.get("washer_blast", {})
 	_build()
 	set_process(false)
+
+
+## The broken machine smokes until every pair is found.
+func set_smoking(on: bool) -> void:
+	_smoke.emitting = on
+
+
+## Every pair found: the machine is fixed. Smoke stops, a little happy jolt.
+func repair() -> void:
+	set_smoking(false)
+	Sfx.play("match", global_position)
+	set_process(true)
+	_shake = 0.02
+	var tween := create_tween().set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tween.tween_property(self, "_shake", 0.0, 0.6)
+	tween.tween_callback(func() -> void:
+		set_process(false)
+		_machine.position = _rest
+		_machine.rotation.z = 0.0)
 
 
 func start() -> void:
@@ -48,6 +68,7 @@ func _burst() -> void:
 	Sfx.play("washer_boom", global_position)
 	_foam.restart()
 	_foam.emitting = true
+	set_smoking(true)
 	burst.emit()
 	var tween := create_tween()
 	_flash.light_energy = float(_cfg.get("flash_energy", 8.0))
@@ -108,3 +129,64 @@ func _build() -> void:
 	bubble.material = bubble_material
 	_foam.draw_pass_1 = bubble
 	add_child(_foam)
+	_build_smoke()
+
+
+func _build_smoke() -> void:
+	_smoke = GPUParticles3D.new()
+	_smoke.name = "Smoke"
+	_smoke.emitting = false
+	_smoke.amount = int(_cfg.get("smoke_count", 36))
+	_smoke.lifetime = float(_cfg.get("smoke_lifetime", 4.5))
+	_smoke.visibility_aabb = AABB(Vector3(-3, -1, -3), Vector3(6, 8, 6))
+	var process := ParticleProcessMaterial.new()
+	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
+	process.emission_sphere_radius = 0.2
+	process.direction = Vector3.UP
+	process.spread = 18.0
+	process.initial_velocity_min = 0.3
+	process.initial_velocity_max = 0.6
+	process.gravity = Vector3(0.15, 0.25, 0.05)
+	process.damping_min = 0.1
+	process.damping_max = 0.2
+	process.angle_min = -180.0
+	process.angle_max = 180.0
+	var grow := Curve.new()
+	grow.add_point(Vector2(0.0, 0.3))
+	grow.add_point(Vector2(1.0, 1.0))
+	var grow_texture := CurveTexture.new()
+	grow_texture.curve = grow
+	process.scale_curve = grow_texture
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0.0))
+	fade.set_color(1, Color(1, 1, 1, 0.0))
+	fade.add_point(0.15, Color(1, 1, 1, 0.55))
+	fade.add_point(0.6, Color(1, 1, 1, 0.3))
+	var fade_texture := GradientTexture1D.new()
+	fade_texture.gradient = fade
+	process.color_ramp = fade_texture
+	_smoke.process_material = process
+
+	var puff := Gradient.new()
+	puff.set_color(0, Color(1, 1, 1, 1))
+	puff.set_color(1, Color(1, 1, 1, 0))
+	var puff_texture := GradientTexture2D.new()
+	puff_texture.gradient = puff
+	puff_texture.fill = GradientTexture2D.FILL_RADIAL
+	puff_texture.fill_from = Vector2(0.5, 0.5)
+	puff_texture.fill_to = Vector2(0.5, 0.0)
+	puff_texture.width = 64
+	puff_texture.height = 64
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	material.vertex_color_use_as_albedo = true
+	material.albedo_color = Color(_cfg.get("smoke_color", "#5a5560"))
+	material.albedo_texture = puff_texture
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE * float(_cfg.get("smoke_size", 1.1))
+	quad.material = material
+	_smoke.draw_pass_1 = quad
+	_smoke.position.y = 0.1
+	add_child(_smoke)

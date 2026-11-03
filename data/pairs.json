@@ -12,5 +12,5 @@
   "drop_seconds": 0.14,
   "ball_radius": 0.1,
   "ball_band_width": 0.035,
-  "end_screen_delay_seconds": 0.6
+  "end_screen_delay_seconds": 4.0
 }

@@ -82,7 +82,8 @@ func _ready() -> void:
 
 	Events.pile_ready.connect(_on_pile_ready)
 	Events.rain_finished.connect(_on_rain_finished)
-	Events.pair_matched.connect(func(_p: int, _c: int, _t: int) -> void: _check_starters())
+	Events.pair_matched.connect(_on_pair_matched)
+	Events.run_finished.connect(_on_run_finished)
 	GameState.world_provider = self
 	_pick_starter_pairs()
 	_build_pile.call_deferred(world)
@@ -185,11 +186,26 @@ func _starter_placements() -> Dictionary:
 	return placements
 
 
+func _on_pair_matched(_pair_id: int, _color: int, _pattern: int) -> void:
+	_check_starters()
+
+
+## Every pair found: the washer is fixed and the wall lights up.
+func _on_run_finished(_mode_id: String) -> void:
+	blast.repair()
+	wall.light_up(true)
+
+
 func _on_pile_ready() -> void:
 	GameState.pending_world = {}
 	GameState.running = not GameState.completed
 	Events.run_started.emit(GameState.mode_id)
 	_check_starters()
+	# Broken washer smokes from the burst until the last pair; a finished run
+	# shows the lit wall.
+	blast.set_smoking(_rain_done and not GameState.completed)
+	if GameState.completed:
+		wall.light_up(false)
 
 
 func _exit_tree() -> void:
