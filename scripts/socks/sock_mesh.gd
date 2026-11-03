@@ -194,7 +194,7 @@ static func _build(shape_index: int, detailed: bool) -> void:
 			var x := points[i].x / toe_start
 			w *= 1.0 - 0.05 * _bell(x - 0.4, 0.15) + 0.04 * _bell(x - 0.85, 0.12)
 		ring.back = w * (1.0 + bulge * _bell(d, 0.038))
-		ring.front = w * (1.0 - 0.3 * _bell(d, 0.03))
+		ring.front = w * (1.0 - 0.42 * _bell(d, 0.045))
 		ring.thick = half_t * (1.0 + 0.25 * _bell(d, 0.04))
 		if i >= first_toe:
 			var u: float = toe_marks[i - first_toe]
