@@ -9,12 +9,14 @@ const MAX_TRIES := 64
 var seed_value := 0
 var pair_count := 0
 
-# Per pair.
+# Per pair. Visible traits: shape, base color, design (pattern and count),
+# accent color (only where the design or heel and toe show it), contrast heel and toe.
 var base_colors := PackedInt32Array()
 var accent_colors := PackedInt32Array()
 var patterns := PackedInt32Array()
-var stripe_counts := PackedInt32Array()
-var lengths := PackedInt32Array()
+var counts := PackedInt32Array()
+var shapes := PackedInt32Array()
+var heel_toes := PackedByteArray()
 var near_of := PackedInt32Array() # pair this one was derived from, or -1
 
 # Per sock.
@@ -22,7 +24,9 @@ var sock_pairs := PackedInt32Array()
 
 var _used := {}
 var _rng := RandomNumberGenerator.new()
-var _weight_total := 0.0
+var _pattern_weights := PackedFloat32Array()
+var _shape_weights := PackedFloat32Array()
+var _heel_toe_share := 0.0
 
 
 ## Empty seed text means a random seed. Numbers are used as they are.
@@ -67,23 +71,28 @@ func is_near_miss(sock_a: int, sock_b: int) -> bool:
 ## Number of visible traits in which two pairs differ.
 func trait_distance(pair_a: int, pair_b: int) -> int:
 	var distance := 0
+	if shapes[pair_a] != shapes[pair_b]:
+		distance += 1
 	if base_colors[pair_a] != base_colors[pair_b]:
 		distance += 1
-	if lengths[pair_a] != lengths[pair_b]:
+	if patterns[pair_a] != patterns[pair_b] or counts[pair_a] != counts[pair_b]:
 		distance += 1
-	var pattern_a := SockCatalog.pattern(patterns[pair_a])
-	var pattern_b := SockCatalog.pattern(patterns[pair_b])
-	if patterns[pair_a] != patterns[pair_b]:
+	if heel_toes[pair_a] != heel_toes[pair_b]:
 		distance += 1
-	if pattern_a["uses_accent"] and pattern_b["uses_accent"] and accent_colors[pair_a] != accent_colors[pair_b]:
-		distance += 1
-	var count_a := stripe_counts[pair_a]
-	var count_b := stripe_counts[pair_b]
-	if count_a > 0 and count_b > 0 and count_a != count_b:
+	if shows_accent(pair_a) and shows_accent(pair_b) and accent_colors[pair_a] != accent_colors[pair_b]:
 		distance += 1
 	return distance
 
 
+func shows_accent(pair: int) -> bool:
+	return heel_toes[pair] == 1 or SockCatalog.pattern(patterns[pair])["uses_accent"]
+
+
+func shape_of(sock: int) -> int:
+	return shapes[sock_pairs[sock]]
+
+
+## count is the number of stripes or rings, or the dot and diamond size.
 func sock_info(sock: int) -> Dictionary:
 	var pair := sock_pairs[sock]
 	return {
@@ -91,8 +100,9 @@ func sock_info(sock: int) -> Dictionary:
 		"base_color": base_colors[pair],
 		"accent_color": accent_colors[pair],
 		"pattern": patterns[pair],
-		"stripes": stripe_counts[pair],
-		"length": lengths[pair],
+		"count": counts[pair],
+		"shape": shapes[pair],
+		"heel_toe": heel_toes[pair] == 1,
 	}
 
 
@@ -102,8 +112,8 @@ func custom_data(sock: int) -> Color:
 	return Color(
 		base_colors[pair] / 255.0,
 		accent_colors[pair] / 255.0,
-		(patterns[pair] * 16 + stripe_counts[pair]) / 255.0,
-		SockCatalog.length_scale(lengths[pair]) * 0.5
+		(patterns[pair] * 16 + counts[pair]) / 255.0,
+		float(heel_toes[pair])
 	)
 
 
@@ -119,10 +129,12 @@ func validate() -> PackedStringArray:
 	for pair in pair_count:
 		if near_of[pair] < 0:
 			plain_total += 1
-		var key := _key(base_colors[pair], accent_colors[pair], patterns[pair], stripe_counts[pair], lengths[pair])
+		var key := _key(base_colors[pair], accent_colors[pair], patterns[pair], counts[pair], shapes[pair], heel_toes[pair])
 		if seen.has(key):
 			errors.append("pairs %d and %d look the same" % [seen[key], pair])
 		seen[key] = pair
+		if not shows_accent(pair) and accent_colors[pair] != base_colors[pair]:
+			errors.append("pair %d has a hidden accent" % pair)
 		bases[base_colors[pair]] = true
 		kinds[patterns[pair]] = true
 		if near_of[pair] >= 0 and trait_distance(pair, near_of[pair]) != 1:
@@ -141,12 +153,21 @@ func validate() -> PackedStringArray:
 
 func _build(near_share: float) -> void:
 	_rng.seed = seed_value
-	_weight_total = 0.0
+	_pattern_weights.clear()
 	for i in SockCatalog.pattern_count():
-		_weight_total += SockCatalog.pattern(i)["weight"]
+		_pattern_weights.append(SockCatalog.pattern(i)["weight"])
+	_shape_weights.clear()
+	for i in SockCatalog.shape_count():
+		_shape_weights.append(SockCatalog.shape(i)["weight"])
+	_heel_toe_share = SockCatalog.data()["heel_toe_share"]
 
-	for values: PackedInt32Array in [base_colors, accent_colors, patterns, stripe_counts, lengths, near_of]:
-		values.resize(pair_count)
+	base_colors.resize(pair_count)
+	accent_colors.resize(pair_count)
+	patterns.resize(pair_count)
+	counts.resize(pair_count)
+	shapes.resize(pair_count)
+	heel_toes.resize(pair_count)
+	near_of.resize(pair_count)
 	near_of.fill(-1)
 
 	var near_total := clampi(roundi(pair_count * near_share), 0, pair_count - 1)
@@ -178,35 +199,37 @@ func _build(near_share: float) -> void:
 
 func _fill_random(pair: int, forced_base: int, forced_pattern: int) -> void:
 	for attempt in MAX_TRIES:
-		var pattern := forced_pattern if forced_pattern >= 0 else _pick_pattern()
+		var pattern := forced_pattern if forced_pattern >= 0 else _pick_weighted(_pattern_weights)
 		var base := forced_base if forced_base >= 0 else _rng.randi_range(0, SockCatalog.palette_size() - 1)
 		var info := SockCatalog.pattern(pattern)
+		var heel_toe := 1 if _rng.randf() < _heel_toe_share else 0
 		var accent := base
-		if info["uses_accent"]:
+		if info["uses_accent"] or heel_toe == 1:
 			accent = _pick(SockCatalog.accents_for(base))
-		var counts: Array = info["counts"]
-		var count: int = counts[_rng.randi_range(0, counts.size() - 1)]
-		var length := _rng.randi_range(0, SockCatalog.length_count() - 1)
-		if _store_if_free(pair, base, accent, pattern, count, length):
+		var count := _pick_count(pattern)
+		var shape := _pick_weighted(_shape_weights)
+		if _store_if_free(pair, base, accent, pattern, count, shape, heel_toe):
 			return
 	_fill_first_free(pair)
 
 
 ## Fallback for a nearly full trait space: walks every combination once.
 func _fill_first_free(pair: int) -> void:
-	for pattern in SockCatalog.pattern_count():
-		var info := SockCatalog.pattern(pattern)
-		for base in SockCatalog.palette_size():
-			var accents := SockCatalog.accents_for(base) if info["uses_accent"] else PackedInt32Array([base])
-			for accent in accents:
-				for count: int in info["counts"]:
-					for length in SockCatalog.length_count():
-						if _store_if_free(pair, base, accent, pattern, count, length):
-							return
+	for shape in SockCatalog.shape_count():
+		for pattern in SockCatalog.pattern_count():
+			var info := SockCatalog.pattern(pattern)
+			for heel_toe in 2:
+				for base in SockCatalog.palette_size():
+					var shows: bool = info["uses_accent"] or heel_toe == 1
+					var accents := SockCatalog.accents_for(base) if shows else PackedInt32Array([base])
+					for accent in accents:
+						for count: Variant in info["counts"]:
+							if _store_if_free(pair, base, accent, pattern, int(count), shape, heel_toe):
+								return
 	push_error("Sock trait space is exhausted")
 
 
-## Copies an earlier pair and changes exactly one trait.
+## Copies an earlier pair and changes exactly one visible trait.
 func _fill_near(pair: int) -> bool:
 	for attempt in MAX_TRIES:
 		var source := _rng.randi_range(0, pair - 1)
@@ -220,93 +243,100 @@ func _mutate(pair: int, source: int) -> bool:
 	var base := base_colors[source]
 	var accent := accent_colors[source]
 	var pattern := patterns[source]
-	var count := stripe_counts[source]
-	var length := lengths[source]
-	var info := SockCatalog.pattern(pattern)
-	var uses_accent: bool = info["uses_accent"]
+	var count := counts[source]
+	var shape := shapes[source]
+	var heel_toe := int(heel_toes[source])
+	var shows := shows_accent(source)
 
 	for trait_index in _shuffled_range(5):
-		var options := PackedInt32Array()
+		# Each candidate is [base, accent, pattern, count, shape, heel_toe].
+		var options: Array[PackedInt32Array] = []
 		match trait_index:
-			0: # base color
+			0: # shape
+				for candidate in SockCatalog.shape_count():
+					if candidate != shape:
+						options.append(PackedInt32Array([base, accent, pattern, count, candidate, heel_toe]))
+			1: # base color, the accent stays if it still reads on the new base
 				for candidate in SockCatalog.palette_size():
-					if candidate == base:
+					if candidate == base or (shows and not SockCatalog.accents_for(candidate).has(accent)):
 						continue
-					if uses_accent and not SockCatalog.accents_for(candidate).has(accent):
-						continue
-					var new_accent := accent if uses_accent else candidate
-					if not _used.has(_key(candidate, new_accent, pattern, count, length)):
-						options.append(candidate)
-				if not options.is_empty():
-					var chosen := _pick(options)
-					_store(pair, chosen, accent if uses_accent else chosen, pattern, count, length)
-					return true
-			1: # accent color
-				if uses_accent:
+					options.append(PackedInt32Array([candidate, accent if shows else candidate, pattern, count, shape, heel_toe]))
+			2: # accent color
+				if shows:
 					for candidate in SockCatalog.accents_for(base):
-						if candidate != accent and not _used.has(_key(base, candidate, pattern, count, length)):
-							options.append(candidate)
-					if not options.is_empty():
-						_store(pair, base, _pick(options), pattern, count, length)
-						return true
-			2: # stripe or ring count
-				for candidate: int in info["counts"]:
-					if candidate != count and not _used.has(_key(base, accent, pattern, candidate, length)):
-						options.append(candidate)
-				if not options.is_empty():
-					_store(pair, base, accent, pattern, _pick(options), length)
-					return true
-			3: # length
-				for candidate in SockCatalog.length_count():
-					if candidate != length and not _used.has(_key(base, accent, pattern, count, candidate)):
-						options.append(candidate)
-				if not options.is_empty():
-					_store(pair, base, accent, pattern, count, _pick(options))
-					return true
-			4: # pattern, only between patterns that share the count
+						if candidate != accent:
+							options.append(PackedInt32Array([base, candidate, pattern, count, shape, heel_toe]))
+			3: # design: another pattern or another count
 				for candidate in SockCatalog.pattern_count():
-					var other := SockCatalog.pattern(candidate)
-					if candidate != pattern and other["uses_accent"] == uses_accent \
-							and other["counts"].has(count) \
-							and not _used.has(_key(base, accent, candidate, count, length)):
-						options.append(candidate)
-				if not options.is_empty():
-					_store(pair, base, accent, _pick(options), count, length)
-					return true
+					var info := SockCatalog.pattern(candidate)
+					var needs_accent: bool = info["uses_accent"] or heel_toe == 1
+					var new_accent := accent
+					if needs_accent and not shows:
+						new_accent = _pick(SockCatalog.accents_for(base))
+					elif not needs_accent:
+						new_accent = base
+					for value: Variant in info["counts"]:
+						var candidate_count := int(value)
+						if candidate != pattern or candidate_count != count:
+							options.append(PackedInt32Array([base, new_accent, candidate, candidate_count, shape, heel_toe]))
+			4: # contrast heel and toe on or off
+				var flipped := 1 - heel_toe
+				var plain_after: bool = not SockCatalog.pattern(pattern)["uses_accent"] and flipped == 0
+				var new_accent := base if plain_after else accent
+				if flipped == 1 and not shows:
+					new_accent = _pick(SockCatalog.accents_for(base))
+				options.append(PackedInt32Array([base, new_accent, pattern, count, shape, flipped]))
+		var free: Array[PackedInt32Array] = []
+		for o in options:
+			if not _used.has(_key(o[0], o[1], o[2], o[3], o[4], o[5])):
+				free.append(o)
+		if not free.is_empty():
+			var o := free[_rng.randi_range(0, free.size() - 1)]
+			_store(pair, o[0], o[1], o[2], o[3], o[4], o[5])
+			return true
 	return false
 
 
-func _store_if_free(pair: int, base: int, accent: int, pattern: int, count: int, length: int) -> bool:
-	if _used.has(_key(base, accent, pattern, count, length)):
+func _store_if_free(pair: int, base: int, accent: int, pattern: int, count: int, shape: int, heel_toe: int) -> bool:
+	if _used.has(_key(base, accent, pattern, count, shape, heel_toe)):
 		return false
-	_store(pair, base, accent, pattern, count, length)
+	_store(pair, base, accent, pattern, count, shape, heel_toe)
 	return true
 
 
-func _store(pair: int, base: int, accent: int, pattern: int, count: int, length: int) -> void:
+func _store(pair: int, base: int, accent: int, pattern: int, count: int, shape: int, heel_toe: int) -> void:
 	base_colors[pair] = base
 	accent_colors[pair] = accent
 	patterns[pair] = pattern
-	stripe_counts[pair] = count
-	lengths[pair] = length
-	_used[_key(base, accent, pattern, count, length)] = true
+	counts[pair] = count
+	shapes[pair] = shape
+	heel_toes[pair] = heel_toe
+	_used[_key(base, accent, pattern, count, shape, heel_toe)] = true
 
 
-func _key(base: int, accent: int, pattern: int, count: int, length: int) -> int:
-	return base | accent << 8 | pattern << 16 | count << 24 | length << 32
+func _key(base: int, accent: int, pattern: int, count: int, shape: int, heel_toe: int) -> int:
+	return base | accent << 8 | pattern << 16 | count << 20 | shape << 24 | heel_toe << 28
 
 
 func _pick(values: PackedInt32Array) -> int:
 	return values[_rng.randi_range(0, values.size() - 1)]
 
 
-func _pick_pattern() -> int:
-	var roll := _rng.randf() * _weight_total
-	for i in SockCatalog.pattern_count():
-		roll -= SockCatalog.pattern(i)["weight"]
+func _pick_count(pattern: int) -> int:
+	var options: Array = SockCatalog.pattern(pattern)["counts"]
+	return int(options[_rng.randi_range(0, options.size() - 1)])
+
+
+func _pick_weighted(weights: PackedFloat32Array) -> int:
+	var total := 0.0
+	for w in weights:
+		total += w
+	var roll := _rng.randf() * total
+	for i in weights.size():
+		roll -= weights[i]
 		if roll <= 0.0:
 			return i
-	return SockCatalog.pattern_count() - 1
+	return weights.size() - 1
 
 
 func _shuffled_range(size: int) -> PackedInt32Array:

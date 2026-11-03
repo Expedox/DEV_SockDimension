@@ -1,10 +1,12 @@
 class_name SockCatalog
 extends RefCounted
-## Read-only access to data/socks.json: palette, patterns, lengths, mesh values.
+## Read-only access to data/socks.json: palette, patterns, shapes, mesh and knit values.
 
 const PATH := "res://data/socks.json"
 const MAX_PALETTE := 32 # size of the palette array in sock.gdshader
 const MAX_COUNT := 15 # pattern and count share one byte in the custom data
+## sock.gdshader knows the patterns by position, so data/socks.json must keep this order.
+const PATTERN_ORDER := ["plain", "stripes", "dots", "cuff_rings", "argyle"]
 
 static var _data: Dictionary = {}
 static var _colors: PackedColorArray = []
@@ -21,6 +23,10 @@ static func mesh_values() -> Dictionary:
 	return data()["mesh"]
 
 
+static func knit_values() -> Dictionary:
+	return data()["knit"]
+
+
 static func palette_size() -> int:
 	return data()["palette"].size()
 
@@ -29,8 +35,8 @@ static func pattern_count() -> int:
 	return data()["patterns"].size()
 
 
-static func length_count() -> int:
-	return data()["lengths"].size()
+static func shape_count() -> int:
+	return data()["shapes"].size()
 
 
 static func color_id(index: int) -> String:
@@ -39,6 +45,10 @@ static func color_id(index: int) -> String:
 
 static func pattern_id(index: int) -> String:
 	return data()["patterns"][index]["id"]
+
+
+static func shape_id(index: int) -> String:
+	return data()["shapes"][index]["id"]
 
 
 static func pattern_index(id: String) -> int:
@@ -53,8 +63,8 @@ static func pattern(index: int) -> Dictionary:
 	return data()["patterns"][index]
 
 
-static func length_scale(index: int) -> float:
-	return data()["lengths"][index]["scale"]
+static func shape(index: int) -> Dictionary:
+	return data()["shapes"][index]
 
 
 static func colors() -> PackedColorArray:
@@ -68,18 +78,19 @@ static func accents_for(base: int) -> PackedInt32Array:
 	return _accents[base]
 
 
-## How many distinct pairs the current data allows.
+## How many visibly different pairs the current data allows.
+## Plain socks without a contrast heel and toe show no accent at all.
 static func capacity() -> int:
 	var total := 0
-	var lengths := length_count()
-	for p: Dictionary in data()["patterns"]:
-		var counts: int = p["counts"].size()
-		if not p["uses_accent"]:
-			total += palette_size() * counts * lengths
-			continue
-		for base in palette_size():
-			total += _accents[base].size() * counts * lengths
-	return total
+	for base in palette_size():
+		var accents := _accents[base].size()
+		for p: Dictionary in data()["patterns"]:
+			var counts: int = p["counts"].size()
+			if p["uses_accent"]:
+				total += counts * accents * 2
+			else:
+				total += counts * (1 + accents)
+	return total * shape_count()
 
 
 static func _load() -> void:
@@ -90,6 +101,8 @@ static func _load() -> void:
 		return
 	_data = parsed
 	assert(palette_size() <= MAX_PALETTE, "Palette is larger than the shader array")
+	for i in pattern_count():
+		assert(pattern_id(i) == PATTERN_ORDER[i], "Pattern order differs from sock.gdshader")
 
 	_colors = PackedColorArray()
 	for entry: Dictionary in _data["palette"]:

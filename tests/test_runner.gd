@@ -22,6 +22,7 @@ func _ready() -> void:
 	_test_save_manager()
 	_test_game_state_counters()
 	_test_achievements()
+	_test_socks()
 	await _test_pair_controller()
 
 	print("%d checks, %d failed" % [_checks, _failures])
@@ -170,6 +171,30 @@ func _test_achievements() -> void:
 
 	Achievements.save_path = TEST_DIR + "achievements.save"
 	Achievements.load_state()
+
+
+func _test_socks() -> void:
+	check(SockCatalog.capacity() >= 10000, "sock data has room for 5,000 pairs twice")
+	var socks := SockSet.generate(77, 5000, 0.2)
+	check(socks != null and socks.sock_count() == 10000, "5,000 pairs generate")
+	if socks == null:
+		return
+	var errors := socks.validate()
+	check(errors.is_empty(), "sock set follows the rules: " + ", ".join(errors.slice(0, 3)))
+	var near := 0
+	for pair in socks.pair_count:
+		if socks.near_of[pair] >= 0:
+			near += 1
+	check(near == 1000, "a fifth are near pairs (%d)" % near)
+	var again := SockSet.generate(77, 5000, 0.2)
+	check(again.sock_pairs == socks.sock_pairs and again.base_colors == socks.base_colors, "same seed, same socks")
+	for shape in SockCatalog.shape_count():
+		var near_mesh := SockMesh.get_mesh(shape, true)
+		var far_mesh := SockMesh.get_mesh(shape)
+		check(near_mesh != null and near_mesh.get_surface_count() == 1, "mesh for " + SockCatalog.shape_id(shape))
+		check(far_mesh.surface_get_array_len(0) < near_mesh.surface_get_array_len(0), "far mesh is cheaper for " + SockCatalog.shape_id(shape))
+		var size := SockMesh.collision_size(shape)
+		check(size.x > 0.05 and size.y > 0.01 and size.z > 0.05, "box for " + SockCatalog.shape_id(shape))
 
 
 func _test_pair_controller() -> void:
