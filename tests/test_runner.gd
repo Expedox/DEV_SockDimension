@@ -15,6 +15,7 @@ func _ready() -> void:
 	_clean(TEST_DIR)
 	SaveManager.save_dir = TEST_DIR + "saves/"
 	Achievements.save_path = TEST_DIR + "achievements.save"
+	SpeedrunScores.save_path = TEST_DIR + "speedrun.save"
 	Achievements.load_state()
 
 	_test_scripts_parse()
@@ -225,7 +226,7 @@ func _test_achievements() -> void:
 	Achievements.save_path = TEST_DIR + "achievements2.save"
 	Achievements.load_state()
 	check(Achievements.get_unlocked_count() == 0, "fresh achievement state")
-	check(Achievements.get_total_count() == 21, "twenty-one achievements defined")
+	check(Achievements.get_total_count() == 22, "twenty-two achievements defined")
 
 	_start_fake_run("sock_dimension", 10)
 	GameState.register_match(0, 0, 0)
@@ -270,9 +271,15 @@ func _test_achievements() -> void:
 	check(Achievements.get_stat("pairs_total") == pairs, "stats survive reload")
 
 	for definition: Dictionary in Achievements.get_definitions():
-		if definition.id != Achievements.COMPLETIONIST_ID:
+		if definition.id != Achievements.COMPLETIONIST_ID and not definition.speedrun:
 			Achievements.unlock(definition.id)
-	check(Achievements.is_unlocked(Achievements.COMPLETIONIST_ID), "completionist after all others")
+	check(Achievements.is_unlocked(Achievements.COMPLETIONIST_ID), "completionist after all others but speedrun ones")
+	# Speedrun achievements only unlock inside a speedrun.
+	var story_mode := GameState.mode_id
+	GameState.mode_id = "speedrun_50"
+	for definition: Dictionary in Achievements.get_definitions():
+		Achievements.unlock(definition.id)
+	GameState.mode_id = story_mode
 	check(Achievements.get_percent() == 100, "percent reaches 100")
 	_end_fake_run()
 
@@ -397,9 +404,21 @@ func _test_speedrun() -> void:
 	_start_fake_run("speedrun_50", 0)
 	check(not SaveManager.save_current(), "speedrun is not saved")
 	Achievements.unlock("ACH_YEET")
-	check(not Achievements.is_unlocked("ACH_YEET"), "no achievements in a speedrun")
+	check(not Achievements.is_unlocked("ACH_YEET"), "no story achievements in a speedrun")
+	GameState.pairs_total = 50
+	GameState.play_time = 301.0
+	GameState.finish()
+	check(not Achievements.is_unlocked("ACH_SPEEDRUN_50"), "50 pairs in over 5 minutes: no achievement")
+	GameState.completed = false
+	GameState.play_time = 299.0
+	GameState.finish()
+	check(Achievements.is_unlocked("ACH_SPEEDRUN_50"), "50 pairs in under 5 minutes unlocks Quick Feet")
+	Achievements.reset_all()
+	check(Achievements.is_unlocked("ACH_SPEEDRUN_50"), "speedrun achievement survives a new game")
 	_end_fake_run()
 	GameState._reset("laundry_day")
+	SpeedrunScores.clear()
+	Achievements.reset_all()
 	check(not Achievements.get_definitions().any(func(d: Dictionary) -> bool:
 		return d.id in ["ACH_SOCK_DIMENSION", "ACH_PAIRS_5000"]), "5000 pair achievements are gone")
 	SpeedrunScores.clear()

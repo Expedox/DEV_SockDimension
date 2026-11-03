@@ -152,6 +152,11 @@ func _on_pair_mismatched(near_miss: bool) -> void:
 
 
 func _on_run_finished(mode_id: String) -> void:
+	if GameState.is_speedrun():
+		if mode_id == str(params.get("speedrun_50_mode", "speedrun_50")) and not GameState.cheat_used \
+				and GameState.play_time < float(params.get("speedrun_50_seconds", 300)):
+			unlock("ACH_SPEEDRUN_50")
+		return
 	unlock("ACH_%s" % mode_id.to_upper())
 	if GameState.mistakes == 0:
 		unlock("ACH_FLAWLESS")
@@ -203,8 +208,13 @@ func notify(name_key: String, description_key: String) -> void:
 
 
 func unlock(id: String) -> void:
-	if _unlocked.has(id) or not _by_id.has(id) or GameState.is_speedrun():
+	if _unlocked.has(id) or not _by_id.has(id):
 		return
+	# In a speedrun only the speedrun achievements count.
+	if GameState.is_speedrun() != is_speedrun_achievement(id):
+		return
+	if is_speedrun_achievement(id):
+		SpeedrunScores.add_unlock(id)
 	_unlocked[id] = int(Time.get_unix_time_from_system())
 	var target := int(_by_id[id].target)
 	_platform.set_progress(id, target, target)
@@ -241,6 +251,7 @@ func load_definitions() -> void:
 			"hidden": bool(entry.get("hidden", false)),
 			"target": maxi(int(entry.get("target", 1)), 1),
 			"stat": String(entry.get("stat", "")),
+			"speedrun": bool(entry.get("speedrun", false)),
 		}
 		_definitions.append(definition)
 		_by_id[id] = definition
@@ -298,6 +309,7 @@ func reset_all() -> void:
 	_stats = {}
 	_run = {"colors": {}, "patterns": {}}
 	_thrown_sock = -1
+	_merge_speedrun_unlocks()
 	_mark_dirty()
 	flush()
 
@@ -320,6 +332,19 @@ func _drop_unknown() -> void:
 	for id: String in _unlocked.keys():
 		if not _by_id.has(id):
 			_unlocked.erase(id)
+	_merge_speedrun_unlocks()
+
+
+## Speedrun achievements are not tied to a run: they come back from
+## user://speedrun.save after every reset or load.
+func _merge_speedrun_unlocks() -> void:
+	for id: String in SpeedrunScores.unlocks():
+		if _by_id.has(id) and not _unlocked.has(id):
+			_unlocked[id] = 0
+
+
+func is_speedrun_achievement(id: String) -> bool:
+	return bool(_by_id.get(id, {}).get("speedrun", false))
 
 
 func _mark_dirty() -> void:
@@ -349,6 +374,6 @@ func _evaluate_stats() -> void:
 
 func _check_completionist() -> void:
 	for definition: Dictionary in _definitions:
-		if definition.id != COMPLETIONIST_ID and not _unlocked.has(definition.id):
+		if definition.id != COMPLETIONIST_ID and not definition.get("speedrun", false) and not _unlocked.has(definition.id):
 			return
 	unlock(COMPLETIONIST_ID)

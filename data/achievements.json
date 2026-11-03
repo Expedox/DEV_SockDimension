@@ -10,7 +10,9 @@
     "marathon_seconds": 7200,
     "toast_seconds": 12.0,
     "save_interval_seconds": 30,
-    "per_run": true
+    "per_run": true,
+    "speedrun_50_mode": "speedrun_50",
+    "speedrun_50_seconds": 300
   },
   "achievements": [
     { "id": "ACH_FIRST_PAIR", "name": "ACH_FIRST_PAIR_NAME", "description": "ACH_FIRST_PAIR_DESC", "hidden": false, "target": 1, "stat": "pairs_total" },
@@ -33,6 +35,7 @@
     { "id": "ACH_CAT_BURGLAR", "name": "ACH_CAT_BURGLAR_NAME", "description": "ACH_CAT_BURGLAR_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_NIGHT_OWL", "name": "ACH_NIGHT_OWL_NAME", "description": "ACH_NIGHT_OWL_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_MARATHON", "name": "ACH_MARATHON_NAME", "description": "ACH_MARATHON_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_SPEEDRUN_50", "name": "ACH_SPEEDRUN_50_NAME", "description": "ACH_SPEEDRUN_50_DESC", "hidden": false, "target": 1, "speedrun": true },
     { "id": "ACH_COMPLETIONIST", "name": "ACH_COMPLETIONIST_NAME", "description": "ACH_COMPLETIONIST_DESC", "hidden": false, "target": 1 }
   ]
 }

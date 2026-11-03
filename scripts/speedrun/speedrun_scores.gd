@@ -43,6 +43,21 @@ static func record(pairs: int, time: float, mistakes: int, versus := false) -> i
 	return rank
 
 
+## Speedrun achievement ids unlocked so far; they last across all games.
+static func unlocks() -> Array:
+	return _load().get("unlocks", [])
+
+
+static func add_unlock(id: String) -> void:
+	var all := _load()
+	var list: Array = all.get("unlocks", [])
+	if id in list:
+		return
+	list.append(id)
+	all["unlocks"] = list
+	SafeFile.write(save_path, SAVE_VERSION, all)
+
+
 static func clear() -> void:
 	SafeFile.remove(save_path)
 
