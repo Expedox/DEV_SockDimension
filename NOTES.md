@@ -341,6 +341,14 @@ throws), audio, and the real FPS.
   throw speed) and climbing feel on the pile.
 - German texts (`de` column in `i18n/game_text.csv`) are still to come.
 - Steam: only `scripts/achievements/achievement_platform.gd` needs swapping.
+- Achievements are per run (Mike's call, `data/achievements.json` `per_run: true`).
+  New Game starts with none; each save stores its run's unlocks and counters
+  (`achievements` key in the save) and loading restores them. Lasting unlocks
+  come only from Steam: every unlock still goes to `AchievementPlatform`, and
+  Steam unlocks are not merged back into the run. `per_run: false` brings back
+  the lifetime counters shared by all saves. Note: `ACH_PAIRS_6000` cannot be
+  reached in one run (largest mode has 5,000 pairs); target or text needs a
+  change.
 
 - The project folder is on the Google Drive mount. Git works there, but Drive
   syncing a live `.git` folder can corrupt it. Push often, or move the checkout.

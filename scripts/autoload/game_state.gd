@@ -38,6 +38,7 @@ func _process(delta: float) -> void:
 ## Starts a fresh pile in a save slot. An empty seed text picks a random seed.
 func start_new(new_mode: String, seed_text := "", new_slot := 1) -> void:
 	_reset(new_mode)
+	Achievements.on_new_game()
 	slot = new_slot
 	seed_value = _seed_from_text(seed_text)
 	pending_world = {}
@@ -58,6 +59,7 @@ func start_loaded(data: Dictionary, from_slot := 1) -> void:
 	found_pair_ids = data.found
 	pairs_found = found_pair_ids.size()
 	pending_world = data.world
+	Achievements.restore_run(data.get("achievements", {}))
 	get_tree().change_scene_to_file(GAME_SCENE)
 
 
@@ -74,6 +76,7 @@ func capture() -> Dictionary:
 		"near_misses": near_misses,
 		"found": found_pair_ids,
 		"world": world_provider.capture_world() if world_provider else {},
+		"achievements": Achievements.capture_run(),
 	}
 
 

@@ -9,7 +9,8 @@
     "night_owl_end_hour": 4,
     "marathon_seconds": 7200,
     "toast_seconds": 4.0,
-    "save_interval_seconds": 30
+    "save_interval_seconds": 30,
+    "per_run": true
   },
   "achievements": [
     { "id": "ACH_FIRST_PAIR", "name": "ACH_FIRST_PAIR_NAME", "description": "ACH_FIRST_PAIR_DESC", "hidden": false, "target": 1, "stat": "pairs_total" },

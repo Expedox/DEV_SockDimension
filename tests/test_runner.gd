@@ -237,6 +237,25 @@ func _test_achievements() -> void:
 	check(Achievements.get_percent() == 100, "percent reaches 100")
 	_end_fake_run()
 
+	var keep: bool = Achievements.is_per_run()
+	Achievements.params.per_run = false
+	Achievements.on_new_game()
+	check(Achievements.get_unlocked_count() > 0, "lifetime mode keeps unlocks on new game")
+	check(Achievements.capture_run().is_empty(), "lifetime mode stores nothing in the run save")
+	Achievements.params.per_run = true
+	var snapshot := Achievements.capture_run()
+	var had := Achievements.get_unlocked_count()
+	Achievements.on_new_game()
+	check(Achievements.get_unlocked_count() == 0 and Achievements.get_stat("pairs_total") == 0,
+			"per run: new game starts with no achievements")
+	Achievements.load_state()
+	check(Achievements.get_unlocked_count() == 0, "per run: the wipe is saved")
+	Achievements.restore_run(snapshot)
+	check(Achievements.get_unlocked_count() == had, "per run: loading a save restores its achievements")
+	Achievements.restore_run({})
+	check(Achievements.get_unlocked_count() == 0, "per run: an old save without achievements starts empty")
+	Achievements.params.per_run = keep
+
 	Achievements.save_path = TEST_DIR + "achievements.save"
 	Achievements.load_state()
 

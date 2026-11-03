@@ -31,7 +31,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	load_definitions()
 	load_state()
-	_merge_platform_unlocks()
+	if not is_per_run():
+		_merge_platform_unlocks()
 	_evaluate_stats()
 	_toast = AchievementToast.new()
 	add_child(_toast)
@@ -241,6 +242,48 @@ func load_state() -> void:
 	_unlocked = result.data.get("unlocked", {})
 	_stats = result.data.get("stats", {})
 	_run = result.data.get("run", _run)
+
+
+## In-game achievements belong to one run (params.per_run). A new game starts
+## empty; loading a save restores what that run had. Lasting unlocks come from
+## the storefront: every unlock is still forwarded to AchievementPlatform.
+## With per_run false the old lifetime behaviour (shared by all saves) returns.
+func is_per_run() -> bool:
+	return bool(params.get("per_run", false))
+
+
+func on_new_game() -> void:
+	if is_per_run():
+		reset_all()
+
+
+## Achievement state stored inside a run's save. Empty when not per run.
+func capture_run() -> Dictionary:
+	if not is_per_run():
+		return {}
+	return {"unlocked": _unlocked.duplicate(), "stats": _stats.duplicate(), "run": _run.duplicate(true)}
+
+
+## Restores capture_run() data when a save is loaded. Old saves without it start empty.
+func restore_run(data: Dictionary) -> void:
+	if not is_per_run():
+		return
+	_unlocked = data.get("unlocked", {})
+	_stats = data.get("stats", {})
+	_run = data.get("run", {"colors": {}, "patterns": {}})
+	_thrown_sock = -1
+	_mark_dirty()
+	flush()
+
+
+## Clears all unlocks, stats and run progress and writes the empty state.
+func reset_all() -> void:
+	_unlocked = {}
+	_stats = {}
+	_run = {"colors": {}, "patterns": {}}
+	_thrown_sock = -1
+	_mark_dirty()
+	flush()
 
 
 ## Writes pending changes now. Pair counts wait for the next interval.
