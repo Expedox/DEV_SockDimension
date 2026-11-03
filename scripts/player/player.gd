@@ -29,12 +29,20 @@ var _typed := "" # last letters, for the debug cheat code
 var _cheat_cache := Vector2i(-1, -1) # (sock, partner), avoids a scan every frame
 var _stride_left := 0.0 # metres until the next footstep
 var _fall_speed := 0.0
+## Standing on socks. Socks never block the player sideways; a probe under the
+## feet lifts the player onto them, so loose socks and slopes walk smoothly.
+var _on_sock_ground := false
+var _probe := PhysicsShapeQueryParameters3D.new()
 
 
 func _ready() -> void:
 	_cfg = Config.player
 	collision_layer = 1 << (PLAYER_LAYER - 1)
-	collision_mask = (1 << (WORLD_LAYER - 1)) | (1 << (SOCK_LAYER - 1))
+	collision_mask = 1 << (WORLD_LAYER - 1)
+	var foot := SphereShape3D.new()
+	foot.radius = float(_cfg.get("sock_foot_radius", 0.18))
+	_probe.shape = foot
+	_probe.collision_mask = 1 << (SOCK_LAYER - 1) # lone floor socks are not worth a bump
 	floor_max_angle = deg_to_rad(float(_cfg.floor_max_angle_deg))
 	floor_snap_length = float(_cfg.step_height)
 	floor_stop_on_slope = true
@@ -177,26 +185,61 @@ func _move(delta: float) -> void:
 	var speed := float(_cfg.speed)
 	velocity.x = direction.x * speed
 	velocity.z = direction.z * speed
-	if is_on_floor():
+	if _grounded():
 		if Input.is_action_just_pressed("jump") and GameState.running:
 			velocity.y = float(_cfg.jump_velocity)
+			_on_sock_ground = false
 	else:
 		velocity += get_gravity() * delta
 
-	var was_on_floor := is_on_floor()
+	var was_on_floor := _grounded()
 	var start := global_transform
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z) * delta
 	_fall_speed = maxf(-velocity.y, 0.0) if not was_on_floor else 0.0
 	move_and_slide()
 	if was_on_floor and horizontal.length() > 0.001:
 		_try_step(start, horizontal)
+	_stand_on_socks(start, was_on_floor, delta)
 	_footsteps(was_on_floor, start.origin)
+
+
+func _grounded() -> bool:
+	return is_on_floor() or _on_sock_ground
+
+
+## Puts the feet on the sock surface below. Rises of up to sock_climb per step
+## are walked up; a higher wall of socks blocks like a wall (jump over it).
+func _stand_on_socks(start: Transform3D, was_grounded: bool, delta: float) -> void:
+	_on_sock_ground = false
+	if velocity.y > 0.0:
+		return
+	var climb := float(_cfg.get("sock_climb", 0.35))
+	var snap := float(_cfg.step_height) if was_grounded else maxf(-velocity.y * delta, 0.0) + 0.02
+	var radius := (_probe.shape as SphereShape3D).radius
+	var space := get_world_3d().direct_space_state
+	var top := global_position + Vector3.UP * (climb + radius)
+	_probe.transform = Transform3D(Basis.IDENTITY, top)
+	_probe.motion = Vector3.DOWN * (climb + snap)
+	var cast := space.cast_motion(_probe)
+	if cast[0] <= 0.0:
+		# Even the highest probe is inside socks: too steep, stay where we were.
+		if was_grounded:
+			global_position = Vector3(start.origin.x, global_position.y, start.origin.z)
+		return
+	if cast[0] >= 1.0:
+		return
+	var surface := top.y + _probe.motion.y * cast[0] - radius
+	if surface < global_position.y - snap:
+		return
+	global_position.y = maxf(surface, global_position.y) if not was_grounded else surface
+	velocity.y = 0.0
+	_on_sock_ground = true
 
 
 ## A step sound every stride, softer on socks than on the floor, and a thud
 ## when landing from a jump.
 func _footsteps(was_on_floor: bool, from: Vector3) -> void:
-	if not is_on_floor():
+	if not _grounded():
 		return
 	if not was_on_floor:
 		if _fall_speed >= float(_cfg.get("land_sound_speed", 3.5)):
@@ -207,7 +250,7 @@ func _footsteps(was_on_floor: bool, from: Vector3) -> void:
 	if _stride_left > 0.0:
 		return
 	_stride_left = float(_cfg.get("step_stride", 0.75))
-	Sfx.play("step_socks" if _on_socks() else "step_floor")
+	Sfx.play("step_socks" if _on_sock_ground or _on_socks() else "step_floor")
 
 
 func _on_socks() -> bool:
@@ -407,7 +450,7 @@ func _track_cheat_code(keycode: Key) -> void:
 
 
 func _check_summit(delta: float) -> void:
-	if _summit_done or _field == null or not GameState.running or not is_on_floor():
+	if _summit_done or _field == null or not GameState.running or not _grounded():
 		return
 	_summit_timer -= delta
 	if _summit_timer > 0.0:

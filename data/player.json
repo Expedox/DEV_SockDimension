@@ -18,5 +18,7 @@
   "carry_distance": 0.7,
   "carry_spacing": 0.045,
   "step_stride": 0.75,
-  "land_sound_speed": 3.5
+  "land_sound_speed": 3.5,
+  "sock_foot_radius": 0.18,
+  "sock_climb": 0.35
 }
