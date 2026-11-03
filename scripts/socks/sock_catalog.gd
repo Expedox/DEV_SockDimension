@@ -8,7 +8,13 @@ const MAX_COUNT := 15 # pattern and count share one byte in the custom data
 ## sock.gdshader knows the patterns by position, so data/socks.json must keep this order.
 const PATTERN_ORDER := [
 	"plain", "stripes", "dots", "cuff_rings", "argyle",
-	"hearts", "stars", "zigzag", "snowflakes", "rainbow", "paws",
+	"hearts", "stars", "zigzag", "snowflakes", "rainbow", "paws", "lettering",
+]
+## Knitted words, one pair each per game. The count of a "lettering" pair picks
+## the text; LEFT_RIGHT puts LEFT on one sock and RIGHT on its twin.
+const LETTERING_TEXTS := [
+	"LEFT / RIGHT", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY",
+	"FRIDAY", "SATURDAY", "SUNDAY", "MOM <3", "DAD <3",
 ]
 
 static var _data: Dictionary = {}
@@ -50,6 +56,10 @@ static func regular_pattern_count() -> int:
 		if not is_special(i):
 			total += 1
 	return total
+
+
+static func lettering_pattern() -> int:
+	return pattern_index("lettering")
 
 
 static func special_patterns() -> PackedInt32Array:

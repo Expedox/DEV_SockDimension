@@ -296,7 +296,10 @@ static func _sort_key(s: SockSet, pair: int) -> int:
 	return ((s.patterns[pair] * 16 + s.counts[pair]) * 64 + s.accent_colors[pair]) * 2 + s.heel_toes[pair]
 
 
+## Words hang in text order (LEFT / RIGHT, Monday to Sunday, MOM, DAD).
 static func _special_key(s: SockSet, pair: int) -> int:
+	if s.patterns[pair] == SockCatalog.lettering_pattern():
+		return s.counts[pair]
 	return ((s.base_colors[pair] * 16 + s.counts[pair]) * 64 + s.accent_colors[pair]) * 2 + s.heel_toes[pair]
 
 
@@ -384,11 +387,6 @@ func _build_slots(plan: Dictionary, panels: Array[Transform3D], bounds: AABB) ->
 	_labels.resize(shape_count)
 	_layers.resize(shape_count)
 
-	var first_sock := PackedInt32Array()
-	first_sock.resize(count)
-	for sock in range(_socks.sock_count() - 1, -1, -1):
-		first_sock[_socks.pair_of(sock)] = sock
-
 	var s: float = plan.scale
 	for entry: Dictionary in plan.shapes:
 		var shape: int = entry.shape
@@ -426,9 +424,8 @@ func _build_slots(plan: Dictionary, panels: Array[Transform3D], bounds: AABB) ->
 				_xform_a[pair] = frame * Transform3D(a.basis * s, at + a.origin * s)
 				_xform_b[pair] = frame * Transform3D(b.basis * s, at + b.origin * s)
 				_slot[pair] = next
-				var data := _socks.custom_data(first_sock[pair])
-				mm.set_instance_custom_data(next, data)
-				mm.set_instance_custom_data(next + 1, data)
+				mm.set_instance_custom_data(next, _socks.pair_custom_data(pair, false))
+				mm.set_instance_custom_data(next + 1, _socks.pair_custom_data(pair, true))
 				mm.set_instance_transform(next, HIDDEN)
 				mm.set_instance_transform(next + 1, HIDDEN)
 				next += 2

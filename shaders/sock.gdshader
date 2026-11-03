@@ -8,7 +8,8 @@ render_mode cull_back;
 // r = base palette index / 255
 // g = accent palette index / 255
 // b = (pattern * 16 + count) / 255
-// a = 1 when heel and toe are knitted in the accent color, +2 while the sock is aimed at
+// a = 1 when heel and toe are knitted in the accent color, +2 while the sock is aimed at,
+//     +4 on the second sock of a pair (LEFT / RIGHT)
 
 // Same order as "patterns" in data/socks.json.
 const int PATTERN_STRIPES = 1;
@@ -22,6 +23,28 @@ const int PATTERN_ZIGZAG = 7;
 const int PATTERN_SNOWFLAKES = 8;
 const int PATTERN_RAINBOW = 9;
 const int PATTERN_PAWS = 10;
+const int PATTERN_LETTERING = 11;
+
+// 5x5 knitting font, one int per glyph, top row in the highest bits.
+// Order: A D E F G H I L M N O R S T U W Y heart
+const int GLYPHS[18] = { 15269425, 32032318, 33061407, 33061392, 16272943, 18415153, 32641183, 17318431, 18732593, 18667121, 15255086, 32045649, 16267326, 32641156, 18400814, 18405233, 18157700, 11533764 };
+// Texts by the pair's count (see SockCatalog.LETTERING_TEXTS); 10 is RIGHT,
+// worn by the twin of LEFT. Glyph indices, -1 pads.
+const int TEXT_MAX = 9;
+const int TEXTS[99] = {
+	7, 2, 3, 13, -1, -1, -1, -1, -1, // LEFT
+	8, 10, 9, 1, 0, 16, -1, -1, -1, // MONDAY
+	13, 14, 2, 12, 1, 0, 16, -1, -1, // TUESDAY
+	15, 2, 1, 9, 2, 12, 1, 0, 16, // WEDNESDAY
+	13, 5, 14, 11, 12, 1, 0, 16, -1, // THURSDAY
+	3, 11, 6, 1, 0, 16, -1, -1, -1, // FRIDAY
+	12, 0, 13, 14, 11, 1, 0, 16, -1, // SATURDAY
+	12, 14, 9, 1, 0, 16, -1, -1, -1, // SUNDAY
+	8, 10, 8, 17, -1, -1, -1, -1, -1, // MOM heart
+	1, 0, 1, 17, -1, -1, -1, -1, -1, // DAD heart
+	11, 6, 4, 5, 13, -1, -1, -1, -1 // RIGHT
+};
+const int TEXT_RIGHT = 10;
 
 uniform vec3 palette[32];
 
@@ -31,6 +54,7 @@ uniform float heel_at = 0.2;
 uniform float toe_at = 0.45;
 uniform float rib_length = 0.1;
 uniform float pattern_end = 0.45;
+uniform float half_girth = 0.1; // UV.x at the front edge, measured on the leg
 
 // From "knit" in data/socks.json.
 uniform float stitch_width = 0.0034;
@@ -52,6 +76,8 @@ varying flat int v_pattern;
 varying flat int v_count;
 varying flat float v_heel_toe;
 varying flat float v_highlight;
+varying flat float v_second;
+varying flat float v_text_flip;
 varying float v_fold;
 
 void vertex() {
@@ -60,8 +86,12 @@ void vertex() {
 	v_accent = palette[int(round(INSTANCE_CUSTOM.g * 255.0))];
 	v_pattern = packed / 16;
 	v_count = packed % 16;
-	v_highlight = step(1.5, INSTANCE_CUSTOM.a);
-	v_heel_toe = INSTANCE_CUSTOM.a - 2.0 * v_highlight;
+	int flags = int(round(INSTANCE_CUSTOM.a));
+	v_heel_toe = float(flags % 2);
+	v_highlight = float((flags / 2) % 2);
+	v_second = float((flags / 4) % 2);
+	// Which way UV.x runs as seen from outside, so words never read mirrored.
+	v_text_flip = sign(dot(cross(TANGENT, BINORMAL), NORMAL));
 
 	// Soft per-sock folds, so a pile does not look stamped. Normal follows the fold.
 	float p = float(INSTANCE_ID) * 1.618;
@@ -193,6 +223,35 @@ vec2 motif_cell(vec2 m, float start, vec2 cell, float size, out vec2 id) {
 	return vec2(local.x, -local.y) / size;
 }
 
+// Knitted word, upright letters stacked down the leg, each pixel two by two
+// stitches. Both flat faces carry it, centered between back and front edge.
+float lettering_mask(vec2 m) {
+	int text = (v_count == 0 && v_second > 0.5) ? TEXT_RIGHT : v_count;
+	int letters = 0;
+	for (int i = 0; i < TEXT_MAX; i++) {
+		if (TEXTS[text * TEXT_MAX + i] >= 0) {
+			letters = i + 1;
+		}
+	}
+	vec2 pixel = vec2(stitch_width, row_height) * 2.0;
+	float letter_rows = 11.0; // 5 pixels plus one row gap, in rows
+	float word = float(letters) * letter_rows * row_height - row_height;
+	float start = min(rib_length, 0.03);
+	float top = start + max(0.0, (heel_at - start - word) * 0.5);
+	float side = sign(m.x);
+	float x = -v_text_flip * (m.x - side * half_girth * 0.5);
+	float col = floor(x / pixel.x + 2.5);
+	float row_in_word = floor((m.y - top) / row_height);
+	float letter = floor(row_in_word / letter_rows);
+	float row = floor(mod(row_in_word, letter_rows) / 2.0);
+	if (col < 0.0 || col > 4.0 || letter < 0.0 || letter >= float(letters) || row > 4.0) {
+		return 0.0;
+	}
+	int glyph = TEXTS[text * TEXT_MAX + int(letter)];
+	int bit = (4 - int(row)) * 5 + (4 - int(col));
+	return float((GLYPHS[glyph] >> bit) & 1);
+}
+
 // Rainbow stripes in their own colors; rgb plus how much of it shows.
 vec4 rainbow_color(vec2 m, float aa) {
 	float start = min(rib_length, 0.03);
@@ -282,6 +341,9 @@ vec2 pattern_mask(vec2 m, float aa) {
 		vec2 q = motif_cell(m + vec2(size * 1.25, size * 1.25), start, vec2(size * 2.5), size, id);
 		float dot_mark = band(length(q) * size, 0.0024, aa);
 		return vec2(max(flake, dot_mark) * inside, 0.0);
+	}
+	if (v_pattern == PATTERN_LETTERING) {
+		return vec2(lettering_mask(m), 0.0);
 	}
 	if (v_pattern == PATTERN_PAWS) {
 		float size = count < 1.5 ? 0.034 : 0.04;

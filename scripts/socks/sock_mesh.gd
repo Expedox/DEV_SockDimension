@@ -90,6 +90,7 @@ static func _make_materials() -> void:
 		material.set_shader_parameter("toe_at", marks["toe"])
 		material.set_shader_parameter("rib_length", marks["rib"])
 		material.set_shader_parameter("pattern_end", marks["pattern_end"])
+		material.set_shader_parameter("half_girth", marks["half_girth"])
 		_meshes[shape].surface_set_material(0, material)
 		_far_meshes[shape].surface_set_material(0, material)
 		_materials.append(material)
@@ -252,6 +253,7 @@ static func _build(shape_index: int, detailed: bool) -> void:
 	var ring_count := grid.size()
 	var half := sides / 2
 	var foot_ring := ring_count - toe_marks.size() - 1
+	var half_girth := 0.0 # on the leg, where the knitted words sit
 	for r in ring_count:
 		var row := grid[r]
 		# Girth in meters, measured from the back edge (index half) both ways.
@@ -262,6 +264,8 @@ static func _build(shape_index: int, detailed: bool) -> void:
 			around[k] = around[k - 1] + row[k].distance_to(row[k - 1])
 		for k in range(half - 1, -1, -1):
 			around[k] = around[k + 1] - row[k].distance_to(row[k + 1])
+		if r == ring_count / 4:
+			half_girth = around[sides]
 		var next := grid[mini(r + 1, ring_count - 1)]
 		var prev := grid[maxi(r - 1, 0)]
 		for k in sides + 1:
@@ -340,4 +344,5 @@ static func _build(shape_index: int, detailed: bool) -> void:
 		"rib": minf(float(shape["rib_length"]), leg_part),
 		# Patterns run from below the rib (or the cuff on short socks) to the toe cap.
 		"pattern_end": toe_at,
+		"half_girth": half_girth,
 	})

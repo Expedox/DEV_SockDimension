@@ -391,3 +391,10 @@ sources keep their single-trait difference. On the wall each shape ends with
 one group per special design, sorted by colour. Pattern Master still counts
 the regular patterns; the hidden ACH_LUCKY_SOCK unlocks with the first special
 pair. No extra glow or hints.
+
+Knitted words (pattern `lettering`, count = text): LEFT / RIGHT (one word per
+sock, the twin carries RIGHT via +4 in the custom data alpha), MONDAY to
+SUNDAY, MOM and DAD with a heart. Each exists once per game, always as a knee
+sock (`lettering_shape`), on top of the 10 % rolled designs. A 5x5 stitch font
+lives in sock.gdshader; letters stand upright, stacked down the leg on both
+faces. On the wall they hang in text order.

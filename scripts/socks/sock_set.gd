@@ -19,6 +19,7 @@ var shapes := PackedInt32Array()
 var heel_toes := PackedByteArray()
 var near_of := PackedInt32Array() # pair this one was derived from, or -1
 var special_total := 0 # pairs with a rare easter-egg design
+var _first_sock := PackedInt32Array() # per pair, built on demand
 
 # Per sock.
 var sock_pairs := PackedInt32Array()
@@ -124,12 +125,30 @@ func sock_info(sock: int) -> Dictionary:
 ## Value for MultiMesh.set_instance_custom_data, decoded in sock.gdshader.
 func custom_data(sock: int) -> Color:
 	var pair := sock_pairs[sock]
+	return pair_custom_data(pair, sock != first_sock(pair))
+
+
+## second marks the twin, which only matters for socks that differ per foot (LEFT / RIGHT).
+## Alpha: +1 contrast heel and toe, +4 second sock; the renderer adds 2 while aimed at.
+func pair_custom_data(pair: int, second: bool) -> Color:
 	return Color(
 		base_colors[pair] / 255.0,
 		accent_colors[pair] / 255.0,
 		(patterns[pair] * 16 + counts[pair]) / 255.0,
-		float(heel_toes[pair])
+		float(heel_toes[pair]) + (4.0 if second else 0.0)
 	)
+
+
+## Lower of the two sock indices of a pair.
+func first_sock(pair: int) -> int:
+	if _first_sock.size() != pair_count:
+		_first_sock.resize(pair_count)
+		_first_sock.fill(-1)
+		for sock in sock_count():
+			var p := sock_pairs[sock]
+			if _first_sock[p] < 0:
+				_first_sock[p] = sock
+	return _first_sock[pair]
 
 
 ## Empty when the set follows all rules.
@@ -240,7 +259,10 @@ func _fill_random(pair: int, forced_base: int, forced_pattern: int) -> void:
 ## sources are left alone, so every near pair stays one trait away.
 func _add_specials(share: float) -> void:
 	special_total = 0
-	var designs := SockCatalog.special_patterns()
+	var designs := PackedInt32Array()
+	for d in SockCatalog.special_patterns():
+		if float(SockCatalog.pattern(d)["weight"]) > 0.0:
+			designs.append(d)
 	if designs.is_empty() or share <= 0.0:
 		return
 	var rng := RandomNumberGenerator.new()
@@ -267,9 +289,10 @@ func _add_specials(share: float) -> void:
 		candidates[j] = swap
 
 	var target := mini(roundi(pair_count * share), candidates.size())
-	for pair in candidates:
-		if special_total >= target:
-			break
+	var next := 0
+	while next < candidates.size() and special_total < target:
+		var pair := candidates[next]
+		next += 1
 		for attempt in 8:
 			var design := designs[_pick_weighted_with(rng, weights)]
 			var info := SockCatalog.pattern(design)
@@ -291,6 +314,33 @@ func _add_specials(share: float) -> void:
 			_store(pair, base, accent, design, count, shapes[pair], heel_toe)
 			special_total += 1
 			break
+
+	# The knitted words come on top, once each, after the rolled designs so
+	# those stay as they were. Always the long sock, so the word fits the leg.
+	var lettering := SockCatalog.lettering_pattern()
+	if lettering < 0:
+		return
+	var shape := maxi(0, _shape_index(str(SockCatalog.data().get("lettering_shape", ""))))
+	for value: Variant in SockCatalog.pattern(lettering)["counts"]:
+		if next >= candidates.size():
+			break
+		var pair := candidates[next]
+		next += 1
+		var base := base_colors[pair]
+		var accent := accent_colors[pair]
+		if accent == base:
+			var allowed := SockCatalog.accents_for(base)
+			accent = allowed[rng.randi_range(0, allowed.size() - 1)]
+		_used.erase(_key(base, accent_colors[pair], patterns[pair], counts[pair], shapes[pair], heel_toes[pair]))
+		_store(pair, base, accent, lettering, int(value), shape, heel_toes[pair])
+		special_total += 1
+
+
+static func _shape_index(id: String) -> int:
+	for i in SockCatalog.shape_count():
+		if SockCatalog.shape_id(i) == id:
+			return i
+	return -1
 
 
 ## Fallback for a nearly full trait space: walks every combination once.
