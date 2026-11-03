@@ -293,8 +293,10 @@ static func _build(shape_index: int, detailed: bool) -> void:
 	for pos in m.vertices:
 		aabb = aabb.expand(pos)
 	var offset := -aabb.get_center() if detailed else _offsets[shape_index]
+	# Game scale: bigger than life socks make a pile you look up at.
+	var scale := float(mesh_values.get("scale", 1.0))
 	for i in m.vertices.size():
-		m.vertices[i] += offset
+		m.vertices[i] = (m.vertices[i] + offset) * scale
 
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
@@ -311,7 +313,7 @@ static func _build(shape_index: int, detailed: bool) -> void:
 		return
 	_meshes.append(mesh)
 	_offsets.append(offset)
-	_sizes.append(aabb.size)
+	_sizes.append(aabb.size * scale)
 	_marks.append({
 		"length": total,
 		"heel": heel_at,
