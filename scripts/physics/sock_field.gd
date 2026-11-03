@@ -31,6 +31,7 @@ var _shapes: Array[Shape3D] = []
 var _shape_xform := Transform3D.IDENTITY
 var _material: PhysicsMaterial
 var _rng := RandomNumberGenerator.new()
+var _lumps := FastNoiseLite.new()
 var _freeze_settled := true
 var _to_freeze: Array[Sock] = []
 var _chain := PackedVector3Array() # spots around fast socks to wake next step
@@ -78,6 +79,8 @@ func pour(sock_set: SockSet, mode: Dictionary) -> void:
 	_begin(sock_set)
 	_radius = float(mode.get("pile_radius", 3.0))
 	_rng.seed = sock_set.seed_value
+	_lumps.seed = sock_set.seed_value
+	_lumps.frequency = float(_tuning.pour_lump_frequency)
 	state = State.POURING
 	Events.pile_progress.emit(0, socks.sock_count())
 
@@ -313,6 +316,7 @@ func _pour_wave() -> void:
 	var height := minf(_top + float(_tuning.pour_gap), float(_tuning.pour_max_height))
 	var tilt := deg_to_rad(float(_tuning.pour_tilt_deg))
 	var cone_power := float(_tuning.pour_cone_power)
+	var lumpiness := float(_tuning.pour_lumpiness)
 	var taken := {}
 	var placed := 0
 	for attempt in count * 8:
@@ -323,7 +327,10 @@ func _pour_wave() -> void:
 		# each spot grows in proportion to the cone height there.
 		var angle := _rng.randf() * TAU
 		var spot := Vector2(cos(angle), sin(angle)) * spout * sqrt(_rng.randf())
-		if _rng.randf() > pow(1.0 - spot.length() / spout, cone_power):
+		# Fixed noise over the floor makes some spots grow faster: humps,
+		# ridges and dips instead of a smooth cone.
+		var lump := 1.0 + lumpiness * _lumps.get_noise_2dv(spot)
+		if _rng.randf() > pow(maxf(1.0 - spot.length() / spout, 0.0), cone_power) * lump:
 			continue
 		var layer := _rng.randi_range(0, layers - 1)
 		var cell := Vector3i(floori(spot.x / spacing), layer, floori(spot.y / spacing))
