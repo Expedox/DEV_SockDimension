@@ -33,13 +33,16 @@ uniform float rib_stitches = 4.0;
 uniform float heather = 0.07;
 uniform float crumple = 0.006;
 uniform float sheen = 0.35;
-uniform float wrap = 0.4;
+uniform float wrap = 0.15;
+uniform float drape = 0.03;
+uniform float fold_shade = 0.35;
 
 varying flat vec3 v_base;
 varying flat vec3 v_accent;
 varying flat int v_pattern;
 varying flat int v_count;
 varying flat float v_heel_toe;
+varying float v_fold;
 
 void vertex() {
 	int packed = int(round(INSTANCE_CUSTOM.b * 255.0));
@@ -61,8 +64,15 @@ void vertex() {
 		k1.x * cos(a1) * cos(b1) + 0.5 * k2.x * cos(a2),
 		-k1.y * sin(a1) * sin(b1) + 0.5 * k2.y * cos(a2)
 	) * crumple;
-	VERTEX.y += f * crumple;
+	// Each sock sags or arches a little over what it lies on, so it is not a flat strip.
+	float bow = (fract(p * 7.31) < 0.5 ? -1.0 : 1.0) * drape * (0.6 + 0.4 * fract(p * 2.17));
+	float r2 = dot(VERTEX.xz, VERTEX.xz);
+	float sag = 1.0 - exp(-r2 / 0.03);
+	grad += VERTEX.xz * (bow * exp(-r2 / 0.03) * 2.0 / 0.03);
+	VERTEX.y += f * crumple + bow * sag;
 	NORMAL = normalize(NORMAL + vec3(-grad.x, 0.0, -grad.y) * NORMAL.y);
+	// Fold valleys on the face we look at are darker; +1 ridge, -1 valley.
+	v_fold = clamp(f * sign(NORMAL.y) / 1.2, -1.0, 1.0) * abs(NORMAL.y);
 }
 
 float hash12(vec2 p) {
@@ -201,6 +211,9 @@ void fragment() {
 	ALBEDO = color;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.2;
+	// Soft occlusion in fold valleys and inside the opening; also dims direct light a bit.
+	AO = clamp(1.0 - fold_shade * (0.5 - 0.5 * v_fold), 0.0, 1.0) * mix(1.0, 0.4, smoothstep(0.0, -0.01, m.y));
+	AO_LIGHT_AFFECT = 0.45;
 }
 
 // Cloth light: wrapped diffuse for the soft look of fabric, a fuzzy sheen at grazing angles.

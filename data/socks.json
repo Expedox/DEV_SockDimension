@@ -6,28 +6,30 @@
 		"far_step": 0.09,
 		"detail_radius": 2.0,
 		"detail_capacity": 96,
-		"thickness": 0.022,
+		"thickness": 0.034,
 		"heel_angle_deg": 108,
-		"bend_radius": 0.042,
+		"bend_radius": 0.05,
 		"toe_length": 0.055,
 		"lip_depth": 0.018,
-		"flatness": 4.0,
+		"flatness": 2.4,
 		"collision_fit": 0.85
 	},
 	"knit": {
 		"stitch_width": 0.0042,
 		"row_height": 0.0034,
-		"yarn_depth": 0.0009,
+		"yarn_depth": 0.0013,
 		"rib_stitches": 4,
 		"heather": 0.07,
-		"crumple": 0.006,
-		"sheen": 0.35,
-		"wrap": 0.4
+		"crumple": 0.01,
+		"sheen": 0.55,
+		"wrap": 0.15,
+		"drape": 0.03,
+		"fold_shade": 0.35
 	},
 	"shapes": [
-		{ "id": "sneaker", "weight": 1.0, "leg_length": 0.055, "rib_length": 0.016, "foot_length": 0.235, "width": 0.088, "calf": 0.0, "heel_bulge": 0.55 },
-		{ "id": "sport", "weight": 1.0, "leg_length": 0.19, "rib_length": 0.17, "foot_length": 0.245, "width": 0.094, "calf": 0.04, "heel_bulge": 0.5 },
-		{ "id": "knee", "weight": 0.8, "leg_length": 0.41, "rib_length": 0.39, "foot_length": 0.245, "width": 0.092, "calf": 0.16, "heel_bulge": 0.5 }
+		{ "id": "sneaker", "weight": 1.0, "leg_length": 0.055, "rib_length": 0.016, "foot_length": 0.235, "width": 0.096, "calf": 0.0, "heel_bulge": 0.7 },
+		{ "id": "sport", "weight": 1.0, "leg_length": 0.19, "rib_length": 0.17, "foot_length": 0.245, "width": 0.104, "calf": 0.04, "heel_bulge": 0.65 },
+		{ "id": "knee", "weight": 0.8, "leg_length": 0.41, "rib_length": 0.39, "foot_length": 0.245, "width": 0.102, "calf": 0.16, "heel_bulge": 0.65 }
 	],
 	"patterns": [
 		{ "id": "plain", "weight": 0.12, "uses_accent": false, "counts": [0] },
