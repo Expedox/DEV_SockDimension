@@ -7,7 +7,7 @@
 		"volume_sfx": 1.0,
 		"volume_ambience": 0.8,
 		"graphics_quality": "high",
-		"fullscreen": false,
+		"fullscreen": true,
 		"vsync": true,
 		"language": "en",
 		"show_intro": true
