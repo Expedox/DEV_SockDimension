@@ -88,6 +88,15 @@ func shows_accent(pair: int) -> bool:
 	return heel_toes[pair] == 1 or SockCatalog.pattern(patterns[pair])["uses_accent"]
 
 
+## The other sock of the same pair, or -1.
+func partner_of(sock: int) -> int:
+	var pair := sock_pairs[sock]
+	for other in sock_pairs.size():
+		if other != sock and sock_pairs[other] == pair:
+			return other
+	return -1
+
+
 func shape_of(sock: int) -> int:
 	return shapes[sock_pairs[sock]]
 

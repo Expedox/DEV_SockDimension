@@ -21,6 +21,7 @@ var _free_near: Array[PackedInt32Array] = [] # per shape: unused near slots
 var _near_socks := PackedInt32Array() # socks currently drawn detailed
 var _scan := 0
 var _highlighted := -1
+var _partner := -1 # cheat glow, independent of the crosshair one
 var _sock_set: SockSet
 var _radius := 2.0
 
@@ -33,6 +34,7 @@ func setup(sock_set: SockSet, bounds: AABB, shadows := GeometryInstance3D.SHADOW
 	_far.clear()
 	_sock_set = sock_set
 	_highlighted = -1
+	_partner = -1
 	_near.clear()
 	_free_near.clear()
 	_near_socks.clear()
@@ -105,20 +107,35 @@ func set_sock_transform(sock: int, xform: Transform3D) -> void:
 func set_highlight(sock: int) -> void:
 	if sock == _highlighted:
 		return
-	if _highlighted >= 0:
-		_write_highlight(_highlighted, false)
+	var old := _highlighted
 	_highlighted = sock
-	if sock >= 0:
-		_write_highlight(sock, true)
+	_refresh_glow(old)
+	_refresh_glow(sock)
 
 
 func highlighted() -> int:
 	return _highlighted
 
 
-func _write_highlight(sock: int, on: bool) -> void:
+## Cheat only: a second glow that stays on the partner sock until cleared (-1).
+func set_partner_highlight(sock: int) -> void:
+	if sock == _partner:
+		return
+	var old := _partner
+	_partner = sock
+	_refresh_glow(old)
+	_refresh_glow(sock)
+
+
+func partner_highlighted() -> int:
+	return _partner
+
+
+func _refresh_glow(sock: int) -> void:
+	if sock < 0:
+		return
 	var data := _sock_set.custom_data(sock)
-	if on:
+	if sock == _highlighted or sock == _partner:
 		data.a += 2.0
 	_far[_shape_of[sock]].set_instance_custom_data(_slot_of[sock], data)
 	var near := _near_slot[sock]
@@ -130,6 +147,8 @@ func _write_highlight(sock: int, on: bool) -> void:
 func hide_sock(sock: int) -> void:
 	if sock == _highlighted:
 		set_highlight(-1)
+	if sock == _partner:
+		set_partner_highlight(-1)
 	_set_far(sock)
 	_far[_shape_of[sock]].set_instance_transform(_slot_of[sock], HIDDEN)
 	_hidden[sock] = 1

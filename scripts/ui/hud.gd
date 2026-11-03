@@ -6,6 +6,7 @@ var _top: HBoxContainer
 var _pairs_label: Label
 var _pairs_chip: PanelContainer
 var _time_label: Label
+var _cheat_chip: PanelContainer
 var _crosshair: Crosshair
 var _hint: Label
 var _saved: PanelContainer
@@ -27,6 +28,7 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	var live := GameState.running and not get_tree().paused
 	_top.visible = GameState.running or GameState.completed
+	_cheat_chip.visible = GameState.cheat_mode
 	_crosshair.visible = live
 	_hint.visible = live
 	if _shown_pairs != GameState.pairs_found:
@@ -91,6 +93,9 @@ func _build() -> void:
 	_top.add_child(_pairs_chip)
 	_time_label = UiKit.label("", &"HudLabel")
 	_top.add_child(_chip(_time_label))
+	_cheat_chip = _chip(UiKit.label("HUD_CHEAT", &"HudLabel"))
+	_cheat_chip.visible = false
+	_top.add_child(_cheat_chip)
 
 	_crosshair = Crosshair.new()
 	root.add_child(_crosshair)

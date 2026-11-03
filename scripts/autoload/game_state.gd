@@ -25,6 +25,8 @@ var pending_world: Dictionary = {}
 var world_provider: Object = null
 ## True while the clock runs (pile ready, run not finished).
 var running := false
+## Debug cheat (typed code from data/gameplay.json): right-click shows the partner sock. Never saved.
+var cheat_mode := false
 
 
 func _process(delta: float) -> void:
@@ -127,6 +129,7 @@ func _reset(new_mode: String) -> void:
 	near_misses = 0
 	found_pair_ids = PackedInt32Array()
 	running = false
+	cheat_mode = false
 
 
 func _seed_from_text(text: String) -> int:

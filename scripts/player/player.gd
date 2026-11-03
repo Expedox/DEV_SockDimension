@@ -21,6 +21,7 @@ var _wiggle_left := 0.0
 var _summit_timer := 0.0
 var _summit_done := false
 var _pending_held := -1
+var _typed := "" # last letters, for the debug cheat code
 
 
 func _ready() -> void:
@@ -108,6 +109,8 @@ func apply(state: Dictionary) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if get_tree().paused:
 		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		_track_cheat_code(event.keycode)
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion: Vector2 = event.relative * Settings.mouse_sensitivity
 		if Settings.invert_mouse:
@@ -127,6 +130,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_grab()
 	elif event.is_action_pressed("throw") and _held:
 		_throw()
+	elif event.is_action_pressed("throw") and GameState.cheat_mode:
+		_show_partner()
 
 
 func _physics_process(delta: float) -> void:
@@ -259,6 +264,27 @@ func _update_highlight() -> void:
 		return
 	var sock := aimed_sock()
 	_field.renderer.set_highlight(sock.sock_id if sock else -1)
+
+
+## Debug cheat: typing the code from data/gameplay.json toggles cheat mode.
+func _track_cheat_code(keycode: Key) -> void:
+	var code := String(Config.gameplay.get("cheat_code", "")).to_upper()
+	if code.is_empty():
+		return
+	_typed = (_typed + OS.get_keycode_string(keycode).to_upper()).right(code.length())
+	if _typed == code:
+		_typed = ""
+		GameState.cheat_mode = not GameState.cheat_mode
+		if not GameState.cheat_mode and _field and _field.renderer:
+			_field.renderer.set_partner_highlight(-1)
+
+
+## Cheat only: right-click on a sock lights up its partner; on nothing clears it.
+func _show_partner() -> void:
+	if _field == null or _field.renderer == null or _field.socks == null:
+		return
+	var sock := aimed_sock()
+	_field.renderer.set_partner_highlight(_field.socks.partner_of(sock.sock_id) if sock else -1)
 
 
 func _check_summit(delta: float) -> void:

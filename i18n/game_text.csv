@@ -29,6 +29,7 @@ LOADING_PROGRESS,{done} / {total} socks
 HUD_PAIRS,Pairs: {found} / {total}
 HUD_TIME,Time: {time}
 HUD_SAVED,Saved
+HUD_CHEAT,Cheat
 HINT_GRAB,Left click: grab / release
 HINT_THROW,Right click: throw
 HINT_PAIR,E: try to pair

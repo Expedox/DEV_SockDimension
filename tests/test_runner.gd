@@ -275,6 +275,13 @@ func _test_pair_controller() -> void:
 	r.set_highlight(0)
 	r.hide_sock(0)
 	check(r.highlighted() == -1, "a sock leaving the pile drops its glow")
+	var partner := socks.partner_of(2)
+	check(partner != 2 and socks.is_match(2, partner), "partner_of finds the other sock of the pair")
+	r.set_highlight(2)
+	r.set_partner_highlight(partner)
+	check(r.highlighted() == 2 and r.partner_highlighted() == partner, "cheat glow sits next to the aimed glow")
+	r.hide_sock(partner)
+	check(r.partner_highlighted() == -1, "a partner leaving the pile drops the cheat glow")
 	r.queue_free()
 
 	var first := -1
