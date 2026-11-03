@@ -150,7 +150,7 @@ func _test_achievements() -> void:
 	Achievements.save_path = TEST_DIR + "achievements2.save"
 	Achievements.load_state()
 	check(Achievements.get_unlocked_count() == 0, "fresh achievement state")
-	check(Achievements.get_total_count() == 20, "twenty achievements defined")
+	check(Achievements.get_total_count() == 21, "twenty-one achievements defined")
 
 	_start_fake_run("sock_dimension", 10)
 	GameState.register_match(0, 0, 0)
@@ -160,6 +160,9 @@ func _test_achievements() -> void:
 	for i in 4:
 		GameState.register_match(i + 1, 0, 0)
 	check(Achievements.is_unlocked("ACH_HALFWAY"), "halfway after 5 of 10")
+	check(not Achievements.is_unlocked("ACH_LUCKY_SOCK"), "no lucky sock from regular pairs")
+	GameState.register_match(6, 0, SockCatalog.special_patterns()[0])
+	check(Achievements.is_unlocked("ACH_LUCKY_SOCK"), "a special pair unlocks lucky sock")
 
 	check(Achievements.is_night_owl_hour(0) and Achievements.is_night_owl_hour(3), "night owl hours")
 	check(not Achievements.is_night_owl_hour(4) and not Achievements.is_night_owl_hour(23), "outside night owl")
@@ -209,8 +212,17 @@ func _test_socks() -> void:
 		if socks.near_of[pair] >= 0:
 			near += 1
 	check(near == 1000, "a fifth are near pairs (%d)" % near)
+	var special := 0
+	var designs := {}
+	for pair in socks.pair_count:
+		if socks.is_special(pair):
+			special += 1
+			designs[socks.patterns[pair]] = true
+	var share := float(SockCatalog.data()["special_share"])
+	check(special == roundi(5000 * share) and special == socks.special_total, "rare designs on %d pairs" % special)
+	check(designs.size() == SockCatalog.special_patterns().size(), "every rare design shows up")
 	var again := SockSet.generate(77, 5000, 0.2)
-	check(again.sock_pairs == socks.sock_pairs and again.base_colors == socks.base_colors, "same seed, same socks")
+	check(again.sock_pairs == socks.sock_pairs and again.base_colors == socks.base_colors and again.patterns == socks.patterns, "same seed, same socks")
 	for shape in SockCatalog.shape_count():
 		var near_mesh := SockMesh.get_mesh(shape, true)
 		var far_mesh := SockMesh.get_mesh(shape)

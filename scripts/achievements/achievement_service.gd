@@ -124,10 +124,14 @@ func _on_pair_matched(_pair_id: int, base_color: int, pattern_type: int) -> void
 	if GameState.pairs_found <= 1 or _run.get("key", "") != run_key:
 		_run = {"key": run_key, "colors": {}, "patterns": {}}
 	_run.colors[base_color] = true
-	_run.patterns[pattern_type] = true
+	# Pattern Master counts the regular patterns; rare designs have their own.
+	if pattern_type >= 0 and pattern_type < SockCatalog.pattern_count() and SockCatalog.is_special(pattern_type):
+		unlock("ACH_LUCKY_SOCK")
+	else:
+		_run.patterns[pattern_type] = true
 	if _run.colors.size() >= SockCatalog.palette_size():
 		unlock("ACH_RAINBOW")
-	if _run.patterns.size() >= SockCatalog.pattern_count():
+	if _run.patterns.size() >= SockCatalog.regular_pattern_count():
 		unlock("ACH_PATTERNS")
 
 

@@ -15,6 +15,13 @@ const int PATTERN_STRIPES = 1;
 const int PATTERN_DOTS = 2;
 const int PATTERN_CUFF_RINGS = 3;
 const int PATTERN_ARGYLE = 4;
+// Rare easter-egg designs, knitted like intarsia motifs.
+const int PATTERN_HEARTS = 5;
+const int PATTERN_STARS = 6;
+const int PATTERN_ZIGZAG = 7;
+const int PATTERN_SNOWFLAKES = 8;
+const int PATTERN_RAINBOW = 9;
+const int PATTERN_PAWS = 10;
 
 uniform vec3 palette[32];
 
@@ -122,6 +129,87 @@ float band(float x, float half_width, float aa) {
 	return 1.0 - smoothstep(half_width - aa, half_width + aa, x);
 }
 
+float dot2(vec2 v) {
+	return dot(v, v);
+}
+
+// Heart with its tip at y = 0 and the lobes near y = 1.
+float sd_heart(vec2 p) {
+	p.x = abs(p.x);
+	if (p.y + p.x > 1.0) {
+		return sqrt(dot2(p - vec2(0.25, 0.75))) - sqrt(2.0) / 4.0;
+	}
+	return sqrt(min(dot2(p - vec2(0.0, 1.0)), dot2(p - 0.5 * max(p.x + p.y, 0.0)))) * sign(p.x - p.y);
+}
+
+// Five-pointed star, outer radius r, inner share rf, one point up.
+float sd_star5(vec2 p, float r, float rf) {
+	const vec2 k1 = vec2(0.809016994375, -0.587785252292);
+	const vec2 k2 = vec2(-k1.x, k1.y);
+	p.x = abs(p.x);
+	p -= 2.0 * max(dot(k1, p), 0.0) * k1;
+	p -= 2.0 * max(dot(k2, p), 0.0) * k2;
+	p.x = abs(p.x);
+	p.y -= r;
+	vec2 ba = rf * vec2(-k1.y, k1.x) - vec2(0.0, 1.0);
+	float h = clamp(dot(p, ba) / dot(ba, ba), 0.0, r);
+	return length(p - ba * h) * sign(p.y * ba.x - p.x * ba.y);
+}
+
+float sd_segment(vec2 p, vec2 a, vec2 b) {
+	vec2 pa = p - a;
+	vec2 ba = b - a;
+	return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0));
+}
+
+// Six arms with two side branches each, radius 1.
+float sd_snowflake(vec2 p, float width) {
+	float r = length(p);
+	float a = atan(p.y, p.x);
+	a = abs(mod(a + PI / 6.0, PI / 3.0) - PI / 6.0);
+	vec2 q = r * vec2(cos(a), sin(a));
+	float arm = sd_segment(q, vec2(0.0), vec2(1.0, 0.0));
+	float branch = sd_segment(q, vec2(0.55, 0.0), vec2(0.55, 0.0) + 0.32 * vec2(0.5, 0.866));
+	return min(arm, branch) - width;
+}
+
+// Main pad and four toes, toes up.
+float sd_paw(vec2 p) {
+	float pad = (length((p - vec2(0.0, -0.22)) / vec2(0.4, 0.32)) - 1.0) * 0.32;
+	float toes = min(
+		min(length(p - vec2(-0.55, 0.28)), length(p - vec2(0.55, 0.28))),
+		min(length(p - vec2(-0.21, 0.62)), length(p - vec2(0.21, 0.62)))
+	) - 0.18;
+	return min(pad, toes);
+}
+
+// Motif grid: local position in the motif's own units (y toward the cuff),
+// every other row shifted half a cell so the motifs stagger like knitwear.
+vec2 motif_cell(vec2 m, float start, vec2 cell, float size, out vec2 id) {
+	vec2 g = vec2(m.x, m.y - start) / cell;
+	g.x += 0.5 * mod(floor(g.y), 2.0);
+	id = floor(g);
+	vec2 local = (fract(g) - 0.5) * cell;
+	return vec2(local.x, -local.y) / size;
+}
+
+// Rainbow stripes in their own colors; rgb plus how much of it shows.
+vec4 rainbow_color(vec2 m, float aa) {
+	float start = min(rib_length, 0.03);
+	float inside = step(start, m.y) * step(m.y, pattern_end);
+	// count 1: thin rainbow bands with base color between, 2: the whole sock in rainbow.
+	float row = v_count < 2 ? 0.0065 : 0.016;
+	float gap = v_count < 2 ? 4.0 : 0.0;
+	float x = (m.y - start) / row;
+	float step_index = mod(floor(x), 6.0 + gap);
+	vec3 colors[6] = vec3[](
+		vec3(0.74, 0.15, 0.16), vec3(0.88, 0.46, 0.16), vec3(0.91, 0.76, 0.2),
+		vec3(0.25, 0.55, 0.25), vec3(0.17, 0.33, 0.68), vec3(0.43, 0.25, 0.58)
+	);
+	float show = step(step_index, 5.5) * inside;
+	return vec4(colors[int(min(step_index, 5.0))], show);
+}
+
 // x: share of accent color, y: share of the light line color (argyle only).
 vec2 pattern_mask(vec2 m, float aa) {
 	float s = m.x;
@@ -163,6 +251,46 @@ vec2 pattern_mask(vec2 m, float aa) {
 		float line = band(abs(h.x - h.y) * size.x, 0.0012, aa);
 		return vec2(accent, line) * inside;
 	}
+	float inside = step(start, d) * step(d, pattern_end);
+	vec2 id;
+	if (v_pattern == PATTERN_HEARTS) {
+		float size = count < 1.5 ? 0.022 : 0.032;
+		vec2 p = motif_cell(m, start, vec2(size * 1.9), size, id);
+		return vec2(band(sd_heart(p + vec2(0.0, 0.5)) * size, 0.0, aa) * inside, 0.0);
+	}
+	if (v_pattern == PATTERN_STARS) {
+		float size = count < 1.5 ? 0.015 : 0.022;
+		vec2 p = motif_cell(m, start, vec2(size * 2.9, size * 2.6), size, id);
+		return vec2(band(sd_star5(p, 1.0, 0.45) * size, 0.0, aa) * inside, 0.0);
+	}
+	if (v_pattern == PATTERN_ZIGZAG) {
+		// Chevrons around the leg; 1 thin lines, 2 bold two-tone bands.
+		float period = count < 1.5 ? 0.028 : 0.042;
+		float rows = count < 1.5 ? 0.026 : 0.042;
+		float half_width = count < 1.5 ? 0.0032 : rows * 0.25;
+		float wave = abs(fract(s / period) - 0.5) * period * 0.8;
+		float y = d - start - wave;
+		float dist = abs(fract(y / rows) - 0.5) * rows;
+		return vec2(band(dist, half_width, aa) * inside, 0.0);
+	}
+	if (v_pattern == PATTERN_SNOWFLAKES) {
+		float size = count < 1.5 ? 0.02 : 0.028;
+		vec2 p = motif_cell(m, start, vec2(size * 2.5), size, id);
+		float width = 0.0026 / size;
+		float flake = band(sd_snowflake(p, width) * size, 0.0, aa);
+		// Small accent dots between the flakes, like a Nordic jumper.
+		vec2 q = motif_cell(m + vec2(size * 1.25, size * 1.25), start, vec2(size * 2.5), size, id);
+		float dot_mark = band(length(q) * size, 0.0024, aa);
+		return vec2(max(flake, dot_mark) * inside, 0.0);
+	}
+	if (v_pattern == PATTERN_PAWS) {
+		float size = count < 1.5 ? 0.034 : 0.04;
+		vec2 p = motif_cell(m, start, vec2(size * 2.4, size * 2.2), size, id);
+		// Prints turn a little left and right, like a trail.
+		float turn = (mod(id.y, 2.0) < 0.5 ? 0.3 : -0.3);
+		p = mat2(vec2(cos(turn), sin(turn)), vec2(-sin(turn), cos(turn))) * p;
+		return vec2(band(sd_paw(p) * size, 0.0, aa) * inside, 0.0);
+	}
 	return vec2(0.0);
 }
 
@@ -193,6 +321,10 @@ void fragment() {
 	vec2 mask = pattern_mask(pm, aa);
 	vec3 color = mix(v_base, v_accent, mask.x);
 	color = mix(color, vec3(0.62, 0.6, 0.55), mask.y * 0.85);
+	if (v_pattern == PATTERN_RAINBOW) {
+		vec4 rainbow = rainbow_color(pm, aa);
+		color = mix(color, rainbow.rgb, rainbow.a);
+	}
 	if (v_heel_toe > 0.5) {
 		color = mix(color, v_accent, heel_toe_mask(pm, aa));
 	}

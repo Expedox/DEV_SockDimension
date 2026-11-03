@@ -358,3 +358,17 @@ throws), audio, and the real FPS.
 - Windows: rain runs down the glass; the moonlight now points into the room (it pointed into the wall before).
 - Graphics quality (Settings → Display): low / medium / high presets in data/world.json "quality" switch SSAO, SSIL, volumetric fog, SSAO detail, soft-shadow filter, shadow atlas and dust amount. Default high.
 - Not yet measured on a real GPU: the cloud only has the Compatibility renderer (no fog, SSAO). Please check FPS with F1 on high and medium in Sock Dimension mode.
+
+## Rare special designs
+
+About 10 % of all pairs (`special_share` in data/socks.json) carry a rare
+design: hearts, stars, zigzag, snowflakes, rainbow or paws, each in a small
+and a large size. They are extra entries in `patterns` marked `"special"`, drawn
+in sock.gdshader like the regular patterns (snapped to stitches, so they read
+as knitted motifs). SockSet hands them out after all pairs exist, on its own
+random stream, so pair ids and pour order are the same as before and older
+saves still match. Only free-standing pairs get one; near pairs and their
+sources keep their single-trait difference. On the wall each shape ends with
+one group per special design, sorted by colour. Pattern Master still counts
+the regular patterns; the hidden ACH_LUCKY_SOCK unlocks with the first special
+pair. No extra glow or hints.

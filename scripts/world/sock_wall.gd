@@ -5,7 +5,8 @@ extends Node3D
 ## pair_wall) and read like a book: panel by panel, top to bottom, left to
 ## right. Order is shape (each starts a new row with a found/total label),
 ## then base colour (a small gap between colours), then pattern, count,
-## accent and heel/toe. Every pair has a fixed slot from the start, so empty
+## accent and heel/toe. Rare special designs close each shape's rows, one
+## group per design, sorted by colour inside. Every pair has a fixed slot from the start, so empty
 ## pegs show what is still missing. Built from GameState.found_pair_ids, so
 ## saves need nothing extra. This node sits at the world origin.
 
@@ -146,14 +147,22 @@ static func footprint(shape: int, config: Dictionary) -> Dictionary:
 
 
 ## Pair ids of one shape, one array per base colour in palette order, sorted
-## by pattern, count, accent and heel/toe inside.
+## by pattern, count, accent and heel/toe inside. Then one array per special
+## design, sorted by colour, count, accent and heel/toe.
 static func _groups(sock_set: SockSet, shape: int) -> Array:
 	var by_color := []
 	by_color.resize(SockCatalog.palette_size())
 	for i in by_color.size():
 		by_color[i] = []
+	var by_design := {}
+	for design in SockCatalog.special_patterns():
+		by_design[design] = []
 	for pair in sock_set.pair_count:
-		if sock_set.shapes[pair] == shape:
+		if sock_set.shapes[pair] != shape:
+			continue
+		if sock_set.is_special(pair):
+			by_design[sock_set.patterns[pair]].append(pair)
+		else:
 			by_color[sock_set.base_colors[pair]].append(pair)
 	var groups := []
 	for list: Array in by_color:
@@ -162,11 +171,22 @@ static func _groups(sock_set: SockSet, shape: int) -> Array:
 		list.sort_custom(func(x: int, y: int) -> bool:
 			return _sort_key(sock_set, x) < _sort_key(sock_set, y))
 		groups.append(list)
+	for design in SockCatalog.special_patterns():
+		var list: Array = by_design[design]
+		if list.is_empty():
+			continue
+		list.sort_custom(func(x: int, y: int) -> bool:
+			return _special_key(sock_set, x) < _special_key(sock_set, y))
+		groups.append(list)
 	return groups
 
 
 static func _sort_key(s: SockSet, pair: int) -> int:
 	return ((s.patterns[pair] * 16 + s.counts[pair]) * 64 + s.accent_colors[pair]) * 2 + s.heel_toes[pair]
+
+
+static func _special_key(s: SockSet, pair: int) -> int:
+	return ((s.base_colors[pair] * 16 + s.counts[pair]) * 64 + s.accent_colors[pair]) * 2 + s.heel_toes[pair]
 
 
 static func _half(panel: Dictionary, margin: float) -> Vector2:

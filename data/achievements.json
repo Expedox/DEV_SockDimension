@@ -27,6 +27,7 @@
     { "id": "ACH_PATTERNS", "name": "ACH_PATTERNS_NAME", "description": "ACH_PATTERNS_DESC", "hidden": false, "target": 1 },
     { "id": "ACH_KING_OF_THE_HILL", "name": "ACH_KING_OF_THE_HILL_NAME", "description": "ACH_KING_OF_THE_HILL_DESC", "hidden": false, "target": 1 },
     { "id": "ACH_YEET", "name": "ACH_YEET_NAME", "description": "ACH_YEET_DESC", "hidden": false, "target": 1 },
+    { "id": "ACH_LUCKY_SOCK", "name": "ACH_LUCKY_SOCK_NAME", "description": "ACH_LUCKY_SOCK_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_AVALANCHE", "name": "ACH_AVALANCHE_NAME", "description": "ACH_AVALANCHE_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_TRICK_SHOT", "name": "ACH_TRICK_SHOT_NAME", "description": "ACH_TRICK_SHOT_DESC", "hidden": true, "target": 1 },
     { "id": "ACH_NIGHT_OWL", "name": "ACH_NIGHT_OWL_NAME", "description": "ACH_NIGHT_OWL_DESC", "hidden": true, "target": 1 },

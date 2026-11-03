@@ -18,6 +18,7 @@ var counts := PackedInt32Array()
 var shapes := PackedInt32Array()
 var heel_toes := PackedByteArray()
 var near_of := PackedInt32Array() # pair this one was derived from, or -1
+var special_total := 0 # pairs with a rare easter-egg design
 
 # Per sock.
 var sock_pairs := PackedInt32Array()
@@ -84,6 +85,11 @@ func trait_distance(pair_a: int, pair_b: int) -> int:
 	return distance
 
 
+## Rare easter-egg design. Both socks share it, like any other trait.
+func is_special(pair: int) -> bool:
+	return SockCatalog.is_special(patterns[pair])
+
+
 func shows_accent(pair: int) -> bool:
 	return heel_toes[pair] == 1 or SockCatalog.pattern(patterns[pair])["uses_accent"]
 
@@ -138,6 +144,11 @@ func validate() -> PackedStringArray:
 	for pair in pair_count:
 		if near_of[pair] < 0:
 			plain_total += 1
+		if is_special(pair):
+			if near_of[pair] >= 0:
+				errors.append("pair %d is special and a near pair" % pair)
+		else:
+			kinds[patterns[pair]] = true
 		var key := _key(base_colors[pair], accent_colors[pair], patterns[pair], counts[pair], shapes[pair], heel_toes[pair])
 		if seen.has(key):
 			errors.append("pairs %d and %d look the same" % [seen[key], pair])
@@ -145,7 +156,6 @@ func validate() -> PackedStringArray:
 		if not shows_accent(pair) and accent_colors[pair] != base_colors[pair]:
 			errors.append("pair %d has a hidden accent" % pair)
 		bases[base_colors[pair]] = true
-		kinds[patterns[pair]] = true
 		if near_of[pair] >= 0 and trait_distance(pair, near_of[pair]) != 1:
 			errors.append("pair %d is not one trait away from pair %d" % [pair, near_of[pair]])
 	for sock in sock_count():
@@ -155,7 +165,7 @@ func validate() -> PackedStringArray:
 			errors.append("pair %d has %d socks" % [pair, socks_per_pair[pair]])
 	if bases.size() < mini(plain_total, SockCatalog.palette_size()):
 		errors.append("only %d base colors in use" % bases.size())
-	if kinds.size() < mini(plain_total, SockCatalog.pattern_count()):
+	if kinds.size() < mini(plain_total, SockCatalog.regular_pattern_count()):
 		errors.append("only %d patterns in use" % kinds.size())
 	return errors
 
@@ -164,7 +174,7 @@ func _build(near_share: float) -> void:
 	_rng.seed = seed_value
 	_pattern_weights.clear()
 	for i in SockCatalog.pattern_count():
-		_pattern_weights.append(SockCatalog.pattern(i)["weight"])
+		_pattern_weights.append(0.0 if SockCatalog.is_special(i) else float(SockCatalog.pattern(i)["weight"]))
 	_shape_weights.clear()
 	for i in SockCatalog.shape_count():
 		_shape_weights.append(SockCatalog.shape(i)["weight"])
@@ -185,13 +195,15 @@ func _build(near_share: float) -> void:
 
 	for pair in plain_total:
 		var forced_base := forced_bases[pair] if pair < forced_bases.size() else -1
-		var forced_pattern := pair if pair < SockCatalog.pattern_count() else -1
+		var forced_pattern := pair if pair < SockCatalog.regular_pattern_count() else -1
 		_fill_random(pair, forced_base, forced_pattern)
 
 	for pair in range(plain_total, pair_count):
 		if not _fill_near(pair):
 			push_warning("No near pair left for pair %d" % pair)
 			_fill_random(pair, -1, -1)
+
+	_add_specials(float(SockCatalog.data().get("special_share", 0.0)))
 
 	sock_pairs.resize(pair_count * 2)
 	for pair in pair_count:
@@ -222,10 +234,71 @@ func _fill_random(pair: int, forced_base: int, forced_pattern: int) -> void:
 	_fill_first_free(pair)
 
 
+## Turns a share of the free-standing pairs into rare easter-egg designs.
+## Runs on its own random stream, so pair ids and the pour order stay exactly
+## as without specials (older saves keep their socks). Near pairs and their
+## sources are left alone, so every near pair stays one trait away.
+func _add_specials(share: float) -> void:
+	special_total = 0
+	var designs := SockCatalog.special_patterns()
+	if designs.is_empty() or share <= 0.0:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([seed_value, "special"])
+	var weights := PackedFloat32Array()
+	for d in designs:
+		weights.append(float(SockCatalog.pattern(d)["weight"]))
+
+	var is_source := PackedByteArray()
+	is_source.resize(pair_count)
+	for pair in pair_count:
+		if near_of[pair] >= 0:
+			is_source[near_of[pair]] = 1
+	# The first pairs carry the forced colors and patterns for the achievements.
+	var first := maxi(SockCatalog.palette_size(), SockCatalog.regular_pattern_count())
+	var candidates := PackedInt32Array()
+	for pair in range(first, pair_count):
+		if near_of[pair] < 0 and is_source[pair] == 0:
+			candidates.append(pair)
+	for i in range(candidates.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var swap := candidates[i]
+		candidates[i] = candidates[j]
+		candidates[j] = swap
+
+	var target := mini(roundi(pair_count * share), candidates.size())
+	for pair in candidates:
+		if special_total >= target:
+			break
+		for attempt in 8:
+			var design := designs[_pick_weighted_with(rng, weights)]
+			var info := SockCatalog.pattern(design)
+			var options: Array = info["counts"]
+			var count := int(options[rng.randi_range(0, options.size() - 1)])
+			var heel_toe := int(heel_toes[pair])
+			var base := base_colors[pair]
+			var accent := accent_colors[pair]
+			if info["uses_accent"] or heel_toe == 1:
+				if accent == base:
+					var allowed := SockCatalog.accents_for(base)
+					accent = allowed[rng.randi_range(0, allowed.size() - 1)]
+			else:
+				accent = base
+			var key := _key(base, accent, design, count, shapes[pair], heel_toe)
+			if _used.has(key):
+				continue
+			_used.erase(_key(base, accent_colors[pair], patterns[pair], counts[pair], shapes[pair], heel_toe))
+			_store(pair, base, accent, design, count, shapes[pair], heel_toe)
+			special_total += 1
+			break
+
+
 ## Fallback for a nearly full trait space: walks every combination once.
 func _fill_first_free(pair: int) -> void:
 	for shape in SockCatalog.shape_count():
 		for pattern in SockCatalog.pattern_count():
+			if SockCatalog.is_special(pattern):
+				continue
 			var info := SockCatalog.pattern(pattern)
 			for heel_toe in 2:
 				for base in SockCatalog.palette_size():
@@ -277,6 +350,8 @@ func _mutate(pair: int, source: int) -> bool:
 							options.append(PackedInt32Array([base, candidate, pattern, count, shape, heel_toe]))
 			3: # design: another pattern or another count
 				for candidate in SockCatalog.pattern_count():
+					if SockCatalog.is_special(candidate):
+						continue
 					var info := SockCatalog.pattern(candidate)
 					var needs_accent: bool = info["uses_accent"] or heel_toe == 1
 					var new_accent := accent
@@ -337,15 +412,23 @@ func _pick_count(pattern: int) -> int:
 
 
 func _pick_weighted(weights: PackedFloat32Array) -> int:
+	return _pick_weighted_with(_rng, weights)
+
+
+static func _pick_weighted_with(rng: RandomNumberGenerator, weights: PackedFloat32Array) -> int:
 	var total := 0.0
 	for w in weights:
 		total += w
-	var roll := _rng.randf() * total
+	var roll := rng.randf() * total
 	for i in weights.size():
 		roll -= weights[i]
-		if roll <= 0.0:
+		if roll <= 0.0 and weights[i] > 0.0:
 			return i
-	return weights.size() - 1
+	# Rounding can leave a tiny rest; never land on a zero weight.
+	for i in range(weights.size() - 1, -1, -1):
+		if weights[i] > 0.0:
+			return i
+	return 0
 
 
 func _shuffled_range(size: int) -> PackedInt32Array:
