@@ -73,11 +73,6 @@ func _build_shell() -> void:
 	floor_material.shader = FLOOR_SHADER
 	floor_material.set_shader_parameter("base_color", _color("floor"))
 	floor_material.set_shader_parameter("dark_color", _color("floor_dark"))
-	floor_material.set_shader_parameter("rug_a", _color("rug_a"))
-	floor_material.set_shader_parameter("rug_b", _color("rug_b"))
-	floor_material.set_shader_parameter("rug_c", _color("rug_c"))
-	floor_material.set_shader_parameter("rug_d", _color("rug_d"))
-	floor_material.set_shader_parameter("rug_radius", float(_data["rug_radius"]))
 
 	var wall_material := ShaderMaterial.new()
 	wall_material.shader = WALL_SHADER
@@ -143,7 +138,7 @@ func _build_environment() -> void:
 	env.ssao_power = float(config.get("ssao_power", 1.5))
 	env.ssao_detail = 0.6
 	env.ssao_light_affect = float(config.get("ssao_light_affect", 0.2))
-	# Short-range bounce light, so the rug and socks tint their surroundings.
+	# Short-range bounce light, so the socks tint their surroundings.
 	env.ssil_enabled = bool(config.get("ssil", false))
 	env.ssil_radius = float(config.get("ssil_radius", 4.0))
 	env.ssil_intensity = float(config.get("ssil_intensity", 1.0))
