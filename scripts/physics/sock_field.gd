@@ -108,8 +108,9 @@ func prepare(sock_set: SockSet, placements: Dictionary) -> void:
 
 ## Pours every sock that is not in play yet into a field that is already
 ## running. skip holds sock ids to leave out, such as found pairs. With burst
-## ({origin: Vector3, area: AABB, wave_size, flight_min, flight_max}) the socks
-## are thrown from origin to random spots on the floor of area instead.
+## ({origin: Vector3, area: AABB, wave_size, flight_min, flight_max, and
+## optional center, radius, cone_power}) the socks are thrown from origin into
+## a heap around center (or all over area) instead.
 ## Emits Events.rain_finished instead of pile_ready when done.
 func pour_rest(mode: Dictionary, skip: Dictionary, burst := {}) -> void:
 	_burst = burst
@@ -378,8 +379,7 @@ func _burst_wave() -> void:
 			break
 		var start := origin + Vector3(_rng.randf_range(-spread, spread), _rng.randf_range(0.0, spread * 2.5),
 				_rng.randf_range(-spread, spread))
-		var target := Vector3(_rng.randf_range(area.position.x, area.end.x), 0.2,
-				_rng.randf_range(area.position.z, area.end.z))
+		var target := _burst_target(area)
 		var t := _rng.randf_range(float(_burst.get("flight_min", 0.8)), float(_burst.get("flight_max", 1.6)))
 		# Launch speed for an arc with linear drag k: x(t) = v0 / k * (1 - e^-kt),
 		# y(t) = (v0 + g / k) / k * (1 - e^-kt) - g t / k.
@@ -395,6 +395,26 @@ func _burst_wave() -> void:
 		_airborne[_next] = t * float(_burst.get("ghost_share", 0.8))
 		_next += 1
 	_skip_reserved()
+
+
+## Landing spot: a heap around burst.center (denser in the middle, thinning out
+## to burst.radius), or anywhere on the floor of area without a center.
+func _burst_target(area: AABB) -> Vector3:
+	if not _burst.has("center"):
+		return Vector3(_rng.randf_range(area.position.x, area.end.x), 0.2,
+				_rng.randf_range(area.position.z, area.end.z))
+	var center: Vector3 = _burst.center
+	var radius := float(_burst.get("radius", 3.0))
+	var power := float(_burst.get("cone_power", 1.0))
+	var spot := Vector2.ZERO
+	for attempt in 16:
+		spot = Vector2.from_angle(_rng.randf() * TAU) * radius * sqrt(_rng.randf())
+		if _rng.randf() <= pow(1.0 - spot.length() / radius, power):
+			break
+	var target := Vector3(center.x + spot.x, 0.2, center.z + spot.y)
+	target.x = clampf(target.x, area.position.x, area.end.x)
+	target.z = clampf(target.z, area.position.z, area.end.z)
+	return target
 
 
 func _land_airborne(delta: float) -> void:

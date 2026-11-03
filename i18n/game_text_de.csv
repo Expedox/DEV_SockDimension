@@ -156,4 +156,4 @@ SLOT_DELETE,Löschen
 SLOT_DELETE_TITLE,Spielstand löschen?
 SLOT_DELETE_BODY,Der Spielstand in Platz {n} ist dann für immer weg.
 TUT_BLAST_TITLE,Oh-oh
-TUT_BLAST_TEXT,"Die Waschmaschine ist geplatzt und die Sock Dimension liegt im ganzen Keller verstreut. Finde jedes Paar. Esc pausiert und speichert."
+TUT_BLAST_TEXT,"Die Waschmaschine ist übergekocht und die Sock Dimension quillt heraus. Finde jedes Paar. Esc pausiert und speichert."

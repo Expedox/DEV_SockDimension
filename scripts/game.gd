@@ -135,9 +135,22 @@ func _on_washer_burst() -> void:
 	var cfg: Dictionary = Config.world.get("washer_blast", {})
 	var room := cellar.room_bounds()
 	var margin := float(cfg.get("wall_margin", 0.8))
+	var top := cellar.washer_top()
+	var lid := cellar.washer_lid()
+	var front := top.basis.z
+	# Socks gush out of the door like foam boiling over and heap up in front
+	# of the machine, leaving the rest of the floor free for sorting.
+	var door := top.origin + Vector3.DOWN * float(cfg.get("door_depth", 0.65)) \
+			+ front * (lid.y * 0.5 + float(cfg.get("door_out", 0.35)))
+	var mode := Config.mode(GameState.mode_id)
+	var radius := float(mode.get("pile_radius", 3.0)) * float(cfg.get("heap_radius_scale", 1.4))
+	var center := door + front * (radius + float(cfg.get("heap_gap", 0.6)))
 	var burst := {
-		"origin": cellar.washer_top().origin + Vector3.UP * 0.3,
+		"origin": door,
 		"area": room.grow(-margin),
+		"center": Vector3(center.x, 0.0, center.z),
+		"radius": radius,
+		"cone_power": float(cfg.get("heap_cone_power", 1.0)),
 		"wave_size": int(cfg.get("wave_size", 60)),
 		"flight_min": float(cfg.get("flight_min", 0.8)),
 		"flight_max": float(cfg.get("flight_max", 1.6)),
@@ -155,6 +168,7 @@ func _on_washer_burst() -> void:
 
 func _on_rain_finished() -> void:
 	_rain_done = true
+	blast.stop_foam()
 	SaveManager.save_current.call_deferred()
 
 

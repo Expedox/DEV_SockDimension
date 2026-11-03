@@ -1,8 +1,8 @@
 class_name WasherBlast
 extends Node3D
 ## The washing machine is the tear into the Sock Dimension. Once its first
-## socks are paired it rumbles, shakes harder and harder and bursts: a flash,
-## a cloud of foam and every other sock flies out across the cellar.
+## socks are paired it rumbles, shakes harder and harder and boils over: a
+## flash, foam and every other sock gushes out of the door into a heap.
 ## Timings and look in data/world.json -> washer_blast.
 
 ## The machine bursts now; the field should start throwing socks.
@@ -25,6 +25,11 @@ func setup(machine: Node3D) -> void:
 	_cfg = Config.world.get("washer_blast", {})
 	_build()
 	set_process(false)
+
+
+## Foam stops bubbling over once the last sock is out.
+func stop_foam() -> void:
+	_foam.emitting = false
 
 
 ## The broken machine smokes until every pair is found.
@@ -66,7 +71,6 @@ func _process(_delta: float) -> void:
 
 func _burst() -> void:
 	Sfx.play("washer_boom", global_position)
-	_foam.restart()
 	_foam.emitting = true
 	set_smoking(true)
 	burst.emit()
@@ -92,18 +96,20 @@ func _build() -> void:
 	_foam = GPUParticles3D.new()
 	_foam.name = "Foam"
 	_foam.emitting = false
-	_foam.one_shot = true
-	_foam.explosiveness = 0.9
+	_foam.explosiveness = 0.2
 	_foam.amount = int(_cfg.get("foam_count", 140))
 	_foam.lifetime = float(_cfg.get("foam_lifetime", 3.0))
 	_foam.visibility_aabb = AABB(Vector3(-8, -2, -8), Vector3(16, 8, 16))
+	_foam.local_coords = false
+	# Out of the door, which faces this node's +Z.
+	_foam.position = Vector3(0.0, -float(_cfg.get("door_depth", 0.65)), 0.5)
 	var process := ParticleProcessMaterial.new()
 	process.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_SPHERE
-	process.emission_sphere_radius = 0.35
-	process.direction = Vector3.UP
-	process.spread = 70.0
-	process.initial_velocity_min = 1.5
-	process.initial_velocity_max = 4.5
+	process.emission_sphere_radius = 0.25
+	process.direction = Vector3(0.0, 0.6, 1.0)
+	process.spread = 35.0
+	process.initial_velocity_min = 1.0
+	process.initial_velocity_max = 2.8
 	process.gravity = Vector3(0.0, -1.2, 0.0)
 	process.damping_min = 1.0
 	process.damping_max = 2.0

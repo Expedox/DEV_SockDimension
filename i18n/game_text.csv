@@ -156,4 +156,4 @@ SLOT_DELETE,Delete
 SLOT_DELETE_TITLE,Delete Save?
 SLOT_DELETE_BODY,The saved game in slot {n} will be gone for good.
 TUT_BLAST_TITLE,Uh-oh
-TUT_BLAST_TEXT,"The washing machine burst and the Sock Dimension is all over the cellar. Find every pair. Esc pauses and saves."
+TUT_BLAST_TEXT,"The washing machine boiled over and the Sock Dimension is gushing out. Find every pair. Esc pauses and saves."
