@@ -16,5 +16,7 @@
   "throw_speed": 20.0,
   "carry_max": 10,
   "carry_distance": 0.7,
-  "carry_spacing": 0.045
+  "carry_spacing": 0.045,
+  "step_stride": 0.75,
+  "land_sound_speed": 3.5
 }

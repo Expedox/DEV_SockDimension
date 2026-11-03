@@ -71,6 +71,62 @@ func show_pair(pair_id: int, animate: bool) -> void:
 	var tween := create_tween()
 	tween.tween_method(_set_pair.bind(pair_id), 0.05, 1.0, float(_config["pop_seconds"])) \
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var center := (_xform_a[pair_id].origin + _xform_b[pair_id].origin) * 0.5
+	Sfx.play("wall_pop", center)
+	# Out of the wall means towards the middle of the room (this node sits at the origin).
+	_burst(center, (-center * Vector3(1, 0, 1)).normalized(), pair_id)
+
+
+## A puff of fluff in the pair's two colours as it pops onto its peg.
+func _burst(at: Vector3, out: Vector3, pair_id: int) -> void:
+	var config: Dictionary = _config.get("pop_burst", {})
+	if config.is_empty():
+		return
+	var colors := SockCatalog.colors()
+	var palette := Gradient.new()
+	palette.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
+	palette.set_color(0, colors[_socks.base_colors[pair_id]])
+	palette.set_color(1, colors[_socks.accent_colors[pair_id]])
+	palette.set_offset(1, 0.65)
+
+	var size: Array = config.get("size", [0.012, 0.03])
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.vertex_color_use_as_albedo = true
+	# Tiny low-poly balls read as round fluff from every side, no billboard needed.
+	var fluff := SphereMesh.new()
+	fluff.radius = float(size[1]) * 0.5
+	fluff.height = float(size[1])
+	fluff.radial_segments = 6
+	fluff.rings = 3
+	fluff.material = material
+
+	var puff := CPUParticles3D.new()
+	puff.mesh = fluff
+	puff.one_shot = true
+	puff.explosiveness = 0.95
+	puff.amount = int(config.get("amount", 28))
+	puff.lifetime = float(config.get("lifetime", 0.8))
+	puff.direction = out if out.length() > 0.1 else Vector3.FORWARD
+	puff.spread = 70.0
+	var speed: Array = config.get("speed", [0.8, 2.2])
+	puff.initial_velocity_min = float(speed[0])
+	puff.initial_velocity_max = float(speed[1])
+	puff.gravity = Vector3(0, -float(config.get("gravity", 2.5)), 0)
+	puff.damping_min = 1.5
+	puff.damping_max = 3.0
+	puff.scale_amount_min = float(size[0]) / float(size[1])
+	puff.scale_amount_max = 1.0
+	puff.color_initial_ramp = palette
+	var shrink := Curve.new()
+	shrink.add_point(Vector2(0.0, 1.0))
+	shrink.add_point(Vector2(1.0, 0.0))
+	puff.scale_amount_curve = shrink
+	puff.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(puff)
+	puff.global_position = at
+	puff.finished.connect(puff.queue_free)
+	puff.emitting = true
 
 
 func _set_pair(grow: float, pair_id: int) -> void:

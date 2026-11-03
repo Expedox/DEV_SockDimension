@@ -32,7 +32,14 @@ func _ready() -> void:
 	_render_loops(data)
 	Events.sock_thrown.connect(func(_id: int) -> void: play("throw"))
 	Events.sock_grabbed.connect(func(_id: int) -> void: play("grab"))
-	Events.sock_landed.connect(func(_id: int, _distance: float) -> void: play("plop"))
+	Events.sock_landed.connect(_on_sock_landed)
+
+
+## A soft thud where a thrown sock comes to rest.
+func _on_sock_landed(sock_id: int, _distance: float) -> void:
+	var field := get_tree().get_first_node_in_group("sock_field") as SockField
+	var sock := field.sock_by_id(sock_id) if field else null
+	play("sock_thud", sock.global_position if sock else null)
 
 
 ## Plays a sound in the world, or flat when no position is given.

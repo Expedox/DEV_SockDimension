@@ -27,6 +27,8 @@ var _pending_held := -1
 var _pending_carried := PackedInt32Array()
 var _typed := "" # last letters, for the debug cheat code
 var _cheat_cache := Vector2i(-1, -1) # (sock, partner), avoids a scan every frame
+var _stride_left := 0.0 # metres until the next footstep
+var _fall_speed := 0.0
 
 
 func _ready() -> void:
@@ -184,9 +186,36 @@ func _move(delta: float) -> void:
 	var was_on_floor := is_on_floor()
 	var start := global_transform
 	var horizontal := Vector3(velocity.x, 0.0, velocity.z) * delta
+	_fall_speed = maxf(-velocity.y, 0.0) if not was_on_floor else 0.0
 	move_and_slide()
 	if was_on_floor and horizontal.length() > 0.001:
 		_try_step(start, horizontal)
+	_footsteps(was_on_floor, start.origin)
+
+
+## A step sound every stride, softer on socks than on the floor, and a thud
+## when landing from a jump.
+func _footsteps(was_on_floor: bool, from: Vector3) -> void:
+	if not is_on_floor():
+		return
+	if not was_on_floor:
+		if _fall_speed >= float(_cfg.get("land_sound_speed", 3.5)):
+			Sfx.play("land_player")
+		_stride_left = float(_cfg.get("step_stride", 0.75)) * 0.5
+		return
+	_stride_left -= ((global_position - from) * Vector3(1, 0, 1)).length()
+	if _stride_left > 0.0:
+		return
+	_stride_left = float(_cfg.get("step_stride", 0.75))
+	Sfx.play("step_socks" if _on_socks() else "step_floor")
+
+
+func _on_socks() -> bool:
+	for i in get_slide_collision_count():
+		var hit := get_slide_collision(i)
+		if hit.get_normal().y > 0.5 and hit.get_collider() is Sock:
+			return true
+	return false
 
 
 ## Socks form a bumpy surface: lift over small edges instead of getting stuck.

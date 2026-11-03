@@ -362,7 +362,20 @@
     "pop_seconds": 0.45,
     "board_color": "#4e3828",
     "board_dark": "#2e1f15",
-    "peg_color": "#b08a5e"
+    "peg_color": "#b08a5e",
+    "pop_burst": {
+      "amount": 28,
+      "lifetime": 0.8,
+      "speed": [
+        0.8,
+        2.2
+      ],
+      "size": [
+        0.012,
+        0.03
+      ],
+      "gravity": 2.5
+    }
   },
   "shelf": {
     "z": 2.5,
