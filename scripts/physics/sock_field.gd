@@ -213,9 +213,9 @@ func _begin(sock_set: SockSet) -> void:
 	_still.resize(count)
 	_still.fill(0.0)
 	_shapes.clear()
-	for length in SockCatalog.length_count():
+	for shape in SockCatalog.shape_count():
 		var box := BoxShape3D.new()
-		box.size = SockMesh.collision_size(length)
+		box.size = SockMesh.collision_size(shape)
 		_shapes.append(box)
 	_next = 0
 	_frame = 0
@@ -328,7 +328,7 @@ func _spawn(sock_id: int, xform: Transform3D, velocity: Vector3, asleep: bool) -
 	sock.freeze_mode = RigidBody3D.FREEZE_MODE_STATIC
 	sock.freeze = asleep and _freeze_settled
 	var owner_id := sock.create_shape_owner(sock)
-	sock.shape_owner_add_shape(owner_id, _shapes[socks.sock_info(sock_id).length])
+	sock.shape_owner_add_shape(owner_id, _shapes[socks.shape_of(sock_id)])
 	_bodies[sock_id] = sock
 	add_child(sock)
 	renderer.set_sock_transform(sock_id, xform)
