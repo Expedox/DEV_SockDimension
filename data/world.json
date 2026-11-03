@@ -634,7 +634,10 @@
       "bed": "#7b4f6e",
       "bed_stripes": "#5c3a52",
       "cushion": "#e2cfa8"
-    }
+    },
+    "pet_distance": 1.8,
+    "pet_angle_deg": 14.0,
+    "pet_seconds": 2.5
   },
   "daylight": {
     "enabled": true,

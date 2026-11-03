@@ -31,6 +31,22 @@ void fragment() {
 }
 """
 
+const HEART_SHADER := """
+shader_type spatial;
+render_mode unshaded, cull_disabled, blend_mix;
+void vertex() {
+	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
+	MODELVIEW_MATRIX = MODELVIEW_MATRIX * mat4(vec4(length(MODEL_MATRIX[0].xyz), 0, 0, 0), vec4(0, length(MODEL_MATRIX[1].xyz), 0, 0), vec4(0, 0, length(MODEL_MATRIX[2].xyz), 0), vec4(0, 0, 0, 1));
+}
+void fragment() {
+	vec2 p = (UV - vec2(0.5, 0.42)) * vec2(2.2, -2.2);
+	p.y -= sqrt(abs(p.x)) * 0.55;
+	float d = length(p) - 0.62;
+	ALBEDO = vec3(1.0, 0.42, 0.55);
+	ALPHA = 1.0 - smoothstep(-0.04, 0.02, d);
+}
+"""
+
 var active := false # true once the pile is in play
 var state := State.NAP
 var goal := Goal.HOME
@@ -68,6 +84,9 @@ var _gait := 0.0
 var _speed := 0.0
 var _time := 0.0
 var _blink := 3.0
+var _pet := 0.0 # seconds left of the current cuddle
+var _hearts: Array[MeshInstance3D] = []
+var _heart_mesh: QuadMesh
 
 
 func setup(field: SockField, cellar: Cellar, player: Node3D, config: Dictionary) -> void:
@@ -152,6 +171,7 @@ func _physics_process(delta: float) -> void:
 				_sit(_rng.randf_range(1.5, 3.5))
 	_hold_sock(delta)
 	_check_caught()
+	_update_hearts(delta)
 	_animate(delta)
 	_update_purr(delta)
 
@@ -285,6 +305,42 @@ func _hold_sock(_delta: float) -> void:
 
 
 ## Caught red-pawed: the player walks up while the sock is in its mouth.
+## Petting: look at the cat up close with empty hands and press the pair key.
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("pair") or event.is_echo() or _cfg.is_empty():
+		return
+	if _sock != null or _player == null or not GameState.running:
+		return
+	if _player.has_method("held_sock") and _player.call("held_sock") != null:
+		return
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	var to := _head.global_position - camera.global_position
+	if to.length() > float(_cfg.get("pet_distance", 1.8)):
+		return
+	var forward := -camera.global_basis.z
+	if forward.dot(to.normalized()) < cos(deg_to_rad(float(_cfg.get("pet_angle_deg", 14.0)))):
+		return
+	pet()
+	get_viewport().set_input_as_handled()
+
+
+func pet() -> void:
+	var first := _pet <= 0.0
+	_pet = float(_cfg.get("pet_seconds", 2.5))
+	# An awake cat stops for a cuddle; a napping one stays in its bed.
+	if state == State.WALK and goal != Goal.CARRY and goal != Goal.FETCH:
+		_sit(_pet + 0.5)
+	elif state == State.SIT:
+		_state_left = maxf(_state_left, _pet + 0.5)
+	if first:
+		if _rng.randf() < 0.35:
+			Sfx.play("meow", _head.global_position, -6.0)
+		Events.cat_petted.emit()
+	_spawn_heart()
+
+
 func _check_caught() -> void:
 	if _sock == null or _caught or _player == null:
 		return
@@ -387,15 +443,21 @@ func _animate(delta: float) -> void:
 	var head_at := Vector3(0.0, 0.31 + sin(_gait * 2.0) * 0.006, -0.22)
 	head_at = head_at.lerp(Vector3(0.12, 0.13, -0.15), _curl)
 	head_at += Vector3(0.0, -0.13, -0.05) * crouch
+	# Being petted: head pushes up into the hand and rubs side to side.
+	var cuddle := clampf(_pet, 0.0, 1.0)
+	head_at += Vector3(sin(_time * 3.0) * 0.012, 0.03, 0.0) * cuddle
 	_head.position = head_at
-	_head.rotation = Vector3(-crouch * 0.6 + _curl * 0.35, look + _curl * 0.9, _curl * 0.5)
+	_head.rotation = Vector3(-crouch * 0.6 + _curl * 0.35 - cuddle * 0.35, look * (1.0 - cuddle) + _curl * 0.9,
+			_curl * 0.5 + sin(_time * 3.0) * 0.25 * cuddle)
 
 	# Tail: up and swishing when awake, wrapped round the body when asleep.
 	var tail_up := 1.0 - _curl
 	for i in _tail.size():
 		var seg := _tail[i]
 		var sway := sin(_time * 2.2 - i * 0.6) * 0.18
-		var awake_rot := Vector3(-0.55 if i == 0 else 0.12, sway, 0.0)
+		var awake_rot := Vector3(-0.55 if i == 0 else 0.12, sway * (1.0 - cuddle * 0.7), 0.0)
+		if cuddle > 0.0 and i > 0:
+			awake_rot.x = lerpf(0.12, -0.05, cuddle) # tail straight up, happy
 		var curl_rot := Vector3(0.05, 0.42 + sin(_time * 0.8 - i) * 0.03, 0.0)
 		seg.rotation = curl_rot.lerp(awake_rot, tail_up)
 
@@ -403,7 +465,7 @@ func _animate(delta: float) -> void:
 	for i in _ears.size():
 		_ears[i].rotation.z = (0.25 if i == 0 else -0.25) + (sin(_time * 9.0) * 0.15 if fmod(_time + i, 7.0) < 0.25 else 0.0)
 	_blink -= delta
-	var shut := _curl > 0.5 or _blink < 0.12
+	var shut := _curl > 0.5 or _blink < 0.12 or (cuddle > 0.0 and sin(_time * 1.3) > -0.3)
 	if _blink < 0.0:
 		_blink = _rng.randf_range(2.0, 6.0)
 	for eye in _eyes:
@@ -414,9 +476,43 @@ func _update_purr(delta: float) -> void:
 	if _purr == null:
 		return
 	var near := _player != null and _player.global_position.distance_to(global_position) < float(_cfg.get("purr_distance", 3.0))
-	var on := _curl > 0.7 and near
-	var level := float(_cfg.get("purr_volume_db", -14.0))
+	var on := (_curl > 0.7 and near) or _pet > 0.0
+	var level := float(_cfg.get("purr_volume_db", -14.0)) + (6.0 if _pet > 0.0 else 0.0)
 	_purr.volume_db = move_toward(_purr.volume_db, level if on else -60.0, delta * 25.0)
+
+
+## Little hearts that float up while it is petted.
+func _spawn_heart() -> void:
+	if _heart_mesh == null:
+		_heart_mesh = QuadMesh.new()
+		_heart_mesh.size = Vector2(0.07, 0.07)
+		var shader := Shader.new()
+		shader.code = HEART_SHADER
+		var material := ShaderMaterial.new()
+		material.shader = shader
+		_heart_mesh.material = material
+	var heart := MeshInstance3D.new()
+	heart.mesh = _heart_mesh
+	heart.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(heart)
+	heart.global_position = _head.global_position + Vector3(_rng.randf_range(-0.06, 0.06), 0.1, _rng.randf_range(-0.06, 0.06))
+	heart.set_meta("life", 1.4)
+	_hearts.append(heart)
+
+
+func _update_hearts(delta: float) -> void:
+	if _pet > 0.0:
+		_pet -= delta
+		if fmod(_pet, 0.8) < delta and _pet > 0.3:
+			_spawn_heart()
+	for heart in _hearts.duplicate():
+		var life: float = heart.get_meta("life") - delta
+		heart.set_meta("life", life)
+		heart.global_position += Vector3(sin(life * 6.0) * 0.05, 0.22, 0.0) * delta
+		heart.scale = Vector3.ONE * clampf(life * 2.0, 0.0, 1.0)
+		if life <= 0.0:
+			_hearts.erase(heart)
+			heart.queue_free()
 
 
 # --- Model ---

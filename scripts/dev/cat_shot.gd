@@ -1,6 +1,6 @@
 extends Node
 ## Starts a laundry day run, makes the cellar cat go for a sock right away and
-## takes screenshots (on a small pile) of it napping, carrying and back home:
+## takes screenshots (on a small pile) of it napping, being petted, carrying and back home:
 ##   xvfb-run godot --rendering-driver opengl3 --fixed-fps 60 --path . res://scenes/dev/cat_shot.tscn -- <out_prefix>
 
 var _prefix := "user://cat"
@@ -39,6 +39,11 @@ func _run() -> void:
 	camera.current = true
 	await get_tree().create_timer(2.0).timeout
 	await _shot(camera, cat, "nap", Vector3(0.9, 0.6, -0.9))
+	cat.pet()
+	await get_tree().create_timer(1.2).timeout
+	await _shot(camera, cat, "pet", Vector3(0.9, 0.6, -0.9))
+	print("CAT petted, achievement ", Achievements.is_unlocked("ACH_PET_CAT"))
+	await get_tree().create_timer(2.0).timeout
 	cat._steal_in = 0.0
 	var waited := 0.0
 	while not cat.is_carrying() and waited < 90.0:

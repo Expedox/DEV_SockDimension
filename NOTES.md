@@ -409,6 +409,8 @@ on top, below 1.2 m, away from the basket, never held ones (`SockField.is_held`)
 found pairs are gone from the field, so the wall is safe. Before saving it puts
 the sock down. Purrs when you stand next to it asleep, meows when it grabs a
 sock. Walking up to it while it carries one unlocks the hidden `ACH_CAT_BURGLAR`.
+Petting: look at it from up to 1.8 m with empty hands and press E (the pair key).
+It purrs louder, nuzzles, and little hearts float up. This unlocks the hidden `ACH_PET_CAT`.
 Dev check: `scenes/dev/cat_shot.tscn` (small pile, forces a theft, screenshots).
 
 ## LAN: watching each other through a glass ceiling

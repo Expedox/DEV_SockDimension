@@ -46,6 +46,7 @@ func _ready() -> void:
 	Events.socks_moving.connect(_on_socks_moving)
 	Events.summit_reached.connect(_on_summit_reached)
 	Events.cat_caught.connect(func() -> void: unlock("ACH_CAT_BURGLAR"))
+	Events.cat_petted.connect(func() -> void: unlock("ACH_PET_CAT"))
 	Events.ability_unlocked.connect(func(ability: String) -> void:
 		notify("UNLOCK_%s_NAME" % ability.to_upper(), "UNLOCK_%s_TEXT" % ability.to_upper()))
 	Events.game_saved.connect(flush)

@@ -225,7 +225,7 @@ func _test_achievements() -> void:
 	Achievements.save_path = TEST_DIR + "achievements2.save"
 	Achievements.load_state()
 	check(Achievements.get_unlocked_count() == 0, "fresh achievement state")
-	check(Achievements.get_total_count() == 20, "twenty achievements defined")
+	check(Achievements.get_total_count() == 21, "twenty-one achievements defined")
 
 	_start_fake_run("sock_dimension", 10)
 	GameState.register_match(0, 0, 0)
@@ -249,6 +249,8 @@ func _test_achievements() -> void:
 	check(not Achievements.is_unlocked("ACH_CAT_BURGLAR"), "cat burglar starts locked")
 	Events.cat_caught.emit()
 	check(Achievements.is_unlocked("ACH_CAT_BURGLAR"), "catching the cat unlocks cat burglar")
+	Events.cat_petted.emit()
+	check(Achievements.is_unlocked("ACH_PET_CAT"), "petting the cat unlocks its achievement")
 
 	Events.sock_thrown.emit(12)
 	Events.sock_in_basket.emit(12)
