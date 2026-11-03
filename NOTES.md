@@ -251,8 +251,8 @@ Close uses `GameState.near_misses` (or `pair_mismatched(true)`).
 
 `godot --headless --path . --import` once, then
 `godot --headless --path . res://tests/test_runner.tscn` (exit code 0 = passed).
-It writes only under `user://tests/`. GitHub Actions runs the same on every push
-(`.github/workflows/tests.yml`). Fakes for the player and field are in
+It writes only under `user://tests/`. Tests run only in the cloud threads and on
+the PC, never on GitHub. Fakes for the player and field are in
 `tests/fakes.gd`; replace them with the real scenes once those exist.
 
 ## Measurement
