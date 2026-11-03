@@ -26,6 +26,7 @@ func _ready() -> void:
 	_test_socks()
 	_test_sock_wall()
 	_test_daylight()
+	_test_drop_scatter()
 	await _test_lost_found()
 	await _test_pair_controller()
 
@@ -431,6 +432,23 @@ func _test_lost_found() -> void:
 	field.queue_free()
 	cellar.queue_free()
 	await get_tree().process_frame
+
+
+func _test_drop_scatter() -> void:
+	var cfg := {"drop_scatter_speed": 1.6, "drop_scatter_forward": 0.6, "drop_scatter_lift": 1.0}
+	var n := 10
+	var spread := Vector3.ZERO
+	var min_gap := INF
+	var kicks: Array[Vector3] = []
+	for i in n:
+		var v := Player.scatter_velocity(i, n, Vector3(0, -0.3, -1), cfg, 0.5, 0.5)
+		kicks.append(Vector3(v.x, 0, v.z))
+		spread += Vector3(v.x, 0, v.z)
+	for i in n:
+		min_gap = minf(min_gap, kicks[i].distance_to(kicks[(i + 1) % n]))
+	check(min_gap > 0.3, "dropped socks fly apart in different directions")
+	check((spread / n).dot(Vector3.FORWARD) > 0.3, "a dropped bundle spreads a little forward")
+	check(Player.scatter_velocity(0, 1, Vector3.FORWARD, cfg, 0.5, 0.5).y > 0.5, "dropped socks pop up before they fall")
 
 
 func _test_daylight() -> void:

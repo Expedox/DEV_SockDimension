@@ -339,9 +339,32 @@ func _drop() -> void:
 	_field.end_hold(sock)
 
 
+## Q: the whole armful falls apart and spreads out, so every sock stays visible.
 func _drop_all() -> void:
+	var socks: Array[Sock] = []
 	while _held:
+		socks.append(_held)
 		_drop()
+	var forward := -camera.global_basis.z
+	for i in socks.size():
+		var sock := socks[i]
+		sock.linear_velocity = velocity + scatter_velocity(i, socks.size(), forward, _cfg, randf(), randf())
+		sock.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) \
+				* float(_cfg.get("drop_scatter_spin", 6.0))
+	if not socks.is_empty():
+		_field.wake_around(socks[0].global_position, float(_cfg.get("drop_scatter_wake", 1.2)))
+
+
+## Kick for sock i of n when a bundle is dropped: spread round a circle with
+## jitter, pushed a little forward and up.
+static func scatter_velocity(i: int, n: int, forward: Vector3, cfg: Dictionary, r1: float, r2: float) -> Vector3:
+	var flat := Vector3(forward.x, 0.0, forward.z)
+	flat = flat.normalized() if flat.length() > 0.001 else Vector3.FORWARD
+	var angle := TAU * float(i) / maxf(float(n), 1.0) + (r1 - 0.5) * TAU / maxf(float(n), 1.0)
+	var side := flat.rotated(Vector3.UP, angle)
+	var speed := float(cfg.get("drop_scatter_speed", 1.6)) * lerpf(0.6, 1.0, r2)
+	return side * speed + flat * float(cfg.get("drop_scatter_forward", 0.6)) \
+			+ Vector3.UP * float(cfg.get("drop_scatter_lift", 1.0))
 
 
 func _throw() -> void:
