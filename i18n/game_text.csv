@@ -137,7 +137,7 @@ TUT_GRAB_TEXT,"Aim at a sock and left-click to grab it. Three easy pairs lie on 
 TUT_INSPECT_TITLE,Take a close look
 TUT_INSPECT_TEXT,"Hold F to bring the sock close and turn it with the mouse. Twins share colour, pattern, stripes and shape."
 TUT_THROW_TITLE,Throw it
-TUT_THROW_TEXT,"Right-click to throw the sock. Left-click on empty space just drops it. Grab more socks to carry up to ten at once."
+TUT_THROW_TEXT,"Right-click to throw the sock in your hand. Left-click on empty space just drops it."
 TUT_PAIR_TITLE,Make a pair
 TUT_PAIR_TEXT,"Hold one sock, aim at its twin and press E. A match rolls up and flies into the basket."
 TUT_MISS_TITLE,Not quite
@@ -161,3 +161,6 @@ TUT_BLAST_TITLE,Uh-oh
 TUT_BLAST_TEXT,"The washing machine boiled over and the Sock Dimension is gushing out. Find every pair. Esc pauses and saves."
 ACH_CAT_BURGLAR_NAME,Caught Red-Pawed
 ACH_CAT_BURGLAR_DESC,Catch the cellar cat carrying off a sock.
+TUT_CARRY_TITLE,Carry a bundle
+TUT_CARRY_TEXT,"Grab another sock: the first one goes under your arm. You can carry up to ten. Mouse wheel switches the sock in your hand, Q drops them all."
+TUT_SKIP_HINT,Tab: skip tutorial

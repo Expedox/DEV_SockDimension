@@ -14,6 +14,7 @@
   "starter_pairs": 3,
   "tutorial": {
     "move_seconds": 7.0,
+    "carry_seconds": 12.0,
     "inspect_seconds": 12.0,
     "tip_seconds": 4.0,
     "done_seconds": 9.0

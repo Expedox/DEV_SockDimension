@@ -1,13 +1,15 @@
 class_name Tutorial
 extends CanvasLayer
 ## First-steps card at the top of the screen. Each step waits for the player to
-## do the thing it names, then moves on. Steps and timings are in data/gameplay.json.
+## do the thing it names, then moves on. Tab skips the rest. Steps and timings
+## are in data/gameplay.json.
 
-const STEPS := ["move", "grab", "inspect", "throw", "pair", "done", "blast"]
+const STEPS := ["move", "grab", "carry", "inspect", "throw", "pair", "done", "blast"]
 
 var _card: PanelContainer
 var _title: Label
 var _text: Label
+var _skip: Label
 var _step := -1
 var _step_time := 0.0
 var _tip_time := 0.0
@@ -18,7 +20,7 @@ func _ready() -> void:
 	layer = 6
 	_cfg = Config.gameplay.get("tutorial", {})
 	_build()
-	Events.sock_grabbed.connect(func(_id: int) -> void: _done_if("grab"))
+	Events.sock_grabbed.connect(_on_grabbed)
 	Events.sock_thrown.connect(func(_id: int) -> void: _done_if("throw"))
 	Events.pair_matched.connect(_on_matched)
 	Events.pair_mismatched.connect(_on_mismatched)
@@ -26,6 +28,22 @@ func _ready() -> void:
 		_step = STEPS.find("done")
 		_advance())
 	_advance()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("skip_tutorial") and _step < STEPS.find("blast") \
+			and GameState.running and not get_tree().paused:
+		get_viewport().set_input_as_handled()
+		skip()
+
+
+## Hides the card for good. The washer still bursts as usual.
+func skip() -> void:
+	set_process(false)
+	set_process_unhandled_input(false)
+	var tween := create_tween()
+	tween.tween_property(_card, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(queue_free)
 
 
 func _process(delta: float) -> void:
@@ -41,6 +59,9 @@ func _process(delta: float) -> void:
 		"move":
 			if _step_time > float(_cfg.get("move_seconds", 7.0)):
 				_advance()
+		"carry":
+			if _step_time > float(_cfg.get("carry_seconds", 12.0)):
+				_advance()
 		"inspect":
 			if Input.is_action_pressed("inspect") and _step_time > 1.0 \
 					or _step_time > float(_cfg.get("inspect_seconds", 12.0)):
@@ -54,8 +75,15 @@ func _process(delta: float) -> void:
 
 
 func _done_if(step: String) -> void:
-	# Grabbing early also covers the walk step.
-	if STEPS[_step] == step or (step == "grab" and STEPS[_step] == "move"):
+	if STEPS[_step] == step:
+		_advance()
+
+
+func _on_grabbed(_id: int) -> void:
+	# Grabbing early also covers the walk step; a second grab fills the bundle.
+	if STEPS[_step] == "move":
+		_step = STEPS.find("grab")
+	if STEPS[_step] in ["grab", "carry"]:
 		_advance()
 
 
@@ -92,6 +120,7 @@ func _show_step() -> void:
 func _set_text(title: String, text: String) -> void:
 	_title.text = title
 	_text.text = text
+	_skip.visible = _step < STEPS.find("done")
 
 
 func _build() -> void:
@@ -121,3 +150,6 @@ func _build() -> void:
 	_text = UiKit.label("", &"", HORIZONTAL_ALIGNMENT_CENTER)
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(_text)
+	_skip = UiKit.label("TUT_SKIP_HINT", &"MutedLabel", HORIZONTAL_ALIGNMENT_CENTER)
+	_skip.add_theme_font_size_override("font_size", 14)
+	column.add_child(_skip)

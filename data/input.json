@@ -35,6 +35,9 @@
     ],
     "washer_retrigger": [
       "F3"
+    ],
+    "skip_tutorial": [
+      "Tab"
     ]
   },
   "mouse": {

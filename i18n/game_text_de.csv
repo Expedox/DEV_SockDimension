@@ -137,7 +137,7 @@ TUT_GRAB_TEXT,"Ziele auf eine Socke und greif sie mit Linksklick. Drei leichte P
 TUT_INSPECT_TITLE,Schau genau hin
 TUT_INSPECT_TEXT,"Halte F, um die Socke heranzuholen, und dreh sie mit der Maus. Zwillinge teilen Farbe, Muster, Streifen und Form."
 TUT_THROW_TITLE,Wirf sie
-TUT_THROW_TEXT,"Rechtsklick wirft die Socke. Linksklick ins Leere lässt sie nur fallen. Greif weitere Socken und trag bis zu zehn auf einmal."
+TUT_THROW_TEXT,"Rechtsklick wirft die Socke in der Hand. Linksklick ins Leere lässt sie nur fallen."
 TUT_PAIR_TITLE,Bilde ein Paar
 TUT_PAIR_TEXT,"Halte eine Socke, ziele auf ihren Zwilling und drück E. Ein Treffer rollt sich zusammen und fliegt in den Korb."
 TUT_MISS_TITLE,Nicht ganz
@@ -160,4 +160,7 @@ SLOT_DELETE_BODY,Der Spielstand in Platz {n} ist dann für immer weg.
 TUT_BLAST_TITLE,Oh-oh
 TUT_BLAST_TEXT,"Die Waschmaschine ist übergekocht und die Sock Dimension quillt heraus. Finde jedes Paar. Esc pausiert und speichert."
 ACH_CAT_BURGLAR_NAME,Auf frischer Pfote ertappt
-ACH_CAT_BURGLAR_DESC,Erwische die Kellerkatze dabei, wie sie eine Socke wegträgt.
+ACH_CAT_BURGLAR_DESC,"Erwische die Kellerkatze dabei, wie sie eine Socke wegträgt."
+TUT_CARRY_TITLE,Trag einen Stapel
+TUT_CARRY_TEXT,"Greif eine weitere Socke: Die erste wandert unter den Arm. Du kannst bis zu zehn tragen. Mausrad wechselt die Socke in der Hand, Q lässt alle fallen."
+TUT_SKIP_HINT,Tab: Tutorial überspringen
