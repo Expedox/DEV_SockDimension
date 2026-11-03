@@ -22,6 +22,7 @@ var _summit_timer := 0.0
 var _summit_done := false
 var _pending_held := -1
 var _typed := "" # last letters, for the debug cheat code
+var _cheat_cache := Vector2i(-1, -1) # (sock, partner), avoids a scan every frame
 
 
 func _ready() -> void:
@@ -130,8 +131,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_grab()
 	elif event.is_action_pressed("throw") and _held:
 		_throw()
-	elif event.is_action_pressed("throw") and GameState.cheat_mode:
-		_show_partner()
 
 
 func _physics_process(delta: float) -> void:
@@ -264,6 +263,14 @@ func _update_highlight() -> void:
 		return
 	var sock := aimed_sock()
 	_field.renderer.set_highlight(sock.sock_id if sock else -1)
+	# Debug cheat: the partner of the held sock (else the aimed one) glows too.
+	var partner := -1
+	var source: Sock = _held if _held else sock
+	if GameState.cheat_mode and source and _field.socks:
+		if _cheat_cache.x != source.sock_id:
+			_cheat_cache = Vector2i(source.sock_id, _field.socks.partner_of(source.sock_id))
+		partner = _cheat_cache.y
+	_field.renderer.set_partner_highlight(partner)
 
 
 ## Debug cheat: typing the code from data/gameplay.json toggles cheat mode.
@@ -275,16 +282,6 @@ func _track_cheat_code(keycode: Key) -> void:
 	if _typed == code:
 		_typed = ""
 		GameState.cheat_mode = not GameState.cheat_mode
-		if not GameState.cheat_mode and _field and _field.renderer:
-			_field.renderer.set_partner_highlight(-1)
-
-
-## Cheat only: right-click on a sock lights up its partner; on nothing clears it.
-func _show_partner() -> void:
-	if _field == null or _field.renderer == null or _field.socks == null:
-		return
-	var sock := aimed_sock()
-	_field.renderer.set_partner_highlight(_field.socks.partner_of(sock.sock_id) if sock else -1)
 
 
 func _check_summit(delta: float) -> void:

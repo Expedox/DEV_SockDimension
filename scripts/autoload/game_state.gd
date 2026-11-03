@@ -25,7 +25,7 @@ var pending_world: Dictionary = {}
 var world_provider: Object = null
 ## True while the clock runs (pile ready, run not finished).
 var running := false
-## Debug cheat (typed code from data/gameplay.json): right-click shows the partner sock. Never saved.
+## Debug cheat (typed code from data/gameplay.json): the partner of the held or aimed sock glows. Never saved.
 var cheat_mode := false
 
 

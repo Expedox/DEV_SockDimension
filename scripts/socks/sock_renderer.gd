@@ -117,7 +117,7 @@ func highlighted() -> int:
 	return _highlighted
 
 
-## Cheat only: a second glow that stays on the partner sock until cleared (-1).
+## Cheat only: a second glow on the partner sock; -1 clears it.
 func set_partner_highlight(sock: int) -> void:
 	if sock == _partner:
 		return
