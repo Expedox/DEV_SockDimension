@@ -67,6 +67,7 @@ func _build() -> void:
 	buttons.add_child(_continue_info)
 	_add(buttons, "MENU_NEW_GAME", _open_new_game)
 	_load_button = _add(buttons, "MENU_LOAD_GAME", _open_load)
+	_add(buttons, "MENU_LAN", _open_lan)
 	_add(buttons, "MENU_ACHIEVEMENTS", _open_achievements)
 	_add(buttons, "MENU_SETTINGS", _open_settings)
 	_add(buttons, "MENU_QUIT", SaveManager.save_and_quit, &"QuietButton")
@@ -114,6 +115,10 @@ func _open_new_game() -> void:
 
 func _open_load() -> void:
 	_open(SlotSelect.create(SlotSelect.Purpose.LOAD))
+
+
+func _open_lan() -> void:
+	_open(LanLobby.new())
 
 
 func _open_achievements() -> void:

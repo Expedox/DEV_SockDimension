@@ -409,3 +409,11 @@ found pairs are gone from the field, so the wall is safe. Before saving it puts
 the sock down. Purrs when you stand next to it asleep, meows when it grabs a
 sock. Walking up to it while it carries one unlocks the hidden `ACH_CAT_BURGLAR`.
 Dev check: `scenes/dev/cat_shot.tscn` (small pile, forces a theft, screenshots).
+
+## LAN: watching each other through a glass ceiling
+
+Main menu → LAN Game: one PC hosts, the other joins with the host's address (UDP port in data/net.json, default 24680; Windows firewall must allow it). Each player plays their own game (any mode, any seed, saves as usual). While the other player is in a run, the cellar ceiling turns to glass and their cellar is drawn on top of it: their socks as a second SockRenderer, their figure, and their pair count in the HUD.
+
+- scripts/autoload/net.gd (autoload Net): ENet connection, survives menus. Sends the player pose (20 Hz, unreliable) and every sock whose transform changed (SockRenderer.track_changes, max 600 per send, reliable). The run (mode + seed) goes first, so the viewer builds the same SockSet and sock ids match.
+- scripts/net/remote_cellar.gd: the other cellar, one room height plus the glass up. scripts/net/net_hud.gd: count and join/leave notes.
+- Tested in the cloud with two headless instances on 127.0.0.1: 3000 burst socks arrive on the other side; clean leave turns the glass back into planks.

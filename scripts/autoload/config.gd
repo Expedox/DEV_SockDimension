@@ -10,6 +10,7 @@ var world: Dictionary = {}
 ## data/world.json as written, laid out for its own room_size.
 var base_world: Dictionary = {}
 var achievements: Array = []
+var net: Dictionary = {}
 
 
 func _init() -> void:
@@ -17,6 +18,7 @@ func _init() -> void:
 	physics = _load("res://data/physics.json")
 	player = _load("res://data/player.json")
 	gameplay = _load("res://data/gameplay.json")
+	net = _load("res://data/net.json")
 	base_world = _load("res://data/world.json")
 	world = base_world.duplicate(true)
 	achievements = _load("res://data/achievements.json").get("achievements", [])

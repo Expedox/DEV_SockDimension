@@ -24,6 +24,10 @@ var _highlighted := -1
 var _partner := -1 # cheat glow, independent of the crosshair one
 var _sock_set: SockSet
 var _radius := 2.0
+## LAN race: remember which socks changed since the last take_changes().
+var track_changes := false
+var _changed := PackedByteArray() # per sock
+var _changed_list := PackedInt32Array()
 
 
 ## Call once per game. All socks start hidden. bounds must enclose the room, it
@@ -51,6 +55,9 @@ func setup(sock_set: SockSet, bounds: AABB, shadows := GeometryInstance3D.SHADOW
 	_positions.fill(FAR_AWAY)
 	_hidden.resize(count)
 	_hidden.fill(1)
+	_changed.resize(count)
+	_changed.fill(0)
+	_changed_list.clear()
 	var per_shape := PackedInt32Array()
 	per_shape.resize(SockCatalog.shape_count())
 	for sock in count:
@@ -95,6 +102,8 @@ func _add_layer(shape: int, detailed: bool, count: int, bounds: AABB,
 func set_sock_transform(sock: int, xform: Transform3D) -> void:
 	_positions[sock] = xform.origin
 	_hidden[sock] = 0
+	if track_changes and _changed[sock] == 0:
+		_mark(sock)
 	var near := _near_slot[sock]
 	if near >= 0:
 		_near[_shape_of[sock]].set_instance_transform(near, xform)
@@ -153,6 +162,37 @@ func hide_sock(sock: int) -> void:
 	_far[_shape_of[sock]].set_instance_transform(_slot_of[sock], HIDDEN)
 	_hidden[sock] = 1
 	_positions[sock] = FAR_AWAY
+	if track_changes and _changed[sock] == 0:
+		_mark(sock)
+
+
+func sock_count() -> int:
+	return _positions.size()
+
+
+func is_hidden(sock: int) -> bool:
+	return _hidden[sock] == 1
+
+
+func _mark(sock: int) -> void:
+	_changed[sock] = 1
+	_changed_list.append(sock)
+
+
+## Every sock counts as changed, so the whole pile is sent once.
+func mark_all_changed() -> void:
+	for sock in _changed.size():
+		if _changed[sock] == 0:
+			_mark(sock)
+
+
+## Up to limit sock ids that changed, oldest first; they count as unchanged after.
+func take_changes(limit: int) -> PackedInt32Array:
+	var out := _changed_list.slice(0, limit)
+	_changed_list = _changed_list.slice(limit)
+	for sock in out:
+		_changed[sock] = 0
+	return out
 
 
 ## World-space read back, used by saving and by anything that needs a sock without a body.
@@ -167,7 +207,7 @@ func _process(_delta: float) -> void:
 	var camera: Camera3D = get_viewport().get_camera_3d() if is_inside_tree() else null
 	if camera == null or _positions.is_empty():
 		return
-	var eye := camera.global_position
+	var eye := to_local(camera.global_position) # the rival's copy sits above the glass
 	var near_sq := _radius * _radius
 	var far_sq := near_sq * 1.3 # a little slack, so socks at the edge do not flicker
 

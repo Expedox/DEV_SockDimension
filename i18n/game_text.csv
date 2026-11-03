@@ -172,3 +172,21 @@ HINT_SPRINT,Shift: sprint
 HINT_ZOOM,Hold C: zoom
 LOST_AND_FOUND,LOST & FOUND
 HUD_LOST_FOUND,A sock turned up in Lost & Found
+MENU_LAN,LAN Game
+LAN_TITLE,LAN Game
+LAN_INTRO,"Play your own game and watch each other: the other player's cellar appears above your ceiling, which turns to glass."
+LAN_HOST,Host
+LAN_JOIN,Join
+LAN_DISCONNECT,Disconnect
+LAN_ADDRESS_PLACEHOLDER,"Address of the host, e.g. 192.168.0.12"
+LAN_YOUR_ADDRESS,Your address: {address}
+LAN_WAITING,Waiting for a second player...
+LAN_CONNECTING,Connecting...
+LAN_CONNECTED,"Connected! Start or continue any game, the other player shows up above you."
+LAN_FAILED,Could not connect. Same network? Same address?
+LAN_HOST_FAILED,Port {port} is already in use.
+LAN_LEFT,The other player left.
+LAN_VERSION_MISMATCH,The other player runs a different version of the game.
+HUD_RIVAL,Above you: {found} / {total}
+NET_RIVAL_JOINED,The other player is connected
+NET_RIVAL_LEFT,The other player left

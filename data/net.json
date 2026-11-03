@@ -1,0 +1,16 @@
+{
+  "port": 24680,
+  "protocol": 1,
+  "send_hz": 20,
+  "socks_per_send": 600,
+  "rival_smoothing": 14.0,
+  "glass_thickness": 0.06,
+  "glass_color": "#bfe3ef1c",
+  "rival_color": "#d9734e",
+  "rival_lights": [
+    { "position": [0.0, 3.0, 0.0], "energy": 1.2, "range": 18.0 },
+    { "position": [-6.0, 3.0, 4.0], "energy": 0.7, "range": 12.0 },
+    { "position": [6.0, 3.0, -4.0], "energy": 0.7, "range": 12.0 }
+  ],
+  "rival_light_color": "#ffd9a8"
+}

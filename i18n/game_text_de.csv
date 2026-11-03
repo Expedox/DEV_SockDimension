@@ -172,3 +172,21 @@ HINT_SPRINT,Shift: sprinten
 HINT_ZOOM,C halten: zoomen
 LOST_AND_FOUND,FUNDSACHEN
 HUD_LOST_FOUND,Eine Socke liegt jetzt bei den Fundsachen
+MENU_LAN,LAN-Spiel
+LAN_TITLE,LAN-Spiel
+LAN_INTRO,"Jeder spielt sein eigenes Spiel und ihr seht euch gegenseitig: Der Keller des anderen erscheint über deiner Decke, die dafür zu Glas wird."
+LAN_HOST,Hosten
+LAN_JOIN,Beitreten
+LAN_DISCONNECT,Trennen
+LAN_ADDRESS_PLACEHOLDER,"Adresse des Hosts, z. B. 192.168.0.12"
+LAN_YOUR_ADDRESS,Deine Adresse: {address}
+LAN_WAITING,Warte auf einen zweiten Spieler...
+LAN_CONNECTING,Verbinde...
+LAN_CONNECTED,"Verbunden! Starte oder setze ein Spiel fort, der andere Spieler erscheint über dir."
+LAN_FAILED,Keine Verbindung. Gleiches Netzwerk? Richtige Adresse?
+LAN_HOST_FAILED,Port {port} ist schon belegt.
+LAN_LEFT,Der andere Spieler ist gegangen.
+LAN_VERSION_MISMATCH,Der andere Spieler hat eine andere Spielversion.
+HUD_RIVAL,Über dir: {found} / {total}
+NET_RIVAL_JOINED,Der andere Spieler ist verbunden
+NET_RIVAL_LEFT,Der andere Spieler ist gegangen

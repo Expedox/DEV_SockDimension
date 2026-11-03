@@ -101,6 +101,14 @@ func _ready() -> void:
 
 	add_child((load(TUNING_SCENE) as PackedScene).instantiate())
 
+	# LAN: the other player's cellar above a glass ceiling, while connected.
+	var rival := RemoteCellar.new()
+	rival.name = "RivalCellar"
+	add_child(rival)
+	rival.setup(cellar)
+	add_child(NetHud.new())
+	Net.attach(field.renderer, player)
+
 	Events.pile_ready.connect(_on_pile_ready)
 	Events.rain_finished.connect(_on_rain_finished)
 	Events.pair_matched.connect(_on_pair_matched)
@@ -293,6 +301,7 @@ func _on_pile_ready() -> void:
 
 
 func _exit_tree() -> void:
+	Net.detach(field.renderer)
 	if GameState.world_provider == self:
 		GameState.world_provider = null
 		GameState.running = false

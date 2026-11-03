@@ -16,6 +16,7 @@ Settings="*res://scripts/autoload/settings.gd"
 SaveManager="*res://scripts/autoload/save_manager.gd"
 Achievements="*res://scripts/achievements/achievement_service.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
+Net="*res://scripts/autoload/net.gd"
 
 [display]
 

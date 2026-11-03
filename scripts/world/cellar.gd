@@ -125,6 +125,38 @@ func _build_shell() -> void:
 	_add_solid("WallWest", Vector3(t, size.y, size.z), Vector3(-half.x - t * 0.5, wall_y, 0), wall_material)
 
 
+## LAN: while the other player is in a run, the planks give way to a pane of
+## glass with their cellar on top. The thick slab still collides either way.
+func set_glass_ceiling(on: bool) -> void:
+	var planks := get_node("Ceiling").get_child(1) as MeshInstance3D
+	planks.visible = not on
+	var pane := get_node_or_null("Glass") as MeshInstance3D
+	if pane == null and on:
+		pane = _build_glass(_room_size)
+	if pane:
+		pane.visible = on
+
+
+func _build_glass(size: Vector3) -> MeshInstance3D:
+	var thickness := float(Config.net.get("glass_thickness", 0.06))
+	var pane := BoxMesh.new()
+	pane.size = Vector3(size.x, thickness, size.z)
+	var glass := StandardMaterial3D.new()
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.albedo_color = Color(Config.net.get("glass_color", "#bfe3ef1c"))
+	glass.roughness = 0.05
+	glass.metallic_specular = 0.9
+	glass.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var part := MeshInstance3D.new()
+	part.name = "Glass"
+	part.mesh = pane
+	part.material_override = glass
+	part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	part.position = Vector3(0, size.y + thickness * 0.5, 0)
+	add_child(part)
+	return part
+
+
 func _add_solid(node_name: String, size: Vector3, at: Vector3, material: Material) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.name = node_name
