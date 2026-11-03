@@ -1,10 +1,11 @@
 extends CanvasLayer
-## Esc menu during a run: Resume, Save, Settings, Main Menu, Quit. Pauses the
+## Esc menu during a run: Resume, Save, Achievements, Settings, Main Menu, Quit. Pauses the
 ## tree while open and also opens when the window loses focus.
 
 var _root: Control
 var _buttons: VBoxContainer
 var _settings: SettingsPanel
+var _achievements: AchievementsMenu
 var _sheet: Control
 
 
@@ -19,8 +20,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed("pause"):
 		return
 	if is_open():
-		# The settings panel handles its own Esc.
-		if _settings == null:
+		# Sub screens handle their own Esc.
+		if _settings == null and _achievements == null:
 			get_viewport().set_input_as_handled()
 			resume()
 	elif _can_open():
@@ -47,6 +48,7 @@ func open() -> void:
 
 func resume() -> void:
 	_close_settings()
+	_close_achievements()
 	_root.hide()
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -77,6 +79,7 @@ func _build() -> void:
 	column.add_child(_buttons)
 	_add("MENU_RESUME", resume, &"PrimaryButton")
 	_add("MENU_SAVE", SaveManager.save_current)
+	_add("MENU_ACHIEVEMENTS", _open_achievements)
 	_add("MENU_SETTINGS", _open_settings)
 	_add("MENU_MAIN_MENU", _to_main_menu)
 	_add("MENU_QUIT", SaveManager.save_and_quit, &"QuietButton")
@@ -96,8 +99,27 @@ func _open_settings() -> void:
 	_sheet.hide()
 	_settings.closed.connect(func() -> void:
 		_close_settings()
-		_buttons.get_child(2).grab_focus())
+		_buttons.get_child(3).grab_focus())
 	_root.add_child(_settings)
+
+
+func _open_achievements() -> void:
+	if _achievements or _settings:
+		return
+	_achievements = AchievementsMenu.new()
+	_achievements.with_backdrop = false
+	_sheet.hide()
+	_achievements.closed.connect(func() -> void:
+		_close_achievements()
+		_buttons.get_child(2).grab_focus())
+	_root.add_child(_achievements)
+
+
+func _close_achievements() -> void:
+	if _achievements:
+		UiKit.fade_out_and_free(_achievements)
+		_achievements = null
+		_sheet.show()
 
 
 func _close_settings() -> void:

@@ -2,8 +2,12 @@ class_name AchievementsMenu
 extends Control
 ## Achievement list with total percentage. Add it as a full-screen child and
 ## listen for closed; it reads everything from the Achievements autoload.
+## Shows the current run. Locked entries stay fully covered as "???".
 
 signal closed
+
+## False inside the pause menu: dims the game instead of the menu backdrop.
+var with_backdrop := true
 
 const CONTENT_WIDTH := 860.0
 const LOCKED_ALPHA := 0.75
@@ -51,8 +55,11 @@ func refresh() -> void:
 	for child in _rows.get_children():
 		_rows.remove_child(child)
 		child.queue_free()
-	for definition: Dictionary in Achievements.get_definitions():
-		_rows.add_child(_make_row(definition))
+	# Unlocked ones first so they are easy to look up.
+	for want_unlocked: bool in [true, false]:
+		for definition: Dictionary in Achievements.get_definitions():
+			if Achievements.is_unlocked(definition.id) == want_unlocked:
+				_rows.add_child(_make_row(definition))
 
 
 func _on_changed(_id: String) -> void:
@@ -66,7 +73,8 @@ func _on_progress_changed(_id: String, _current: int, _target: int) -> void:
 func _make_row(definition: Dictionary) -> Control:
 	var id: String = definition.id
 	var is_done: bool = Achievements.is_unlocked(id)
-	var is_secret: bool = definition.hidden and not is_done
+	# Locked entries give nothing away, not even their progress.
+	var is_secret: bool = not is_done
 
 	var panel := PanelContainer.new()
 	panel.theme_type_variation = &"CardPanel"
@@ -113,7 +121,13 @@ func _make_row(definition: Dictionary) -> Control:
 
 
 func _build() -> void:
-	var background := MenuBackdrop.new()
+	var background: Control
+	if with_backdrop:
+		background = MenuBackdrop.new()
+	else:
+		var dim := ColorRect.new()
+		dim.color = UiTheme.color("dim")
+		background = dim
 	background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(background)
 
