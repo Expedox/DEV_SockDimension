@@ -27,6 +27,7 @@ var _rain_done := true
 ## Rift waits for the tutorial instead of a short timer.
 var _wait_for_lesson := false
 var _rift_started := false
+var wall: SockWall
 
 
 func _ready() -> void:
@@ -52,6 +53,13 @@ func _ready() -> void:
 	pairs.name = "PairController"
 	add_child(pairs)
 	pairs.setup(player, field, cellar, socks)
+
+	# Found pairs hang on the wall; rebuilt from the found list on load.
+	wall = SockWall.new()
+	wall.name = "SockWall"
+	cellar.add_child(wall)
+	wall.setup(socks, Config.world["pair_wall"], GameState.found_pair_ids)
+	Events.pair_matched.connect(wall.on_pair_matched)
 
 	for path: String in UI_SCENES:
 		if ResourceLoader.exists(path):

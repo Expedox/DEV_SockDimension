@@ -44,6 +44,24 @@ static func collision_size(shape: int) -> Vector3:
 	return Vector3(size.x * fit, size.y, size.z * fit)
 
 
+## Bounds of the cheap mesh in mesh space.
+static func mesh_aabb(shape: int) -> AABB:
+	_ensure_built()
+	return _far_meshes[shape].get_aabb()
+
+
+## Unit vector from the heel up the leg, in mesh space (same for every shape).
+static func leg_direction() -> Vector3:
+	var angle := deg_to_rad(float(SockCatalog.mesh_values()["heel_angle_deg"]))
+	return Vector3(cos(angle), 0.0, sin(angle))
+
+
+## Centre of the cuff opening in mesh space, where a sock hangs from a peg.
+static func cuff_point(shape: int) -> Vector3:
+	_ensure_built()
+	return leg_direction() * float(SockCatalog.shape(shape)["leg_length"]) + _offsets[shape]
+
+
 static func _ensure_built() -> void:
 	if _meshes.is_empty():
 		for shape in SockCatalog.shape_count():

@@ -23,6 +23,7 @@ func _ready() -> void:
 	_test_game_state_counters()
 	_test_achievements()
 	_test_socks()
+	_test_sock_wall()
 	await _test_pair_controller()
 
 	print("%d checks, %d failed" % [_checks, _failures])
@@ -195,6 +196,33 @@ func _test_socks() -> void:
 		check(far_mesh.surface_get_array_len(0) < near_mesh.surface_get_array_len(0), "far mesh is cheaper for " + SockCatalog.shape_id(shape))
 		var size := SockMesh.collision_size(shape)
 		check(size.x > 0.05 and size.y > 0.01 and size.z > 0.05, "box for " + SockCatalog.shape_id(shape))
+
+
+func _test_sock_wall() -> void:
+	var config: Dictionary = Config.world["pair_wall"]
+	var size := Vector2(config["size"][0], config["size"][1])
+	for pairs in [1000, 5000]:
+		var socks := SockSet.generate(5, pairs, 0.2)
+		var wall := SockWall.new()
+		add_child(wall)
+		var found := PackedInt32Array([0, 7, pairs - 1])
+		wall.setup(socks, config, found)
+		check(wall.sock_scale > 0.1, "wall socks readable for %d pairs (scale %.2f)" % [pairs, wall.sock_scale])
+		check(wall.is_shown(7) and not wall.is_shown(8), "wall shows exactly the found pairs")
+		wall.on_pair_matched(8, 0, 0)
+		check(wall.is_shown(8), "a new match goes on the wall")
+		# Every slot sits on the board and no two pairs share one.
+		var seen := {}
+		var inside := true
+		for pair in pairs:
+			var at: Vector3 = wall._xform_a[pair].origin
+			var key := Vector2i(roundi(at.x * 1000.0), roundi(at.y * 1000.0)) * 2 + Vector2i(socks.shapes[pair], 0)
+			seen[key] = true
+			if absf(at.x) > size.x * 0.5 or absf(at.y) > size.y * 0.5:
+				inside = false
+		check(inside, "all %d slots on the board" % pairs)
+		check(seen.size() == pairs, "one slot per pair (%d of %d)" % [seen.size(), pairs])
+		wall.free()
 
 
 func _test_pair_controller() -> void:

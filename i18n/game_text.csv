@@ -133,3 +133,6 @@ TUT_MISS_TITLE,Not quite
 TUT_MISS_TEXT,"Those two only look alike. Check colour, pattern, stripes and length, then try again."
 TUT_DONE_TITLE,Look up!
 TUT_DONE_TEXT,"The rift is open and the rest of the socks are coming. Climb the pile and find every pair. Esc pauses and saves."
+WALL_SHAPE_SNEAKER,Sneaker socks
+WALL_SHAPE_SPORT,Sport socks
+WALL_SHAPE_KNEE,Knee-highs

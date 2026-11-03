@@ -157,6 +157,20 @@ or `GameState.register_mismatch(near_miss)`. These emit
 not on the key press. It emits `Events.sock_in_basket(sock_id)` when a single
 thrown sock (thrown and not grabbed since) lands in the basket.
 
+### Sock wall
+
+`SockWall` (`scripts/world/sock_wall.gd`), built by `game.gd` as a child of the cellar,
+values in `data/world.json` → `pair_wall` (east wall, wooden board 12.6 × 4.8 m).
+Found pairs hang there instead of vanishing: one band per shape (sneaker, sport,
+knee-high, with a found/total label), one block per base colour in palette order,
+inside a block sorted by pattern, count, accent and heel/toe. Every pair of the set
+has a fixed slot from the start, so gaps show what is still missing. The layout
+picks one sock scale that fits the whole set (about 0.4 for 1,000 pairs, 0.19 for
+5,000). One MultiMesh per shape with the far sock mesh and shader, no shadows,
+plus one MultiMesh for the peg rails. `Events.pair_matched` adds a pair with a
+short pop. Nothing extra is saved: the wall is rebuilt from `found` on load.
+Screenshots: `scenes/dev/wall_shot.tscn -- <pairs> <share> <png prefix>`.
+
 ### Game scene
 
 `scenes/game.tscn` with `scripts/game.gd` builds the run: `Cellar`, `SockField`,
