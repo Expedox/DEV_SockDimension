@@ -1,6 +1,6 @@
 extends Node
-## Starts a real laundry day run headless (no intro, so the rift opens on its
-## own) and quits once the pile has rained in:
+## Starts a real laundry day run headless, sets off the washer right away and
+## quits once the scattered socks have settled:
 ##   godot --headless --path . res://scenes/dev/smoke_run.tscn
 ## With a window and "-- <mode> <png path>" it also saves a screenshot from the spawn point.
 
@@ -21,6 +21,7 @@ func _enter_tree() -> void:
 	if not has_meta("keeper"):
 		return
 	Events.rain_finished.connect(_on_ready_pile)
+	Events.pile_ready.connect(func() -> void: GameState.world_provider.blast.start(), CONNECT_ONE_SHOT)
 
 
 func _on_ready_pile() -> void:

@@ -121,10 +121,10 @@ INTRO_2_LINE,The lost socks don't vanish.
 INTRO_2_BODY,"They tumble through a tiny fold in the fabric of laundry and land in the Sock Dimension, a place made of nothing but odd socks."
 INTRO_3_LINE,"For years, they piled up."
 INTRO_3_BODY,"Thousands of them. Striped, dotted, ankle-short and knee-high. Each one alone, each one waiting for its twin."
-INTRO_4_LINE,"Tonight, the fold is tearing open. Right above your cellar."
-INTRO_4_BODY,"A few socks already slipped through early. The rest are right behind them."
+INTRO_4_LINE,"Tonight, the fold opened inside your washing machine."
+INTRO_4_BODY,"A few socks have already slipped out onto the lid. Something much bigger is still rumbling in the drum."
 INTRO_5_LINE,Bring them back together.
-INTRO_5_BODY,"Match each sock with its twin and the two roll up and hop into the laundry basket. Start with the early ones on the washing machine."
+INTRO_5_BODY,"Match each sock with its twin and the two roll up and hop into the laundry basket. Start with the pairs on the washing machine."
 INTRO_CONTINUE,Click or Space to continue  ·  Esc to skip
 INTRO_WAIT,The last socks are still landing...
 INTRO_START,Click or Space to start
@@ -140,8 +140,8 @@ TUT_PAIR_TITLE,Make a pair
 TUT_PAIR_TEXT,"Hold one sock, aim at its twin and press E. A match rolls up and flies into the basket."
 TUT_MISS_TITLE,Not quite
 TUT_MISS_TEXT,"Those two only look alike. Check colour, pattern, stripes and length, then try again."
-TUT_DONE_TITLE,Look up!
-TUT_DONE_TEXT,"The rift is open and the rest of the socks are coming. Climb the pile and find every pair. Esc pauses and saves."
+TUT_DONE_TITLE,Nicely done
+TUT_DONE_TEXT,"Pair up the rest of the socks on the washing machine. Is it shaking a little?"
 WALL_SHAPE_SNEAKER,Sneaker socks
 WALL_SHAPE_SPORT,Sport socks
 WALL_SHAPE_KNEE,Knee-highs
@@ -155,3 +155,5 @@ SLOT_SAVED_AT,Saved {date}
 SLOT_DELETE,Delete
 SLOT_DELETE_TITLE,Delete Save?
 SLOT_DELETE_BODY,The saved game in slot {n} will be gone for good.
+TUT_BLAST_TITLE,Uh-oh
+TUT_BLAST_TEXT,"The washing machine burst and the Sock Dimension is all over the cellar. Find every pair. Esc pauses and saves."

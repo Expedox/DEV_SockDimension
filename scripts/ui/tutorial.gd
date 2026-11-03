@@ -3,10 +3,7 @@ extends CanvasLayer
 ## First-steps card at the top of the screen. Each step waits for the player to
 ## do the thing it names, then moves on. Steps and timings are in data/gameplay.json.
 
-## The player made a pair: time for the rest of the socks.
-signal lesson_done
-
-const STEPS := ["move", "grab", "inspect", "throw", "pair", "done"]
+const STEPS := ["move", "grab", "inspect", "throw", "pair", "done", "blast"]
 
 var _card: PanelContainer
 var _title: Label
@@ -25,6 +22,9 @@ func _ready() -> void:
 	Events.sock_thrown.connect(func(_id: int) -> void: _done_if("throw"))
 	Events.pair_matched.connect(_on_matched)
 	Events.pair_mismatched.connect(_on_mismatched)
+	Events.rain_started.connect(func() -> void:
+		_step = STEPS.find("done")
+		_advance())
 	_advance()
 
 
@@ -45,7 +45,7 @@ func _process(delta: float) -> void:
 			if Input.is_action_pressed("inspect") and _step_time > 1.0 \
 					or _step_time > float(_cfg.get("inspect_seconds", 12.0)):
 				_advance()
-		"done":
+		"blast":
 			if _step_time > float(_cfg.get("done_seconds", 6.0)):
 				var tween := create_tween()
 				tween.tween_property(_card, "modulate:a", 0.0, 0.6)
@@ -61,13 +61,13 @@ func _done_if(step: String) -> void:
 
 func _on_matched(_pair_id: int, _color: int, _pattern: int) -> void:
 	# A pair found early skips the rest of the lesson.
-	if STEPS[_step] != "done":
+	if _step < STEPS.find("done"):
 		_step = STEPS.find("pair")
 		_advance()
 
 
 func _on_mismatched(_near_miss: bool) -> void:
-	if STEPS[_step] == "done":
+	if _step >= STEPS.find("done"):
 		return
 	_set_text("TUT_MISS_TITLE", "TUT_MISS_TEXT")
 	_tip_time = float(_cfg.get("tip_seconds", 4.0))
@@ -78,8 +78,6 @@ func _advance() -> void:
 	_step_time = 0.0
 	_tip_time = 0.0
 	_show_step()
-	if STEPS[_step] == "done":
-		lesson_done.emit()
 	if _step > 0:
 		var tween := _card.create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_card.scale = Vector2.ONE * 0.92

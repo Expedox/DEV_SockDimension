@@ -286,8 +286,8 @@
       ],
       "ambient": true
     },
-    "rift_open": {
-      "volume_db": -3.0,
+    "washer_rumble": {
+      "volume_db": -4.0,
       "pitch_jitter": 0.0,
       "variants": 1,
       "max_per_second": 1,
@@ -295,76 +295,76 @@
         {
           "type": "noise",
           "filter": "lowpass",
-          "cutoff_start": 180,
-          "cutoff_end": 2400,
-          "resonance": 0.8,
-          "duration": 2.4,
-          "attack": 1.6,
-          "curve": 2.0,
-          "gain": 0.5
+          "cutoff_start": 90,
+          "cutoff_end": 600,
+          "resonance": 0.9,
+          "duration": 2.3,
+          "attack": 2.0,
+          "curve": 1.5,
+          "gain": 0.6
         },
         {
           "type": "tone",
-          "duration": 2.6,
-          "freq_start": 55,
-          "freq_end": 220,
+          "duration": 2.3,
+          "freq_start": 40,
+          "freq_end": 95,
+          "harmonics": [
+            1.0,
+            0.6,
+            0.3,
+            0.2
+          ],
+          "attack": 1.8,
+          "curve": 1.5,
+          "gain": 0.4
+        }
+      ]
+    },
+    "washer_boom": {
+      "volume_db": 0.0,
+      "pitch_jitter": 0.0,
+      "variants": 1,
+      "max_per_second": 1,
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lowpass",
+          "cutoff_start": 3500,
+          "cutoff_end": 80,
+          "resonance": 0.5,
+          "duration": 1.4,
+          "attack": 0.002,
+          "curve": 4.0,
+          "gain": 0.8
+        },
+        {
+          "type": "tone",
+          "duration": 0.9,
+          "freq_start": 110,
+          "freq_end": 30,
           "harmonics": [
             1.0,
             0.5,
-            0.25,
-            0.12
+            0.25
           ],
-          "attack": 1.2,
-          "curve": 2.5,
-          "gain": 0.35
+          "attack": 0.002,
+          "curve": 3.5,
+          "gain": 0.7
         },
         {
           "type": "tone",
-          "delay": 1.8,
-          "duration": 1.2,
-          "freq_start": 880,
-          "freq_end": 1320,
+          "delay": 0.25,
+          "duration": 0.6,
+          "freq_start": 620,
+          "freq_end": 880,
           "harmonics": [
             1.0,
             0.0,
             0.2
           ],
-          "attack": 0.05,
-          "curve": 4.0,
-          "gain": 0.12
-        }
-      ]
-    },
-    "rift_close": {
-      "volume_db": -6.0,
-      "pitch_jitter": 0.0,
-      "variants": 1,
-      "max_per_second": 1,
-      "layers": [
-        {
-          "type": "tone",
-          "duration": 2.2,
-          "freq_start": 330,
-          "freq_end": 60,
-          "harmonics": [
-            1.0,
-            0.4,
-            0.15
-          ],
-          "attack": 0.1,
-          "curve": 3.0,
-          "gain": 0.3
-        },
-        {
-          "type": "noise",
-          "filter": "lowpass",
-          "cutoff_start": 1800,
-          "cutoff_end": 120,
-          "resonance": 0.6,
-          "duration": 1.6,
-          "attack": 0.05,
-          "curve": 3.0,
-          "gain": 0.3
+          "attack": 0.01,
+          "curve": 5.0,
+          "gain": 0.1
         }
       ]
     }

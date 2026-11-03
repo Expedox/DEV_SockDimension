@@ -64,7 +64,7 @@ func _refresh() -> void:
 
 
 func _on_ready() -> void:
-	# Later progress comes from the rift pouring in plain sight.
+	# Later progress comes from the washer burst, in plain sight.
 	Events.pile_progress.disconnect(_on_progress)
 	_done = _total
 	_refresh()

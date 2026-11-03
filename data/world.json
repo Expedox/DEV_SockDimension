@@ -250,12 +250,102 @@
   },
   "pair_wall": {
     "panels": [
-      { "center": [8.96, 2.95, 0.0], "normal": [-1.0, 0.0, 0.0], "size": [13.6, 5.4] },
-      { "center": [0.0, 2.95, 6.96], "normal": [0.0, 0.0, -1.0], "size": [17.6, 5.4] },
-      { "center": [-8.96, 2.95, 5.35], "normal": [1.0, 0.0, 0.0], "size": [2.9, 5.4] },
-      { "center": [-8.96, 3.93, 2.5], "normal": [1.0, 0.0, 0.0], "size": [2.6, 3.44] },
-      { "center": [-8.96, 2.95, -0.1], "normal": [1.0, 0.0, 0.0], "size": [2.4, 5.4] },
-      { "center": [2.5, 1.85, -6.96], "normal": [0.0, 0.0, 1.0], "size": [12.6, 3.2] }
+      {
+        "center": [
+          8.96,
+          2.95,
+          0.0
+        ],
+        "normal": [
+          -1.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          13.6,
+          5.4
+        ]
+      },
+      {
+        "center": [
+          0.0,
+          2.95,
+          6.96
+        ],
+        "normal": [
+          0.0,
+          0.0,
+          -1.0
+        ],
+        "size": [
+          17.6,
+          5.4
+        ]
+      },
+      {
+        "center": [
+          -8.96,
+          2.95,
+          5.35
+        ],
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          2.9,
+          5.4
+        ]
+      },
+      {
+        "center": [
+          -8.96,
+          3.93,
+          2.5
+        ],
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          2.6,
+          3.44
+        ]
+      },
+      {
+        "center": [
+          -8.96,
+          2.95,
+          -0.1
+        ],
+        "normal": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "size": [
+          2.4,
+          5.4
+        ]
+      },
+      {
+        "center": [
+          2.5,
+          1.85,
+          -6.96
+        ],
+        "normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "size": [
+          12.6,
+          3.2
+        ]
+      }
     ],
     "margin": 0.08,
     "board_depth": 0.04,
@@ -376,30 +466,6 @@
       }
     ]
   },
-  "rift": {
-    "position": [
-      0.0,
-      5.5,
-      0.0
-    ],
-    "size": [
-      5.0,
-      0.0,
-      2.6
-    ],
-    "yaw_degrees": 20.0,
-    "edge_color": "#7b4dff",
-    "core_color": "#d9c4ff",
-    "tear_energy": 0.9,
-    "light_energy": 4.0,
-    "light_range": 11.0,
-    "open_seconds": 2.2,
-    "close_seconds": 3.0,
-    "scar_amount": 0.12,
-    "spark_count": 160,
-    "spark_lifetime": 1.6,
-    "delay_seconds": 3.0
-  },
   "dust": {
     "tint": "#ffe6c4",
     "strength": 0.55,
@@ -456,5 +522,21 @@
       "soft_shadows": 3,
       "dust": 1.0
     }
+  },
+  "washer_blast": {
+    "shake_seconds": 2.2,
+    "shake_amount": 0.06,
+    "calm_seconds": 2.5,
+    "flash_color": "#fff1d6",
+    "flash_energy": 8.0,
+    "flash_range": 12.0,
+    "flash_seconds": 0.8,
+    "foam_count": 160,
+    "foam_lifetime": 3.0,
+    "wave_size": 60,
+    "flight_min": 0.7,
+    "flight_max": 1.5,
+    "spawn_spread": 0.4,
+    "wall_margin": 0.8
   }
 }

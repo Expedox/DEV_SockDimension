@@ -359,8 +359,8 @@ throws), audio, and the real FPS.
 - First new game shows five story beats (`scenes/ui/intro.tscn`) over the pour. Click/Space/Enter goes on, Esc skips. If the pile is ready first, the game stays paused until the story ends; the last beat fades to show the cellar.
 - Then a tutorial card (`scenes/ui/tutorial.tscn`) walks through look, grab, inspect, throw and pair; each step waits for the action. Timings in `data/gameplay.json` → `tutorial`.
 - Setting `show_intro` ("Story and tutorial on next new game") turns itself off after one showing; switch it on again in Settings to replay.
-- A new run starts with only `starter_pairs` (data/gameplay.json, 3) whole pairs side by side on the washing machine lid (`SockField.prepare`). The rest of the pile rains in through a rift under the ceiling (`scripts/world/rift.gd`, look in data/world.json -> `rift`) once the tutorial pair is made, or after `rift.delay_seconds` without the tutorial (`SockField.pour_rest`, then `Events.rain_finished`).
-- Saves carry `rain_done`. Saved before the rain: starters come back and the rift opens on load. Saved mid-rain: no stable snapshot, so it starts again from the starters (minus found pairs). Old saves count as done.
+- A new run starts with only `starter_pairs` (data/gameplay.json, 3) whole pairs side by side on the washing machine lid (`SockField.prepare`). The washing machine is the tear into the Sock Dimension: once all starter pairs are found it shakes, bursts with a flash and foam (`scripts/world/washer_blast.gd`, data/world.json -> `washer_blast`) and throws every other sock on its own arc to a random spot across the whole room (`SockField.pour_rest` with a burst, then `Events.rain_finished`).
+- Saves carry `rain_done`. Saved before the burst: the starters come back. Saved mid-burst: no stable snapshot, so it starts again from the starters (minus found pairs), and the burst follows at once if they are all found. Old saves count as done.
 
 ## Cellar atmosphere
 

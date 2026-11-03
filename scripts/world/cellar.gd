@@ -66,6 +66,11 @@ func washer_top() -> Transform3D:
 	return Transform3D(basis, vec3(_data["washer_position"]) + Vector3.UP * size.y)
 
 
+## The washing machine body, for shaking it.
+func washer() -> Node3D:
+	return get_node("WashingMachine")
+
+
 ## Lid size of the washing machine (x width, z depth).
 func washer_lid() -> Vector2:
 	var size := vec3(_data["washer_size"])

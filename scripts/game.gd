@@ -20,13 +20,13 @@ var cellar: Cellar
 var field: SockField
 var player: Player
 var pairs: PairController
-var rift: Rift
+var blast: WasherBlast
 
-## False until the rest of the pile came through the rift.
+## False until the washing machine burst and the rest of the socks settled.
 var _rain_done := true
-## Rift waits for the tutorial instead of a short timer.
-var _wait_for_lesson := false
-var _rift_started := false
+var _blast_started := false
+## Pairs that start on the washer lid; finding all of them sets off the burst.
+var _starter_pairs: Array[int] = []
 var wall: SockWall
 
 
@@ -65,29 +65,30 @@ func _ready() -> void:
 		if ResourceLoader.exists(path):
 			add_child((load(path) as PackedScene).instantiate())
 
-	rift = Rift.new()
-	rift.name = "Rift"
-	add_child(rift)
-	rift.position = Cellar.vec3(Config.world.get("rift", {}).get("position", [0.0, 5.6, 0.0]))
-	rift.opened.connect(_on_rift_opened)
+	blast = WasherBlast.new()
+	blast.name = "WasherBlast"
+	add_child(blast)
+	blast.global_transform = cellar.washer_top()
+	blast.setup(cellar.washer())
+	blast.burst.connect(_on_washer_burst)
 
 	# Story and first steps on a fresh pile, once, until switched on again in Settings.
-	# The rift opens when the tutorial is through.
 	if not world.has("socks") and Settings.show_intro:
 		Settings.set_value("show_intro", false)
 		Settings.save()
-		_wait_for_lesson = true
 		var intro: Node = (load(INTRO_SCENE) as PackedScene).instantiate()
 		intro.finished.connect(_start_tutorial)
 		add_child(intro)
 
 	Events.pile_ready.connect(_on_pile_ready)
 	Events.rain_finished.connect(_on_rain_finished)
+	Events.pair_matched.connect(func(_p: int, _c: int, _t: int) -> void: _check_starters())
 	GameState.world_provider = self
+	_pick_starter_pairs()
 	_build_pile.call_deferred(world)
 
 
-## Mid-rain the field has no stable snapshot: socks stays empty and the rain
+## Mid-burst the field has no stable snapshot: socks stays empty and the run
 ## starts over from the starter pairs on load.
 func capture_world() -> Dictionary:
 	return {"socks": field.capture(), "player": player.capture(), "rain_done": _rain_done}
@@ -99,25 +100,48 @@ func _build_pile(world: Dictionary) -> void:
 	if world.has("socks") and (_rain_done or saved.has("ids")):
 		field.restore(socks, saved)
 	else:
-		# New run: only the starter pairs; the rest rains in through the rift.
+		# New run: only the starter pairs; the rest bursts out of the washer later.
 		_rain_done = false
 		field.prepare(socks, _starter_placements())
 
 
+## The first few plain pairs of the set; the same for a seed every time.
+func _pick_starter_pairs() -> void:
+	var wanted := mini(int(Config.gameplay.get("starter_pairs", 3)), socks.pair_count)
+	for pair in socks.pair_count:
+		if _starter_pairs.size() >= wanted:
+			break
+		if socks.near_of[pair] == -1:
+			_starter_pairs.append(pair)
+
+
 func _start_tutorial() -> void:
-	var tutorial: Node = (load(TUTORIAL_SCENE) as PackedScene).instantiate()
-	tutorial.lesson_done.connect(_open_rift)
-	add_child(tutorial)
+	add_child((load(TUTORIAL_SCENE) as PackedScene).instantiate())
 
 
-func _open_rift() -> void:
-	if _rift_started or _rain_done:
+## Sets off the washer once every starter pair is found.
+func _check_starters() -> void:
+	if _blast_started or _rain_done:
 		return
-	_rift_started = true
-	rift.open()
+	for pair in _starter_pairs:
+		if not pair in GameState.found_pair_ids:
+			return
+	_blast_started = true
+	blast.start()
 
 
-func _on_rift_opened() -> void:
+func _on_washer_burst() -> void:
+	var cfg: Dictionary = Config.world.get("washer_blast", {})
+	var room := cellar.room_bounds()
+	var margin := float(cfg.get("wall_margin", 0.8))
+	var burst := {
+		"origin": cellar.washer_top().origin + Vector3.UP * 0.3,
+		"area": room.grow(-margin),
+		"wave_size": int(cfg.get("wave_size", 60)),
+		"flight_min": float(cfg.get("flight_min", 0.8)),
+		"flight_max": float(cfg.get("flight_max", 1.6)),
+		"spawn_spread": float(cfg.get("spawn_spread", 0.4)),
+	}
 	var skip := {}
 	var found := {}
 	for pair in GameState.found_pair_ids:
@@ -125,24 +149,20 @@ func _on_rift_opened() -> void:
 	for sock_id in socks.sock_count():
 		if found.has(socks.pair_of(sock_id)):
 			skip[sock_id] = true
-	field.pour_rest(Config.mode(GameState.mode_id), skip)
+	field.pour_rest(Config.mode(GameState.mode_id), skip, burst)
 
 
 func _on_rain_finished() -> void:
 	_rain_done = true
-	rift.close()
 	SaveManager.save_current.call_deferred()
 
 
 ## A few whole pairs laid side by side on the washing machine, so the first
 ## match is right there. Count in data/gameplay.json.
 func _starter_placements() -> Dictionary:
-	var wanted := mini(int(Config.gameplay.get("starter_pairs", 3)), socks.pair_count)
 	var pair_ids: Array[int] = []
-	for pair in socks.pair_count:
-		if pair_ids.size() >= wanted:
-			break
-		if socks.near_of[pair] == -1 and not pair in GameState.found_pair_ids:
+	for pair in _starter_pairs:
+		if not pair in GameState.found_pair_ids:
 			pair_ids.append(pair)
 	var by_pair := {}
 	for sock_id in socks.sock_count():
@@ -169,10 +189,7 @@ func _on_pile_ready() -> void:
 	GameState.pending_world = {}
 	GameState.running = not GameState.completed
 	Events.run_started.emit(GameState.mode_id)
-	if _rain_done:
-		rift.show_scar()
-	elif not _wait_for_lesson:
-		get_tree().create_timer(float(Config.world.get("rift", {}).get("delay_seconds", 3.0))).timeout.connect(_open_rift)
+	_check_starters()
 
 
 func _exit_tree() -> void:

@@ -50,6 +50,8 @@ var _ghosts := {} # sock_id -> held Sock that still passes through other socks
 var _carried := {} # sock_id -> true, held in the player's bundle: always a ghost
 var _skip := {} # sock_id -> true, left out of the current pour
 var _raining := false # pour_rest() on a field that is already in play
+var _burst := {} # pour_rest() burst settings, empty for a normal pour
+var _airborne := {} # sock_id -> seconds left flying through other socks after a burst
 
 var _summit := Vector3.ZERO
 var _scan_best := Vector3(0.0, -INF, 0.0)
@@ -101,9 +103,12 @@ func prepare(sock_set: SockSet, placements: Dictionary) -> void:
 
 
 ## Pours every sock that is not in play yet into a field that is already
-## running (the rift). skip holds sock ids to leave out, such as found pairs.
+## running. skip holds sock ids to leave out, such as found pairs. With burst
+## ({origin: Vector3, area: AABB, wave_size, flight_min, flight_max}) the socks
+## are thrown from origin to random spots on the floor of area instead.
 ## Emits Events.rain_finished instead of pile_ready when done.
-func pour_rest(mode: Dictionary, skip: Dictionary) -> void:
+func pour_rest(mode: Dictionary, skip: Dictionary, burst := {}) -> void:
+	_burst = burst
 	_skip = skip.duplicate()
 	for sock_id in _bodies.size():
 		if _bodies[sock_id] != null:
@@ -303,6 +308,8 @@ func _begin(sock_set: SockSet) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not _airborne.is_empty():
+		_land_airborne(delta)
 	_freeze_sleepers()
 	_solidify_ghosts()
 	# Also while pouring: landing socks must shake the top loose, or frozen
@@ -315,7 +322,10 @@ func _physics_process(delta: float) -> void:
 			# Waves wait while too much is still tumbling; that bounds the step cost.
 			if _frame % int(_tuning.wave_interval_frames) == 0 \
 					and _awake.size() < int(_tuning.pour_max_awake):
-				_pour_wave()
+				if _burst.is_empty():
+					_pour_wave()
+				else:
+					_burst_wave()
 			if _next >= socks.sock_count():
 				state = State.SETTLING
 		State.SETTLING:
@@ -349,6 +359,51 @@ func _process(delta: float) -> void:
 
 ## Drops a wave just above the current top, more of it near the centre, so the
 ## socks heap up into a cone instead of spreading into a flat layer.
+## Throws a handful of socks out of one spot, each on its own arc to a random
+## place on the floor.
+func _burst_wave() -> void:
+	var origin: Vector3 = _burst.origin
+	var area: AABB = _burst.area
+	var count := mini(int(_burst.get("wave_size", 60)), socks.sock_count() - _next)
+	var gravity := float(ProjectSettings.get_setting("physics/3d/default_gravity", 9.8))
+	var damp := maxf(float(_tuning.sock_linear_damp), 0.01)
+	var spread := float(_burst.get("spawn_spread", 0.4))
+	for i in count:
+		_skip_reserved()
+		if _next >= socks.sock_count():
+			break
+		var start := origin + Vector3(_rng.randf_range(-spread, spread), _rng.randf_range(0.0, spread * 2.5),
+				_rng.randf_range(-spread, spread))
+		var target := Vector3(_rng.randf_range(area.position.x, area.end.x), 0.2,
+				_rng.randf_range(area.position.z, area.end.z))
+		var t := _rng.randf_range(float(_burst.get("flight_min", 0.8)), float(_burst.get("flight_max", 1.6)))
+		# Launch speed for an arc with linear drag k: x(t) = v0 / k * (1 - e^-kt),
+		# y(t) = (v0 + g / k) / k * (1 - e^-kt) - g t / k.
+		var reach := (1.0 - exp(-damp * t)) / damp
+		var velocity := Vector3((target.x - start.x) / reach,
+				(target.y - start.y + gravity * t / damp) / reach - gravity / damp,
+				(target.z - start.z) / reach)
+		var basis := Basis.from_euler(Vector3(_rng.randf() * TAU, _rng.randf() * TAU, _rng.randf() * TAU))
+		_spawn(_next, Transform3D(basis, start), velocity, false)
+		# Fly through the other socks so the cloud does not stall in mid-air;
+		# they collide again shortly before landing.
+		_bodies[_next].collision_mask = WORLD_LAYER
+		_airborne[_next] = t * float(_burst.get("ghost_share", 0.8))
+		_next += 1
+	_skip_reserved()
+
+
+func _land_airborne(delta: float) -> void:
+	for sock_id: int in _airborne.keys():
+		_airborne[sock_id] -= delta
+		if _airborne[sock_id] > 0.0:
+			continue
+		_airborne.erase(sock_id)
+		var sock: Sock = _bodies[sock_id]
+		if sock != null and not _ghosts.has(sock_id):
+			sock.collision_mask = SOCK_MASK
+
+
 func _pour_wave() -> void:
 	var count := mini(int(_tuning.wave_size), socks.sock_count() - _next)
 	var spacing := float(_tuning.pour_spacing)
@@ -439,7 +494,7 @@ func _spawn(sock_id: int, xform: Transform3D, velocity: Vector3, asleep: bool) -
 
 
 func _finish() -> void:
-	# A sock in the player's hand (possible while the rift pours) stays awake.
+	# A sock in the player's hand (possible during the washer burst) stays awake.
 	var held := {}
 	for sock: Sock in _awake.values():
 		if _ghosts.has(sock.sock_id):
@@ -457,6 +512,7 @@ func _finish() -> void:
 	_reported_moving = 0
 	if _raining:
 		_raining = false
+		_burst = {}
 		Events.rain_finished.emit()
 	else:
 		Events.pile_ready.emit()

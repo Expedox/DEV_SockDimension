@@ -15,7 +15,7 @@ signal summit_reached
 # Run lifecycle
 signal pile_progress(done: int, total: int)
 signal pile_ready
-## The rest of the socks came through the rift and settled.
+## The washer bursts (started) and the scattered socks have settled (finished).
 signal rain_started
 signal rain_finished
 signal run_started(mode_id: String)
