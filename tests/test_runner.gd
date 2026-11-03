@@ -261,8 +261,23 @@ func _test_socks() -> void:
 			special += 1
 			designs[socks.patterns[pair]] = true
 	var share := float(SockCatalog.data()["special_share"])
-	check(special == roundi(5000 * share) and special == socks.special_total, "rare designs on %d pairs" % special)
+	var words := SockCatalog.LETTERING_TEXTS.size()
+	check(special == roundi(5000 * share) + words and special == socks.special_total, "rare designs on %d pairs" % special)
 	check(designs.size() == SockCatalog.special_patterns().size(), "every rare design shows up")
+	var texts := {}
+	var left_right := -1
+	for pair in socks.pair_count:
+		if socks.patterns[pair] == SockCatalog.lettering_pattern():
+			texts[socks.counts[pair]] = true
+			if socks.counts[pair] == 0:
+				left_right = pair
+	check(texts.size() == words, "every knitted word once (%d)" % texts.size())
+	if left_right >= 0:
+		var feet := []
+		for sock in socks.sock_count():
+			if socks.pair_of(sock) == left_right:
+				feet.append(socks.custom_data(sock).a)
+		check(feet.size() == 2 and feet[0] != feet[1], "LEFT and RIGHT socks differ")
 	var again := SockSet.generate(77, 5000, 0.2)
 	check(again.sock_pairs == socks.sock_pairs and again.base_colors == socks.base_colors and again.patterns == socks.patterns, "same seed, same socks")
 	for shape in SockCatalog.shape_count():
