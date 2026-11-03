@@ -402,7 +402,7 @@ faces. On the wall they hang in text order.
 
 `scripts/world/cellar_cat.gd`, numbers in `data/world.json` -> `cat` (`enabled`
 switches it off). A procedural tabby naps in its bed in a corner, strolls now
-and then and every 7 to 14 minutes (first time after 3 to 6) carries a loose
+and then and about every 5 minutes (Mike's choice) carries a loose
 sock somewhere else, half the time into its bed. It only takes socks lying open
 on top, below 1.2 m, away from the basket, never held ones (`SockField.is_held`);
 found pairs are gone from the field, so the wall is safe. Before saving it puts

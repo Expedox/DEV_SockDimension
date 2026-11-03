@@ -581,12 +581,12 @@
       0.84
     ],
     "first_steal_seconds": [
-      180.0,
-      360.0
+      270.0,
+      330.0
     ],
     "steal_seconds": [
-      420.0,
-      840.0
+      270.0,
+      330.0
     ],
     "stroll_seconds": [
       70.0,
@@ -600,7 +600,7 @@
     "step_up": 0.6,
     "pick_reach": 0.32,
     "max_pick_height": 1.2,
-    "basket_keep_out": 1.3,
+    "basket_keep_out": 2.0,
     "wall_margin": 1.2,
     "search_tries": 60,
     "give_up_seconds": 45.0,
@@ -608,8 +608,8 @@
     "purr_distance": 3.0,
     "purr_volume_db": -14.0,
     "colors": {
-      "fur": "#d4873e",
-      "stripes": "#8e4c1f",
+      "fur": "#c97b3a",
+      "stripes": "#7f4219",
       "white": "#efe7da",
       "pink": "#e29a9a",
       "eyes": "#b9cf4a",

@@ -23,10 +23,11 @@ void fragment() {
 	float wobble = sin(local_pos.x * 31.0 + local_pos.z * 17.0) * 1.3;
 	float band = smoothstep(0.25, 0.85, sin(local_pos.y * stripes + wobble));
 	float fuzz = fract(sin(dot(floor(local_pos * 400.0), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
-	ALBEDO = mix(base_color, stripe_color, band * step(0.01, stripes) * 0.75) * (0.92 + fuzz * 0.1);
-	ROUGHNESS = 0.95;
-	RIM = 0.55;
-	RIM_TINT = 0.6;
+	ALBEDO = mix(base_color, stripe_color, band * step(0.01, stripes) * 0.6) * (0.9 + fuzz * 0.12);
+	ROUGHNESS = 1.0;
+	SPECULAR = 0.15;
+	RIM = 0.12;
+	RIM_TINT = 0.8;
 }
 """
 
@@ -83,7 +84,7 @@ func setup(field: SockField, cellar: Cellar, player: Node3D, config: Dictionary)
 	_build_bed(cellar)
 	position = _bed
 	rotation.y = _rng.randf() * TAU
-	var first: Array = _cfg.get("first_steal_seconds", [180.0, 360.0])
+	var first: Array = _cfg.get("first_steal_seconds", [270.0, 330.0])
 	_steal_in = _rng.randf_range(float(first[0]), float(first[1]))
 	_reset_stroll()
 
@@ -156,7 +157,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _start_fetch() -> void:
-	var interval: Array = _cfg.get("steal_seconds", [420.0, 840.0])
+	var interval: Array = _cfg.get("steal_seconds", [270.0, 330.0])
 	_steal_in = _rng.randf_range(float(interval[0]), float(interval[1]))
 	var sock := _find_loose_sock()
 	if sock == null:
@@ -466,21 +467,26 @@ func _build() -> void:
 	var head_fur := _fur(colors.get("fur", "#d4873e"), colors.get("stripes", "#8e4c1f"), 90.0)
 	var white := _fur(colors.get("white", "#efe7da"))
 	var pink := _plain(colors.get("pink", "#e29a9a"), 0.5)
-	var eye := _plain(colors.get("eyes", "#b9cf4a"), 0.15, 0.6)
+	var eye := _plain(colors.get("eyes", "#b9cf4a"), 0.15, 0.25)
 	var dark := _plain("#141210", 0.2)
 
 	_body = Node3D.new()
 	add_child(_body)
-	var torso := CapsuleMesh.new()
-	torso.radius = 0.105
-	torso.height = 0.44
-	_part(_body, torso, fur, Vector3.ZERO, Vector3(PI * 0.5, 0.0, 0.0))
-	_part(_body, _sphere(0.08), white, Vector3(0.0, -0.035, -0.12), Vector3.ZERO, Vector3(0.9, 0.8, 1.2))
+	# Chest, slimmer waist and round haunches instead of one sausage.
+	var along := Vector3(PI * 0.5, 0.0, 0.0)
+	var waist := CapsuleMesh.new()
+	waist.radius = 0.088
+	waist.height = 0.38
+	_part(_body, waist, fur, Vector3(0.0, 0.0, 0.01), along, Vector3(1.0, 1.0, 0.95))
+	_part(_body, _sphere(0.098), fur, Vector3(0.0, 0.012, -0.12), along, Vector3(0.95, 1.15, 1.05))
+	_part(_body, _sphere(0.104), fur, Vector3(0.0, 0.004, 0.12), along, Vector3(1.05, 1.1, 1.08))
+	_part(_body, _sphere(0.072), white, Vector3(0.0, -0.035, -0.16), Vector3.ZERO, Vector3(0.95, 1.0, 1.0))
+	_part(_body, _sphere(0.062), fur, Vector3(0.0, 0.085, -0.19), along, Vector3(1.0, 1.0, 1.1))
 
 	# Legs pivot at the shoulder and hip; white paws.
 	var leg_mesh := CapsuleMesh.new()
-	leg_mesh.radius = 0.026
-	leg_mesh.height = 0.17
+	leg_mesh.radius = 0.022
+	leg_mesh.height = 0.18
 	for at in [Vector3(-0.055, 0.0, -0.14), Vector3(0.055, 0.0, -0.14), Vector3(-0.055, 0.0, 0.14), Vector3(0.055, 0.0, 0.14)]:
 		var hip := Node3D.new()
 		hip.position = at + Vector3(0.0, -0.03, 0.0)
@@ -491,8 +497,8 @@ func _build() -> void:
 
 	# Tail: a chain of short segments, each bending a little.
 	var seg_mesh := CapsuleMesh.new()
-	seg_mesh.radius = 0.022
-	seg_mesh.height = 0.09
+	seg_mesh.radius = 0.027
+	seg_mesh.height = 0.095
 	var parent: Node3D = _body
 	var offset := Vector3(0.0, 0.04, 0.22)
 	for i in 7:
@@ -500,7 +506,7 @@ func _build() -> void:
 		seg.position = offset
 		parent.add_child(seg)
 		var tip := white if i == 6 else fur
-		_part(seg, seg_mesh, tip, Vector3(0.0, 0.0, 0.035), Vector3(PI * 0.5, 0.0, 0.0), Vector3.ONE * (1.0 - i * 0.05))
+		_part(seg, seg_mesh, tip, Vector3(0.0, 0.0, 0.035), Vector3(PI * 0.5, 0.0, 0.0), Vector3.ONE * (1.0 - i * 0.07))
 		_tail.append(seg)
 		parent = seg
 		offset = Vector3(0.0, 0.0, 0.065)
@@ -508,25 +514,28 @@ func _build() -> void:
 	_head = Node3D.new()
 	add_child(_head)
 	_part(_head, _sphere(0.085), head_fur, Vector3.ZERO, Vector3(PI * 0.5, 0.0, 0.0), Vector3(1.08, 1.0, 0.92))
-	_part(_head, _sphere(0.042), white, Vector3(0.0, -0.03, -0.062), Vector3.ZERO, Vector3(1.25, 0.8, 0.9))
+	for side in [-1.0, 1.0]:
+		_part(_head, _sphere(0.048), head_fur, Vector3(0.042 * side, -0.026, -0.02), along, Vector3(1.0, 0.9, 0.85))
+	_part(_head, _sphere(0.042), white, Vector3(0.0, -0.032, -0.064), Vector3.ZERO, Vector3(1.25, 0.8, 0.9))
 	_part(_head, _sphere(0.012), pink, Vector3(0.0, -0.012, -0.098), Vector3.ZERO, Vector3(1.3, 0.8, 0.8))
 	_mouth = Node3D.new()
 	_mouth.position = Vector3(0.0, -0.06, -0.09)
 	_head.add_child(_mouth)
 	for side in [-1.0, 1.0]:
 		var socket := Node3D.new()
-		socket.position = Vector3(0.034 * side, 0.018, -0.07)
+		socket.position = Vector3(0.035 * side, 0.016, -0.064)
 		_head.add_child(socket)
-		_part(socket, _sphere(0.017), eye, Vector3.ZERO)
-		_part(socket, _sphere(0.017), dark, Vector3(0.0, 0.0, -0.006), Vector3.ZERO, Vector3(0.28, 0.9, 0.6))
+		_part(socket, _sphere(0.021), eye, Vector3.ZERO, Vector3.ZERO, Vector3(1.0, 0.9, 0.7))
+		_part(socket, _sphere(0.021), dark, Vector3(0.0, 0.0, -0.006), Vector3.ZERO, Vector3(0.3, 0.85, 0.7))
+		_part(socket, _sphere(0.005), _plain("#ffffff", 0.1, 1.0), Vector3(0.006 * side, 0.008, -0.016))
 		_eyes.append(socket)
 		var ear := Node3D.new()
 		ear.position = Vector3(0.05 * side, 0.06, -0.005)
 		_head.add_child(ear)
 		var cone := CylinderMesh.new()
 		cone.top_radius = 0.0
-		cone.bottom_radius = 0.034
-		cone.height = 0.065
+		cone.bottom_radius = 0.04
+		cone.height = 0.075
 		cone.radial_segments = 4
 		_part(ear, cone, head_fur, Vector3(0.0, 0.025, 0.0), Vector3(0.0, PI * 0.25, 0.0), Vector3(1.0, 1.0, 0.45))
 		_part(ear, cone, pink, Vector3(0.0, 0.022, -0.008), Vector3(0.0, PI * 0.25, 0.0), Vector3(0.65, 0.75, 0.25))
