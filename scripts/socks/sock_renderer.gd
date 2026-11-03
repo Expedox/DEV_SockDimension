@@ -20,6 +20,8 @@ var _hidden := PackedByteArray() # per sock
 var _free_near: Array[PackedInt32Array] = [] # per shape: unused near slots
 var _near_socks := PackedInt32Array() # socks currently drawn detailed
 var _scan := 0
+var _highlighted := -1
+var _sock_set: SockSet
 var _radius := 2.0
 
 
@@ -29,6 +31,8 @@ func setup(sock_set: SockSet, bounds: AABB, shadows := GeometryInstance3D.SHADOW
 	for child in get_children():
 		child.queue_free()
 	_far.clear()
+	_sock_set = sock_set
+	_highlighted = -1
 	_near.clear()
 	_free_near.clear()
 	_near_socks.clear()
@@ -96,8 +100,36 @@ func set_sock_transform(sock: int, xform: Transform3D) -> void:
 		_far[_shape_of[sock]].set_instance_transform(_slot_of[sock], xform)
 
 
+## Makes one sock glow (the one under the crosshair); -1 clears it. Only one at a time.
+## The flag lives in the custom data alpha (+2); far and near copies both get it.
+func set_highlight(sock: int) -> void:
+	if sock == _highlighted:
+		return
+	if _highlighted >= 0:
+		_write_highlight(_highlighted, false)
+	_highlighted = sock
+	if sock >= 0:
+		_write_highlight(sock, true)
+
+
+func highlighted() -> int:
+	return _highlighted
+
+
+func _write_highlight(sock: int, on: bool) -> void:
+	var data := _sock_set.custom_data(sock)
+	if on:
+		data.a += 2.0
+	_far[_shape_of[sock]].set_instance_custom_data(_slot_of[sock], data)
+	var near := _near_slot[sock]
+	if near >= 0:
+		_near[_shape_of[sock]].set_instance_custom_data(near, data)
+
+
 ## For socks that left the pile (matched, in the basket).
 func hide_sock(sock: int) -> void:
+	if sock == _highlighted:
+		set_highlight(-1)
 	_set_far(sock)
 	_far[_shape_of[sock]].set_instance_transform(_slot_of[sock], HIDDEN)
 	_hidden[sock] = 1

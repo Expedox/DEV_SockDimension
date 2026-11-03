@@ -8,7 +8,7 @@ render_mode cull_back;
 // r = base palette index / 255
 // g = accent palette index / 255
 // b = (pattern * 16 + count) / 255
-// a = 1 when heel and toe are knitted in the accent color
+// a = 1 when heel and toe are knitted in the accent color, +2 while the sock is aimed at
 
 // Same order as "patterns" in data/socks.json.
 const int PATTERN_STRIPES = 1;
@@ -36,12 +36,15 @@ uniform float sheen = 0.35;
 uniform float wrap = 0.15;
 uniform float drape = 0.03;
 uniform float fold_shade = 0.35;
+uniform float highlight_glow = 0.5;
+uniform float highlight_rim = 1.6;
 
 varying flat vec3 v_base;
 varying flat vec3 v_accent;
 varying flat int v_pattern;
 varying flat int v_count;
 varying flat float v_heel_toe;
+varying flat float v_highlight;
 varying float v_fold;
 
 void vertex() {
@@ -50,7 +53,8 @@ void vertex() {
 	v_accent = palette[int(round(INSTANCE_CUSTOM.g * 255.0))];
 	v_pattern = packed / 16;
 	v_count = packed % 16;
-	v_heel_toe = INSTANCE_CUSTOM.a;
+	v_highlight = step(1.5, INSTANCE_CUSTOM.a);
+	v_heel_toe = INSTANCE_CUSTOM.a - 2.0 * v_highlight;
 
 	// Soft per-sock folds, so a pile does not look stamped. Normal follows the fold.
 	float p = float(INSTANCE_ID) * 1.618;
@@ -218,6 +222,14 @@ void fragment() {
 	// Soft occlusion in fold valleys and inside the opening; also dims direct light a bit.
 	AO = clamp(1.0 - fold_shade * (0.5 - 0.5 * v_fold), 0.0, 1.0) * mix(1.0, 0.4, smoothstep(0.0, -0.01, m.y));
 	AO_LIGHT_AFFECT = 0.45;
+
+	// Aimed sock: soft warm glow plus a bright rim, so it stands out from its neighbours.
+	if (v_highlight > 0.5) {
+		float edge = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.0);
+		float pulse = 0.85 + 0.15 * sin(TIME * 5.0);
+		vec3 warm = vec3(1.0, 0.86, 0.55);
+		EMISSION = (mix(color, warm, 0.6) * highlight_glow + warm * edge * highlight_rim) * pulse;
+	}
 }
 
 // Cloth light: wrapped diffuse for the soft look of fabric, a fuzzy sheen at grazing angles.

@@ -25,7 +25,9 @@
 		"sheen": 0.55,
 		"wrap": 0.15,
 		"drape": 0.03,
-		"fold_shade": 0.35
+		"fold_shade": 0.35,
+		"highlight_glow": 0.5,
+		"highlight_rim": 1.6
 	},
 	"shapes": [
 		{ "id": "sneaker", "weight": 1.0, "leg_length": 0.055, "rib_length": 0.016, "foot_length": 0.235, "width": 0.096, "calf": 0.0, "heel_bulge": 0.7 },

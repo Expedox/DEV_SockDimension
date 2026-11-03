@@ -135,6 +135,7 @@ func _physics_process(delta: float) -> void:
 	if _held:
 		_steer_held(delta)
 	_check_summit(delta)
+	_update_highlight()
 
 
 func _move(delta: float) -> void:
@@ -250,6 +251,14 @@ func _steer_held(delta: float) -> void:
 	if angle > 0.0001:
 		turn = diff.get_axis() * angle * float(_cfg.hold_turn_spring)
 	_held.angular_velocity = turn.limit_length(max_speed * 2.0)
+
+
+## Only the sock under the crosshair glows, so it is clear which one a click takes.
+func _update_highlight() -> void:
+	if _field == null or _field.renderer == null:
+		return
+	var sock := aimed_sock()
+	_field.renderer.set_highlight(sock.sock_id if sock else -1)
 
 
 func _check_summit(delta: float) -> void:

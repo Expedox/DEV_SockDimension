@@ -217,6 +217,17 @@ func _test_pair_controller() -> void:
 	add_child(controller)
 	controller.setup(player, field, cellar, socks)
 
+	var r := SockRenderer.new()
+	r.setup(socks, cellar.room_bounds())
+	add_child(r)
+	r.set_highlight(0)
+	r.set_highlight(1)
+	check(r.highlighted() == 1, "only the latest aimed sock glows")
+	r.set_highlight(0)
+	r.hide_sock(0)
+	check(r.highlighted() == -1, "a sock leaving the pile drops its glow")
+	r.queue_free()
+
 	var first := -1
 	var second := -1
 	var other := -1
